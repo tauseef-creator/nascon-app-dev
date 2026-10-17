@@ -8,22 +8,45 @@ const S = require('./seedData');
 const LEAGUE = 'league-alpha-1';
 const TEAMS = ['club-alpha-1', 'club-alpha-2', 'demo-club-3', 'demo-club-4'];
 const DEMO_CLUBS = [
-  { club_id: 'demo-club-3', name: 'Alpha Strikers', venue: 'Strikers Park' },
-  { club_id: 'demo-club-4', name: 'Alpha Falcons', venue: 'Falcon Field' },
+  { club_id: 'demo-club-3', name: 'Alpha Strikers', venue: 'Strikers Park', coach: 'Farhan Qureshi', manager: 'Mariam Saeed', physio: 'Daniyal Rauf', social: '@alphastrikers' },
+  { club_id: 'demo-club-4', name: 'Alpha Falcons', venue: 'Falcon Field', coach: 'Naveed Aslam', manager: 'Zoya Siddiqui', physio: 'Hassan Tariq', social: '@alphafalcons' },
 ];
 const FIXTURES = [
+  // Return-leg results give the standings and Results tab some believable history.
+  ['demo-m7', 'club-alpha-2', 'club-alpha-1', -13],
+  ['demo-m8', 'demo-club-4', 'demo-club-3', -11],
+  ['demo-m9', 'demo-club-3', 'club-alpha-1', -9],
+  ['demo-m10', 'demo-club-4', 'club-alpha-2', -8],
   ['demo-m1', 'club-alpha-1', 'club-alpha-2', -6],
   ['demo-m2', 'demo-club-3', 'demo-club-4', -5],
   ['demo-m3', 'club-alpha-1', 'demo-club-3', 0],
   ['demo-m4', 'club-alpha-2', 'demo-club-4', 2],
   ['demo-m5', 'club-alpha-1', 'demo-club-4', 7],
   ['demo-m6', 'club-alpha-2', 'demo-club-3', 9],
+  ['demo-m11', 'demo-club-4', 'club-alpha-1', 12],
+  ['demo-m12', 'demo-club-3', 'club-alpha-2', 15],
 ];
 // Scripted events: [match, team index (0 home / 1 away) or null, type]
 const SCRIPT = [
+  ['demo-m7', null, 'match_start'], ['demo-m7', 0, 'goal'], ['demo-m7', 1, 'goal'], ['demo-m7', null, 'match_end'],
+  ['demo-m8', null, 'match_start'], ['demo-m8', 1, 'goal'], ['demo-m8', 1, 'goal'], ['demo-m8', null, 'match_end'],
+  ['demo-m9', null, 'match_start'], ['demo-m9', 0, 'goal'], ['demo-m9', 1, 'goal'], ['demo-m9', 1, 'goal'], ['demo-m9', null, 'match_end'],
+  ['demo-m10', null, 'match_start'], ['demo-m10', 1, 'goal'], ['demo-m10', null, 'match_end'],
   ['demo-m1', null, 'match_start'], ['demo-m1', 0, 'goal'], ['demo-m1', 1, 'goal'], ['demo-m1', 0, 'goal'], ['demo-m1', null, 'match_end'],
   ['demo-m2', null, 'match_start'], ['demo-m2', 1, 'goal'], ['demo-m2', null, 'match_end'],
   ['demo-m3', null, 'match_start'], ['demo-m3', 0, 'goal'],
+];
+const DEMO_PRODUCTS = [
+  { product_id: 'demo-prod-rovers-jersey', club_id: 'club-alpha-2', name: 'Alpha Rovers Home Jersey', category: 'apparel', description: 'Breathable 2026 match shirt with a woven club crest.', variants: [
+    { variant_id: 'demo-var-rovers-M', size: 'M', color: 'Club colours', price_minor: 420000, stock: 8 },
+    { variant_id: 'demo-var-rovers-L', size: 'L', color: 'Club colours', price_minor: 420000, stock: 10 },
+  ] },
+  { product_id: 'demo-prod-united-scarf', club_id: 'club-alpha-1', name: 'Alpha United Supporter Scarf', category: 'accessories', description: 'Soft knit supporter scarf for matchday evenings.', variants: [
+    { variant_id: 'demo-var-scarf', size: 'One size', color: 'Red / White', price_minor: 180000, stock: 18 },
+  ] },
+  { product_id: 'demo-prod-training-bottle', club_id: 'club-alpha-1', name: 'Matchday Training Bottle', category: 'equipment', description: 'Reusable 750 ml training bottle with an easy-grip finish.', variants: [
+    { variant_id: 'demo-var-bottle', size: '750 ml', color: 'Black', price_minor: 125000, stock: 24 },
+  ] },
 ];
 
 function dayOffset(days, hour = 16) {
@@ -51,7 +74,8 @@ async function seedDemo() {
 
   for (const c of DEMO_CLUBS) {
     await query('INSERT INTO clubs VALUES ($1,$2,$3,$4) ON CONFLICT DO NOTHING', [c.club_id, 'tenant-alpha', c.name,
-      { home_venue: { name: c.venue, lat: 33.69, lng: 73.05 }, social: {}, staff: { coach: 'Demo Coach', manager: 'Demo Manager', physio: 'Demo Physio' } }]);
+      { home_venue: { name: c.venue, lat: 33.69, lng: 73.05 }, social: { x: c.social, instagram: c.social },
+        staff: { coach: c.coach, manager: c.manager, physio: c.physio } }]);
   }
 
   const football = S.SEED_SPORTS.find((s) => s.sport_id === 'football');
@@ -68,7 +92,21 @@ async function seedDemo() {
     await query(
       `INSERT INTO matches (match_id, sport_id, league_id, home_team_id, away_team_id, scheduled_at, venue)
        VALUES ($1,'football',$2,$3,$4,$5,$6) ON CONFLICT DO NOTHING`,
-      [matchId, LEAGUE, home, away, dayOffset(days), 'Alpha Arena']);
+      [matchId, LEAGUE, home, away, dayOffset(days),
+        home === 'club-alpha-1' ? 'Alpha Arena' : home === 'club-alpha-2' ? 'Rovers Ground' : home === 'demo-club-3' ? 'Strikers Park' : 'Falcon Field']);
+  }
+
+  for (const p of DEMO_PRODUCTS) {
+    await query(
+      `INSERT INTO products (product_id, tenant_id, club_id, name, category, data)
+       VALUES ($1, 'tenant-alpha', $2, $3, $4, $5) ON CONFLICT DO NOTHING`,
+      [p.product_id, p.club_id, p.name, p.category, { description: p.description }]);
+    for (const v of p.variants) {
+      await query(
+        `INSERT INTO variants (variant_id, product_id, size, color, price_minor, currency, stock, reserved)
+         VALUES ($1, $2, $3, $4, $5, 'PKR', $6, 0) ON CONFLICT DO NOTHING`,
+        [v.variant_id, p.product_id, v.size, v.color, v.price_minor, v.stock]);
+    }
   }
 
   let n = 0;

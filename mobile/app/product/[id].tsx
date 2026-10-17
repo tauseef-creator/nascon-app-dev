@@ -14,6 +14,7 @@ import { humanize } from '../../src/hooks/useClubNames';
 import { useCart } from '../../src/store/CartContext';
 import { colors, radius, spacing, text } from '../../src/theme';
 import { JerseyArt } from '../../src/components/JerseyArt';
+import { ProductArt } from '../../src/components/ProductArt';
 import { Image } from 'expo-image';
 
 export default function ProductScreen() {
@@ -84,7 +85,7 @@ export default function ProductScreen() {
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
       <Card>
         <View style={{ height: 220, borderRadius: radius.md, overflow: 'hidden', marginBottom: spacing.md }} accessible accessibilityLabel={`${humanize(product.category)} picture`}>
-          {product.category === 'apparel' ? <JerseyArt name={product.name} height={220} /> : <Image source={require('../../assets/merch.jpg')} style={{ height: 220 }} contentFit="cover" />}
+          <ProductArt product={product} height={220} />
         </View>
         <Text style={text.h1} accessibilityRole="header">
           {product.name}

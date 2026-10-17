@@ -7,6 +7,7 @@ import { Text, View } from 'react-native';
 import { Product } from '../../src/api/types';
 import { useBrand } from '../../src/auth/AuthContext';
 import { JerseyArt } from '../../src/components/JerseyArt';
+import { ProductArt } from '../../src/components/ProductArt';
 import { Screen } from '../../src/components/Screen';
 import { available, StockText } from '../../src/components/StockText';
 import { CachedNotice, EmptyState, ErrorBanner, IconButton, LoadingView, money, PressableCard, PrimaryButton } from '../../src/components/ui';
@@ -72,7 +73,7 @@ export default function StoreTab() {
                 style={{ width: 72, height: 72, borderRadius: radius.md, overflow: 'hidden' }}
                 accessible={false}
               >
-                {p.category === 'apparel' ? <JerseyArt name={p.name} height={72} /> : <Image source={require('../../assets/merch.jpg')} style={{ width: 72, height: 72 }} contentFit="cover" />}
+                <ProductArt product={p} height={72} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={text.label} numberOfLines={2}>

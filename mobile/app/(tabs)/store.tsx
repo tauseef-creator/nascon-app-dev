@@ -77,15 +77,15 @@ export default function StoreTab() {
             onPress={() => router.push(`/product/${p.product_id}`)}
             style={{ width: '48.5%', padding: 0, overflow: 'hidden', borderRadius: radius.lg }}
           >
-            <View accessible={false}><ProductArt product={p} height={142} /></View>
-            <View style={{ padding: spacing.md, minHeight: 128 }}>
-              <Text style={[text.small, { color: colors.accent, fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 }]}>{humanize(p.category).toUpperCase()}</Text>
-              <Text style={[text.label, { fontSize: 13, minHeight: 36, marginTop: 4 }]} numberOfLines={2}>{p.name}</Text>
-              <Text style={[text.label, { fontSize: 14, marginTop: spacing.xs }]} numberOfLines={1}>
-                {prices.length > 1 && Math.max(...prices) !== min ? 'From ' : ''}{money(min, cur)}
-              </Text>
-              <View style={{ marginTop: 4 }}><StockText count={stock} /></View>
-              </View>
+            <View style={{ height: 258 }}>
+              <ProductArt product={p} height={258} />
+              <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.55)', 'rgba(0,0,0,0.94)']} locations={[0.32, 0.62, 1]} style={{ position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, justifyContent: 'flex-end', padding: spacing.md }}>
+                <Text style={{ color: colors.accent, fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 }}>{humanize(p.category).toUpperCase()}</Text>
+                <Text style={[text.label, { fontSize: 13, marginTop: 4 }]} numberOfLines={2}>{p.name}</Text>
+                <Text style={[text.label, { fontSize: 14, marginTop: spacing.xs }]} numberOfLines={1}>{prices.length > 1 && Math.max(...prices) !== min ? 'From ' : ''}{money(min, cur)}</Text>
+                <View style={{ marginTop: 4 }}><StockText count={stock} /></View>
+              </LinearGradient>
+            </View>
           </PressableCard>
         );
       })}

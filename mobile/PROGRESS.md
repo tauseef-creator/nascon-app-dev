@@ -1,5 +1,13 @@
 # Mobile progress log
 
+## 2026-10-17 15:04 PKT device and requirements audit
+
+- Reinstalled the latest committed release APK on Galaxy A06; the existing `n-*` Docker stack is healthy on port 8080 and `adb reverse tcp:8080 tcp:8080` is active. A second Compose project started through the Windows repo symlink collided on port 8080; only those duplicate `nascon-app-dev-*` containers were stopped. Leave the healthy `n-*` stack running for judging.
+- Completed purchase on the phone while signed in as Player: Store -> Alpha United Home Jersey (size L, quantity 1) -> Buy now -> approved mock card -> Pay now. Receipt showed successful PKR 4,500 payment. `Open receipt PDF` generated a PDF and opened Android's share sheet. `npx tsc --noEmit` passes.
+- The five bottom tabs are shared by design (`docs/MOBILE_BUILD_PLAN.md`), so accounts look similar. The role badge changes; Organizer scoring controls appear inside Match detail; Manager's Manage roster link appears in More; Player/Viewer cannot use scoring/roster controls. This satisfies most role visibility, but the spec also calls for a role-aware home; the role-specific entry points are not prominent on the shared Fixtures home.
+- Small-screen finding on Galaxy A06 (360 dp): the item-line amount on Receipt wraps awkwardly because `Row` gives its long label nonshrinking width; the final purchase/receipt buttons sit close to Android's system navigation area. The buttons remained tappable in this test. If there is time for another APK rebuild, address receipt row wrapping and bottom scroll padding.
+- Code finding: `canPin()` includes Club Manager and backend `POST /api/v1/matches/:match_id/pin` permits that role, but the Pin button is nested inside the Organizer-only scoring panel in `app/match/[id].tsx`, so managers cannot reach it from the app. Scoring, roster mutation, offline queue survival/sync, and landscape were not re-tested in this short audit. Do not claim those device flows passed based on this note.
+
 ## 2026-10-17 14:38 PKT: Apple Sports redesign, final APK
 
 - Fixtures shows one rounded panel with a Results / Live / Upcoming switcher and a league header, and match rows separated by thin dividers. Match detail has a gradient hero in the two teams' crest colours. Standings is a compact table with a crest per row. Clubs get generated SVG crests (`src/components/ClubCrest.tsx`, no network needed).

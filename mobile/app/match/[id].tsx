@@ -33,6 +33,7 @@ import { listQueue, QueuedAction, subscribeQueue } from '../../src/offline/queue
 import { useSync } from '../../src/offline/SyncProvider';
 import { colors, radius, spacing, text, TOUCH } from '../../src/theme';
 import { ClubCrest, crestColor } from '../../src/components/ClubCrest';
+import { ProductArt } from '../../src/components/ProductArt';
 import { LinearGradient } from 'expo-linear-gradient';
 
 type Pending = { action: string; title: string; message: string; destructive?: boolean; run: () => Promise<void> };
@@ -460,7 +461,6 @@ function TimelineRow({
 }
 
 function PinnedCard({ product }: { product: Product }) {
-  const brand = useBrand();
   const v = product.variants?.[0];
     return (
       <Card testID="pinned-product">
@@ -468,9 +468,10 @@ function PinnedCard({ product }: { product: Product }) {
         <Ionicons name="star" size={18} color={colors.warning} />
         <Text style={[text.section, { color: colors.warning }]}>Featured in this match</Text>
       </View>
-      <Text style={text.title}>{product.name}</Text>
-      {product.description ? <Text style={[text.muted, { marginTop: 2 }]}>{product.description}</Text> : null}
-      {v ? <Text style={[text.label, { marginTop: spacing.sm, fontSize: 18 }]}>{money(v.price_minor, v.currency)}</Text> : null}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm }}>
+        <View style={{ width: 84, height: 84, borderRadius: 14, overflow: 'hidden' }}><ProductArt product={product} height={84} /></View>
+        <View style={{ flex: 1 }}><Text style={text.title} numberOfLines={2}>{product.name}</Text>{v ? <Text style={[text.label, { marginTop: spacing.sm, fontSize: 17 }]}>{money(v.price_minor, v.currency)}</Text> : null}</View>
+      </View>
       <PrimaryButton
         title="View and buy"
         icon="bag-add-outline"

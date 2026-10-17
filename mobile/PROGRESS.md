@@ -5,6 +5,7 @@
 - Rebuilt `mobile/release/app-release.apk` successfully (`assembleRelease`, arm64-v8a; SHA-256 `071a2a4119f2f50e08bb97bdac7c36992c2d482077df1e3e95cc92ec0a404f0a`) and installed it on Pixel 6a `19301FDEE003AS`. The new Fixtures hero, counts, and quick actions render on-device.
 - Rebuilt the live `n-api-1` container from the latest source and confirmed it is healthy. The local ignored `.env` now has the assigned salt; never copy it into Git. The demo database contains 12 fixtures and four products. The Pixel Store shows all four products with the newly bundled jersey, scarf, and bottle photos. Product image display on the phone is confirmed.
 - USB reconnects can remove `adb reverse tcp:8080 tcp:8080`; it was restored. The phone still uses `http://localhost:8080`. If the USB cable disconnects, reconnect and repeat that ADB reverse command, or switch Server settings to this laptop's reachable hotspot address (`http://10.213.195.190:8080` as of this checkpoint).
+- After the demo seed/API rebuild, `run_tests.sh --runInBand` passed all 522 tests across 13 suites. Overall line coverage is 98.99%; `COVERAGE.json` remains 100% in the six scored backend areas. No live contract reset was run against the active phone database.
 
 ## 2026-10-17 15:20 PKT home screen
 

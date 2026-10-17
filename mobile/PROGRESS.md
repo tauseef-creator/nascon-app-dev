@@ -1,5 +1,10 @@
 # Mobile progress log
 
+## 2026-10-17 15:20 PKT home screen
+
+- The Fixtures home now features the current live match, next fixture, or latest result over the bundled stadium photo, followed by live/upcoming/results counts and role-aware quick actions. All values come from the existing matches response, so the view works with offline cache and requires no new endpoint. The existing tabbed fixture list and test IDs remain.
+- `npx tsc --noEmit` and `npx expo export --platform android` pass. A release APK still needs rebuilding for the new home and product photos; the currently installed phone build predates both.
+
 ## 2026-10-17 15:18 PKT demo data and merchandise imagery
 
 - Commit `3b15d63` added separate demo-only fixtures, completed results, realistic club details, and three merchandise products in `backend/src/db/demoSeed.js`. The binding baseline in `seedData.js` and audit reset are unchanged. The live Docker stack has not yet been rebuilt for these additions, so its current database still has the older catalog.

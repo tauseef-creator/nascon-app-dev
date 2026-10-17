@@ -125,7 +125,7 @@ against the live stack; see section 8 for what is left).
 | Signing | `lib/signing.js` (Appendix A vectors pass) | DONE |
 | Rate limit probe | `GET /api/v1/ping` | DONE |
 | Sports (mystery sport) | `POST /audit/v1/sports` | DONE (`domain/scoring`, 100% cov) |
-| Fixtures x4 | `POST /audit/v1/fixtures` | DONE, contract tests pass; **no jest unit tests yet (coverage 0)** |
+| Fixtures x4 | `POST /audit/v1/fixtures` | DONE (`domain/fixtures`, 100% cov, 106 tests) |
 | Leagues | `POST /audit/v1/leagues` | DONE |
 | Events + score | `POST /audit/v1/events`, `GET /audit/v1/score/:match_id` | DONE (`services/events.js`) |
 | Standings | `GET /audit/v1/standings/:league_id` | DONE (100% cov) |
@@ -268,7 +268,7 @@ break `/reset` or `/health`.** Never change the response of `/reset`.
 - Pin `prod-jersey-001` to `demo-m3`.
 - Run the contract suite afterwards: demo data must not change any graded result.
 
-### 8.3 Fixtures unit tests (coverage bonus, 0.6 points)
+### 8.3 Fixtures unit tests: DONE
 
 Write `tests/fixtures.test.js` (jest) for `backend/src/domain/fixtures/*`
 (round robin odd/even, legs 2, withdrawals both policies, Swiss round 1 exact

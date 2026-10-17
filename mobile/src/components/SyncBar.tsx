@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSync } from '../offline/SyncProvider';
-import { colors } from '../theme';
+import { colors, spacing } from '../theme';
 
 export function SyncBar() {
   const { online, serverDown, syncing, pending } = useSync();
@@ -32,7 +32,7 @@ export function SyncBar() {
       accessibilityLabel={a11y}
       onPress={() => router.push('/sync')}
       hitSlop={{ top: 4, bottom: 4 }}
-      style={({ pressed }) => [styles.bar, pressed && { backgroundColor: colors.bg }]}
+      style={({ pressed }) => [styles.bar, pressed && { backgroundColor: 'rgba(255,255,255,0.16)' }]}
     >
       <View style={styles.left}>
         {syncing ? <ActivityIndicator size="small" color={tint} /> : <Ionicons name={icon} size={17} color={tint} />}
@@ -53,16 +53,17 @@ export function SyncBar() {
 
 const styles = StyleSheet.create({
   bar: {
-    minHeight: 42,
+    minHeight: 40,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.xs,
     paddingHorizontal: 14,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.divider,
+    borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.08)',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  text: { color: colors.textMuted, fontSize: 13, fontWeight: '700' },
+  text: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
 });

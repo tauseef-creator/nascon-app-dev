@@ -84,11 +84,11 @@ export default function StandingsTab() {
                     onPress={() => router.push(`/club/${r.team_id}`)}
                     style={({ pressed }) => [
                       styles.tr,
-                      mine && { backgroundColor: '#EFF6FF' },
+                      mine && { backgroundColor: colors.accentBg },
                       pressed && { backgroundColor: colors.neutralBg },
                     ]}
                   >
-                    <View style={[styles.rankCell, inZone && { borderLeftColor: brand.primary }]}>
+                    <View style={[styles.rankCell, inZone && { borderLeftColor: colors.accent }]}>
                       <Text style={[styles.cell, { width: 36, fontWeight: '800' }]}>{r.rank}</Text>
                     </View>
                     <Text style={[styles.cell, styles.teamCol, { fontWeight: '700' }]} numberOfLines={2}>
@@ -116,7 +116,7 @@ export default function StandingsTab() {
           </Text>
           {spots > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
-              <View style={{ width: 6, height: 24, backgroundColor: brand.primary }} />
+              <View style={{ width: 4, height: 24, borderRadius: 2, backgroundColor: colors.accent }} />
               <Text style={[text.body, { flex: 1 }]}>Bar next to the rank: currently in the top {spots} qualification places.</Text>
             </View>
           ) : null}
@@ -149,10 +149,10 @@ function LegendRow({ kind, text: t }: { kind: PillKind; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  tr: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderBottomWidth: 1, borderBottomColor: colors.divider },
-  th: { backgroundColor: colors.neutralBg, minHeight: 44 },
-  cell: { fontSize: 16, color: colors.text, textAlign: 'center', paddingVertical: 8 },
-  hcell: { fontWeight: '800', color: colors.textMuted, fontSize: 15 },
+  tr: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  th: { minHeight: 40 },
+  cell: { fontSize: 15, color: colors.text, textAlign: 'center', paddingVertical: 8, fontVariant: ['tabular-nums'] },
+  hcell: { fontWeight: '600', color: colors.textMuted, fontSize: 13 },
   teamCol: { width: 150, textAlign: 'left', paddingHorizontal: 6 },
-  rankCell: { borderLeftWidth: 4, borderLeftColor: 'transparent', alignSelf: 'stretch', justifyContent: 'center' },
+  rankCell: { borderLeftWidth: 3, borderLeftColor: 'transparent', alignSelf: 'stretch', justifyContent: 'center' },
 });

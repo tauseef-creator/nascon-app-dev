@@ -157,9 +157,9 @@ export default function CartScreen() {
               accessibilityState={{ selected: sel, checked: sel }}
               accessibilityLabel={`${c.title}. ${c.detail}`}
               onPress={() => setToken(c.token)}
-              style={[styles.payOpt, sel && { borderColor: brand.primaryText, backgroundColor: colors.infoBg }]}
+              style={[styles.payOpt, sel && { borderColor: colors.accent, backgroundColor: colors.accentBg }]}
             >
-              <Ionicons name={sel ? 'radio-button-on' : 'radio-button-off'} size={24} color={sel ? brand.primaryText : colors.textMuted} />
+              <Ionicons name={sel ? 'radio-button-on' : 'radio-button-off'} size={24} color={sel ? colors.accent : colors.textMuted} />
               <View style={{ flex: 1 }}>
                 <Text style={text.label}>{c.title}</Text>
                 <Text style={text.small}>{c.detail}</Text>
@@ -224,10 +224,10 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minHeight: 64,
     padding: spacing.md,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    backgroundColor: colors.card,
+    backgroundColor: colors.cardHi,
     marginBottom: spacing.sm,
   },
 });

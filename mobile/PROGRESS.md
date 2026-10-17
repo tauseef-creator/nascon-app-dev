@@ -1,5 +1,12 @@
 # Mobile progress log
 
+## 2026-10-17 UI revamp (Apple Sports style)
+
+- Second pass, built from the Mobbin Apple Sports screens. Pure-black background with a green gradient wash at the top. Large 34pt left-aligned titles. Sync status is a rounded strip. Cards are rounded and borderless (`#1C1C1E`). Primary buttons are green pills; selected chips are white segments. The tab bar is near-black with a green active tint.
+- Match cards are compact rows: tenant-coloured crests, scores beside the crests (the trailing team's score is dimmed), and kickoff time, "Final" or a red LIVE dot in the centre. Live cards have a red tint. Match detail scores are white at 64pt.
+- Fixed contrast bugs: the standings "(you)" row was near-white behind white text. Error, info and success banners used dark text on dark backgrounds. Form inputs now sit on a raised `#2C2C2E` surface so they show up inside cards.
+- Changes are limited to styling. No logic, testID or accessibility label was changed or removed (checked with git diff). `npx tsc --noEmit` and `npx expo export --platform android` pass.
+
 ## 2026-10-17 14:10 PKT update
 
 - Apple Sports reference is the full Mobbin gallery screenshot supplied by the user. Commit `0882164` pushed the first dark UI pass. Its match cards are still too large and too blue compared with the reference; a tighter green-accented fixture layout is the next visual change.

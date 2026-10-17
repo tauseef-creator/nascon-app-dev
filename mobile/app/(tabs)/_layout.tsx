@@ -2,35 +2,35 @@ import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router/tabs';
 import React from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useBrand } from '../../src/auth/AuthContext';
 import { useCart } from '../../src/store/CartContext';
 import { colors } from '../../src/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export default function TabsLayout() {
-  const brand = useBrand();
   const cart = useCart();
   const insets = useSafeAreaInsets();
   const icon = (name: IconName, active: IconName) =>
     function TabIcon({ color, focused }: { color: any; focused: boolean }) {
-      return <Ionicons name={focused ? active : name} size={26} color={color} />;
+      return <Ionicons name={focused ? active : name} size={24} color={color} />;
     };
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: brand.primaryText,
-        tabBarInactiveTintColor: '#A4ADBA',
-        tabBarLabelStyle: { fontSize: 13, fontWeight: '700' },
+        tabBarActiveTintColor: colors.accent,
+        tabBarInactiveTintColor: colors.textMuted,
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
         tabBarStyle: {
-          backgroundColor: colors.card,
+          backgroundColor: '#0D0D0D',
           borderTopColor: colors.divider,
+          borderTopWidth: 0.5,
           height: 64 + insets.bottom,
           paddingBottom: insets.bottom + 6,
           paddingTop: 6,
         },
         tabBarItemStyle: { minHeight: 48 },
+        tabBarBadgeStyle: { backgroundColor: colors.live, color: colors.white, fontSize: 11 },
       }}
     >
       <Tabs.Screen

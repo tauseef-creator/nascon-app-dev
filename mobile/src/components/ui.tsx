@@ -14,7 +14,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useBrand } from '../auth/AuthContext';
-import { colors, font, radius, shadow, spacing, text, TOUCH } from '../theme';
+import { colors, font, radius, spacing, text, TOUCH } from '../theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
 
@@ -45,7 +45,7 @@ export function PressableCard({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85, backgroundColor: '#242A35' }, style]}
+      style={({ pressed }) => [styles.card, pressed && { backgroundColor: colors.cardHi }, style]}
     >
       {children}
     </Pressable>
@@ -67,6 +67,7 @@ type ButtonProps = {
 
 export function PrimaryButton({ title, onPress, testID, loading, disabled, icon, style, accessibilityLabel, accessibilityHint, compact }: ButtonProps) {
   const off = disabled || loading;
+  const fg = off ? colors.textMuted : colors.black;
   return (
     <Pressable
       testID={testID}
@@ -79,17 +80,17 @@ export function PrimaryButton({ title, onPress, testID, loading, disabled, icon,
       style={({ pressed }) => [
         styles.btn,
         compact && styles.btnCompact,
-        { backgroundColor: off ? '#9CA3AF' : colors.ink },
+        { backgroundColor: off ? colors.cardHi : colors.accent },
         pressed && !off && { opacity: 0.85 },
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.white} />
+        <ActivityIndicator color={fg} />
       ) : icon ? (
-        <Ionicons name={icon} size={20} color={colors.white} />
+        <Ionicons name={icon} size={20} color={fg} />
       ) : null}
-      <Text style={[styles.btnText, { color: colors.white }]} numberOfLines={2}>
+      <Text style={[styles.btnText, { color: fg }]} numberOfLines={2}>
         {loading ? 'Please wait…' : title}
       </Text>
     </Pressable>
@@ -97,9 +98,8 @@ export function PrimaryButton({ title, onPress, testID, loading, disabled, icon,
 }
 
 export function SecondaryButton({ title, onPress, testID, loading, disabled, icon, style, accessibilityLabel, accessibilityHint, compact, danger }: ButtonProps & { danger?: boolean }) {
-  const brand = useBrand();
   const off = disabled || loading;
-  const fg = off ? '#6B7280' : danger ? colors.danger : brand.primaryText;
+  const fg = off ? colors.textMuted : danger ? colors.danger : colors.text;
   return (
     <Pressable
       testID={testID}
@@ -112,8 +112,8 @@ export function SecondaryButton({ title, onPress, testID, loading, disabled, ico
       style={({ pressed }) => [
         styles.btn,
         compact && styles.btnCompact,
-        { backgroundColor: colors.card, borderWidth: 1, borderColor: off ? colors.border : colors.border },
-        pressed && !off && { backgroundColor: '#242A35' },
+        { backgroundColor: colors.cardHi },
+        pressed && !off && { backgroundColor: colors.border },
         style,
       ]}
     >
@@ -191,7 +191,7 @@ export function ErrorBanner({ message, onRetry, testID = 'error-banner' }: { mes
     <View testID={testID} style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
         <Ionicons name="alert-circle" size={24} color={colors.danger} accessibilityLabel="Problem" />
-        <Text style={[text.body, { flex: 1, color: '#7F1D1D' }]}>{message}</Text>
+        <Text style={[text.body, { flex: 1, color: colors.text }]}>{message}</Text>
       </View>
       {onRetry ? (
         <SecondaryButton title="Try again" icon="refresh" onPress={onRetry} testID={`${testID}-retry`} danger compact style={{ marginTop: spacing.sm, alignSelf: 'flex-start' }} />
@@ -202,9 +202,9 @@ export function ErrorBanner({ message, onRetry, testID = 'error-banner' }: { mes
 
 export function InfoBanner({ message, icon = 'information-circle', tone = 'info', testID }: { message: string; icon?: IconName; tone?: 'info' | 'warning' | 'success'; testID?: string }) {
   const map = {
-    info: { bg: colors.infoBg, fg: '#1E3A8A' },
+    info: { bg: colors.infoBg, fg: colors.info },
     warning: { bg: colors.warningBg, fg: colors.warning },
-    success: { bg: colors.successBg, fg: '#065F46' },
+    success: { bg: colors.successBg, fg: colors.success },
   }[tone];
   return (
     <View testID={testID} style={[styles.infoBox, { backgroundColor: map.bg }]} accessibilityRole="text">
@@ -272,7 +272,6 @@ export function Chip({
   disabled?: boolean;
   accessibilityLabel?: string;
 }) {
-  const brand = useBrand();
   return (
     <Pressable
       testID={testID}
@@ -283,13 +282,13 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
-        selected ? { backgroundColor: '#1B2A43', borderColor: brand.primaryText } : { backgroundColor: colors.card, borderColor: colors.border },
+        selected ? { backgroundColor: colors.white, borderColor: colors.white } : { backgroundColor: colors.card, borderColor: colors.card },
         disabled && { opacity: 0.45 },
         pressed && { opacity: 0.8 },
       ]}
     >
-      {selected ? <Ionicons name="checkmark" size={16} color={brand.primaryText} /> : null}
-      <Text style={[styles.chipText, { color: selected ? colors.text : colors.textMuted }]} numberOfLines={1}>
+      {selected ? <Ionicons name="checkmark" size={16} color={colors.black} /> : null}
+      <Text style={[styles.chipText, { color: selected ? colors.black : colors.text }]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
@@ -299,11 +298,11 @@ export function Chip({
 export function Field({ label, testID, error, ...rest }: TextInputProps & { label: string; testID: string; error?: string | null }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <Text style={[text.label, { marginBottom: spacing.xs }]}>{label}</Text>
+      <Text style={[text.small, { marginBottom: spacing.xs, fontWeight: '600' }]}>{label}</Text>
       <TextInput
         testID={testID}
         accessibilityLabel={label}
-        placeholderTextColor="#6B7280"
+        placeholderTextColor="#636366"
         style={[styles.input, error ? { borderColor: colors.danger } : null]}
         {...rest}
       />
@@ -374,14 +373,11 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.divider,
-    ...shadow,
   },
   btn: {
     minHeight: TOUCH + 4,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.lg,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.xl,
     paddingVertical: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
@@ -410,8 +406,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
-    borderLeftWidth: 4,
-    borderLeftColor: colors.danger,
   },
   infoBox: {
     flexDirection: 'row',
@@ -447,13 +441,13 @@ const styles = StyleSheet.create({
   chipText: { fontSize: font.body, fontWeight: '600' },
   input: {
     minHeight: TOUCH + 4,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     fontSize: font.body,
     color: colors.text,
-    backgroundColor: colors.card,
+    backgroundColor: colors.cardHi,
   },
   row: {
     flexDirection: 'row',

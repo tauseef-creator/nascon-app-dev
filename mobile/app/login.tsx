@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,7 +9,7 @@ import { getBaseUrl } from '../src/api/client';
 import { useAuth } from '../src/auth/AuthContext';
 import { SyncBar } from '../src/components/SyncBar';
 import { Card, Chip, ErrorBanner, Field, InfoBanner, PrimaryButton, SecondaryButton } from '../src/components/ui';
-import { colors, DEFAULT_PRIMARY, radius, spacing, text, TOUCH } from '../src/theme';
+import { colors, radius, spacing, text, TOUCH } from '../src/theme';
 
 const DEMO = [
   { label: 'Organizer', email: 'organizer@nascon.test' },
@@ -45,13 +46,14 @@ export default function Login() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: DEFAULT_PRIMARY }} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'left', 'right']}>
+      <LinearGradient pointerEvents="none" colors={[colors.headerTint, colors.bg]} style={styles.wash} />
       <SyncBar />
-      <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
             <View style={styles.logo} accessible accessibilityLabel="NaSCon League logo">
-              <Ionicons name="trophy" size={36} color="#fff" />
+              <Ionicons name="trophy" size={36} color={colors.black} />
             </View>
             <Text style={text.h1} accessibilityRole="header">
               NaSCon League
@@ -75,7 +77,7 @@ export default function Login() {
               returnKeyType="next"
               error={emailErr}
             />
-            <Text style={[text.label, { marginBottom: spacing.xs }]}>Password</Text>
+            <Text style={[text.small, { marginBottom: spacing.xs, fontWeight: '600' }]}>Password</Text>
             <View style={[styles.pwRow, pwErr ? { borderColor: colors.danger } : null]}>
               <TextInput
                 testID="login-password"
@@ -85,7 +87,7 @@ export default function Login() {
                 secureTextEntry={!show}
                 autoCapitalize="none"
                 placeholder="Your password"
-                placeholderTextColor="#6B7280"
+                placeholderTextColor="#636366"
                 style={styles.pwInput}
                 returnKeyType="go"
                 onSubmitEditing={submit}
@@ -143,13 +145,14 @@ export default function Login() {
 }
 
 const styles = StyleSheet.create({
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 360 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, width: '100%', maxWidth: 560, alignSelf: 'center' },
   brand: { alignItems: 'center', marginVertical: spacing.lg, gap: spacing.xs },
   logo: {
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: DEFAULT_PRIMARY,
+    backgroundColor: colors.accent,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.sm,
@@ -157,10 +160,10 @@ const styles = StyleSheet.create({
   pwRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
-    backgroundColor: colors.card,
+    borderRadius: radius.sm,
+    backgroundColor: colors.cardHi,
   },
   pwInput: { flex: 1, minHeight: TOUCH + 4, paddingHorizontal: spacing.md, fontSize: 16, color: colors.text },
   eye: { minWidth: 72, minHeight: TOUCH, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 4, paddingRight: spacing.sm },

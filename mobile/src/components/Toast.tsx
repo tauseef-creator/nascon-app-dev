@@ -19,9 +19,9 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     timer.current = setTimeout(() => setToast(null), 4000);
   }, []);
   const map = {
-    success: { bg: '#065F46', icon: 'checkmark-circle' as const },
-    error: { bg: '#991B1B', icon: 'alert-circle' as const },
-    info: { bg: '#1F2937', icon: 'information-circle' as const },
+    success: { bg: '#1E4D2B', icon: 'checkmark-circle' as const },
+    error: { bg: '#7A1E1A', icon: 'alert-circle' as const },
+    info: { bg: '#2C2C2E', icon: 'information-circle' as const },
   };
   return (
     <Ctx.Provider value={show}>

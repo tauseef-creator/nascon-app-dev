@@ -192,7 +192,7 @@ export default function MatchDetail() {
 
       <Card testID="score-header" style={{ padding: 0, overflow: 'hidden' }}>
         <ImageBackground source={require('../../assets/stadium.jpg')} resizeMode="cover">
-          <View style={{ backgroundColor: 'rgba(7, 12, 22, 0.84)', padding: spacing.lg }}>
+          <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.72)', padding: spacing.lg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm }}>
           <StatusPill kind={matchPill(s.status)} testID="match-status" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
@@ -207,7 +207,7 @@ export default function MatchDetail() {
             <Text style={styles.teamName} numberOfLines={2}>
               {homeName}
             </Text>
-            <Text style={[styles.scoreNum, { color: brand.primaryText }]} testID="score-home">
+            <Text style={[styles.scoreNum, { color: colors.text }]} testID="score-home">
               {s.home.score}
             </Text>
             <Text style={text.small}>Home</Text>
@@ -217,7 +217,7 @@ export default function MatchDetail() {
             <Text style={styles.teamName} numberOfLines={2}>
               {awayName}
             </Text>
-            <Text style={[styles.scoreNum, { color: brand.primaryText }]} testID="score-away">
+            <Text style={[styles.scoreNum, { color: colors.text }]} testID="score-away">
               {s.away.score}
             </Text>
             <Text style={text.small}>Away</Text>
@@ -410,7 +410,7 @@ function TimelineRow({
   }
   return (
     <View style={[styles.tl, !last && { borderBottomWidth: 1, borderBottomColor: colors.divider }]} testID={`timeline-${e.sequence}`}>
-      <Ionicons name={icon} size={24} color={e.compensated ? '#9CA3AF' : colors.text} />
+      <Ionicons name={icon} size={24} color={e.compensated ? colors.textMuted : colors.text} />
       <View style={{ flex: 1 }}>
         <Text
           style={[text.body, { fontWeight: '600' }, e.compensated && { textDecorationLine: 'line-through', color: colors.textMuted }]}
@@ -527,8 +527,8 @@ function PinPicker({
 const styles = StyleSheet.create({
   scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.lg },
   side: { flex: 1, alignItems: 'center' },
-  teamName: { fontSize: 18, fontWeight: '700', color: colors.text, textAlign: 'center', minHeight: 44 },
-  scoreNum: { fontSize: 56, fontWeight: '900', lineHeight: 64 },
+  teamName: { fontSize: 16, fontWeight: '600', color: colors.text, textAlign: 'center', minHeight: 44 },
+  scoreNum: { fontSize: 64, fontWeight: '800', lineHeight: 72, fontVariant: ['tabular-nums'] },
   dash: { fontSize: 36, fontWeight: '800', color: colors.textMuted, paddingHorizontal: spacing.sm },
   scoreGrid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm },
   scoreCol: { flex: 1 },
@@ -536,13 +536,12 @@ const styles = StyleSheet.create({
   undoBtn: { minHeight: TOUCH, minWidth: TOUCH, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm },
   input: {
     minHeight: TOUCH,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     fontSize: 16,
     color: colors.text,
+    backgroundColor: colors.cardHi,
   },
-  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(17,24,39,0.55)', justifyContent: 'flex-end' },
+  sheetBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: colors.card, borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: spacing.xl, maxHeight: '90%' },
 });

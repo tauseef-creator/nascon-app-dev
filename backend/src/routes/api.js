@@ -112,4 +112,7 @@ router.get('/tenants/:tenant_id/branding', requireAuth, async (req, res) => {
   res.status(200).json(tenant);
 });
 
+// Mobile app endpoints (matches, products, sports, pins, roster view).
+router.use(require('./app'));
+
 module.exports = router;

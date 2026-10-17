@@ -26,6 +26,9 @@ function buildApp() {
     return res.status(503).json(errorBody(new ApiError(503, 'NOT_READY', 'Database not ready or not seeded.')));
   });
 
+  // Server-Sent Events for live match updates (not rate limited, read-only public match data).
+  app.get('/realtime/matches/:match_id', require('./routes/realtime'));
+
   app.use('/audit/v1', require('./routes/audit'));
   app.use('/api/v1', rateLimit, require('./routes/api'));
 

@@ -1,6 +1,7 @@
 'use strict';
 const { buildApp } = require('./app');
 const { migrate, resetAndSeed } = require('./db/reset');
+const { seedDemoSafe } = require('./db/demoSeed');
 
 async function waitForDb(retries = 60) {
   for (let i = 0; i < retries; i += 1) {
@@ -19,6 +20,7 @@ async function main() {
   if (!process.env.DAY1_SALT) console.warn('[startup] DAY1_SALT is not set; signatures will use an empty key.');
   await waitForDb();
   await resetAndSeed();
+  await seedDemoSafe();
   const port = Number(process.env.PORT || 8080);
   buildApp().listen(port, '0.0.0.0', () => console.log(`[startup] API listening on ${port}`));
 }

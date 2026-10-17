@@ -134,8 +134,8 @@ against the live stack; see section 8 for what is left).
 | RBAC | `POST /audit/v1/rbac-matrix`, 7 probe routes | DONE (`domain/rbac`, `lib/auth.js`, 100% cov) |
 | Offline sync | `POST /audit/v1/offline-sync` | DONE (`domain/sync`, `routes/audit/offlineSync.js`) |
 | Production auth for app | `/api/v1/auth/login`, `/me`, `/clubs`, `/clubs/:id`, `/leagues`, `/tenants/:id/branding` | DONE |
-| App endpoints | `/api/v1/matches`, `/products`, `/sports/:id`, `/matches/:id/pinned`, `/matches/:id/pin`, `/roster/:club_id`, SSE `/realtime/matches/:id` | **TODO** (section 8) |
-| Demo seed data | `demo-` matches, standings league, roster for the app | **TODO** (section 8) |
+| App endpoints | `/api/v1/matches`, `/products`, `/sports/:id`, `/matches/:id/pinned`, `/matches/:id/pin`, `/roster/:club_id`, SSE `/realtime/matches/:id` | DONE (`routes/app.js`, `routes/realtime.js`, `lib/realtime.js`) |
+| Demo seed data | `demo-` matches, standings on league-alpha-1, roster squads demo-sq-alpha-1/2, pinned jersey on demo-m3 | DONE (`db/demoSeed.js`, runs after every reset) |
 | Mobile app | `mobile/`, `mobile/release/app-release.apk` | **TODO**: follow `docs/MOBILE_BUILD_PLAN.md` |
 
 Subtle rules that are easy to miss (read the spec section for each):
@@ -221,7 +221,7 @@ Time budget: push in every window (11:45-12:45, 12:45-13:45, 13:45-14:45). Final
 push by 14:50. Judges visit from 15:15: the backend must be running
 (`docker compose up -d --build`) and the APK installed on the phone.
 
-### 8.1 Backend endpoints the mobile app needs (`backend/src/routes/api.js`)
+### 8.1 Backend endpoints the mobile app needs: DONE (kept for reference)
 
 All require `requireAuth` from `backend/src/lib/auth.js` (already used in api.js)
 and tenant scoping (`req.user.tenant_id`; super_admin sees all). Responses:
@@ -249,7 +249,7 @@ and tenant scoping (`req.user.tenant_id`; super_admin sees all). Responses:
   that match send `event: score\ndata: <JSON of getScore(match_id)>\n\n`; on pin
   send `event: pinned_product`; heartbeat comment every 15 s; clean up on close.
 
-### 8.2 Demo seed data (`backend/src/db/demoSeed.js`, called after `resetAndSeed`)
+### 8.2 Demo seed data: DONE (`backend/src/db/demoSeed.js`)
 
 Call it from `server.js` after `resetAndSeed()` and from `POST /audit/v1/reset`
 after `resetAndSeed(...)`. **Wrap it in try/catch and only log errors: it must never

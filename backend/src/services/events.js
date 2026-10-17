@@ -1,4 +1,5 @@
 'use strict';
+const { hub } = require('../lib/realtime');
 // Match event log service (spec 5.9). Shared by the /audit/v1/events route and offline sync (5.14).
 const { pool, tx } = require('../db/pool');
 const { ApiError, validation, notFound } = require('../lib/errors');
@@ -115,7 +116,9 @@ async function appendEvent(body, opts = {}) {
   if (opts.client) return appendInClient(opts.client, event, hash, opts);
   for (let attempt = 0; ; attempt += 1) {
     try {
-      return await tx((c) => appendInClient(c, event, hash, opts));
+      const out = await tx((c) => appendInClient(c, event, hash, opts));
+      if (out.statusCode === 201) hub.emit('match', event.match_id);
+      return out;
     } catch (e) {
       // Unique violation from a concurrent writer (same event_id on another match, or a racing match row):
       // retry once so the request sees the committed state and answers 200/409 properly.

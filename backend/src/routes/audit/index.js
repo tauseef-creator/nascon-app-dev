@@ -1,6 +1,7 @@
 'use strict';
 const express = require('express');
 const { resetAndSeed } = require('../../db/reset');
+const { seedDemoSafe } = require('../../db/demoSeed');
 const { validation } = require('../../lib/errors');
 const { isObj, isInt } = require('../../lib/validate');
 
@@ -16,6 +17,7 @@ router.post('/reset', async (req, res) => {
   }
   if (bad.length) throw validation(bad);
   const result = await resetAndSeed({ seed: body.seed ?? 42, stock: body.stock || {} });
+  await seedDemoSafe();
   res.status(200).json(result);
 });
 

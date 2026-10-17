@@ -116,19 +116,27 @@ Status legend: DONE / TODO. Update this table when you finish something.
 
 | Area | Endpoint(s) | Status |
 |---|---|---|
+Status as of 11:40 PKT Day 1 (verified: 416 jest tests + 27 contract tests pass
+against the live stack; see section 8 for what is left).
+
+| Area | Endpoint(s) | Status |
+|---|---|---|
 | Health, reset, seed | `GET /health`, `POST /audit/v1/reset` | DONE |
 | Signing | `lib/signing.js` (Appendix A vectors pass) | DONE |
 | Rate limit probe | `GET /api/v1/ping` | DONE |
-| Sports (mystery sport) | `POST /audit/v1/sports` | TODO |
-| Fixtures x4 | `POST /audit/v1/fixtures` | TODO |
-| Leagues | `POST /audit/v1/leagues` | TODO |
-| Events + score | `POST /audit/v1/events`, `GET /audit/v1/score/:match_id` | TODO |
-| Standings | `GET /audit/v1/standings/:league_id` | TODO |
-| Roster | `POST /audit/v1/roster/setup`, `/roster/transfer`, `GET /roster/history/:player_id` | TODO |
-| Store | `POST /audit/v1/checkout`, `GET /audit/v1/inventory/:variant_id` | TODO |
-| RBAC | `POST /audit/v1/rbac-matrix`, 7 probe routes | TODO |
-| Offline sync | `POST /audit/v1/offline-sync` | TODO |
-| Mobile app | `mobile/`, `mobile/release/app-release.apk` | TODO (teammate) |
+| Sports (mystery sport) | `POST /audit/v1/sports` | DONE (`domain/scoring`, 100% cov) |
+| Fixtures x4 | `POST /audit/v1/fixtures` | DONE, contract tests pass; **no jest unit tests yet (coverage 0)** |
+| Leagues | `POST /audit/v1/leagues` | DONE |
+| Events + score | `POST /audit/v1/events`, `GET /audit/v1/score/:match_id` | DONE (`services/events.js`) |
+| Standings | `GET /audit/v1/standings/:league_id` | DONE (100% cov) |
+| Roster | `POST /audit/v1/roster/setup`, `/roster/transfer`, `GET /roster/history/:player_id` | DONE (`services/roster.js`, 100% cov) |
+| Store | `POST /audit/v1/checkout`, `GET /audit/v1/inventory/:variant_id` | DONE (`services/store.js`, `services/pdf.js`, 100% cov) |
+| RBAC | `POST /audit/v1/rbac-matrix`, 7 probe routes | DONE (`domain/rbac`, `lib/auth.js`, 100% cov) |
+| Offline sync | `POST /audit/v1/offline-sync` | DONE (`domain/sync`, `routes/audit/offlineSync.js`) |
+| Production auth for app | `/api/v1/auth/login`, `/me`, `/clubs`, `/clubs/:id`, `/leagues`, `/tenants/:id/branding` | DONE |
+| App endpoints | `/api/v1/matches`, `/products`, `/sports/:id`, `/matches/:id/pinned`, `/matches/:id/pin`, `/roster/:club_id`, SSE `/realtime/matches/:id` | **TODO** (section 8) |
+| Demo seed data | `demo-` matches, standings league, roster for the app | **TODO** (section 8) |
+| Mobile app | `mobile/`, `mobile/release/app-release.apk` | **TODO**: follow `docs/MOBILE_BUILD_PLAN.md` |
 
 Subtle rules that are easy to miss (read the spec section for each):
 - **5.6 sports:** `sport_id` regex `^[a-z0-9_-]{2,40}$`; SQL-injection id -> 400.
@@ -206,3 +214,88 @@ works, `git status` shows no `.env`, no `node_modules`.
   `FR-1.3: round-robin generator with withdrawals`.
 - Update `TRACEABILITY.md` (requirement -> files -> tests) and the status table
   in section 4 when an area is done. Add ADRs to `ADR.md` (8 needed for Day 2 viva).
+
+## 8. NEXT STEPS (in priority order) for the next agent
+
+Time budget: push in every window (11:45-12:45, 12:45-13:45, 13:45-14:45). Final
+push by 14:50. Judges visit from 15:15: the backend must be running
+(`docker compose up -d --build`) and the APK installed on the phone.
+
+### 8.1 Backend endpoints the mobile app needs (`backend/src/routes/api.js`)
+
+All require `requireAuth` from `backend/src/lib/auth.js` (already used in api.js)
+and tenant scoping (`req.user.tenant_id`; super_admin sees all). Responses:
+
+- `GET /api/v1/matches?league_id=` -> `{matches:[{match_id, league_id, sport_id,
+  home_team_id, away_team_id, home_name, away_name, scheduled_at, venue, status,
+  home_score, away_score, version}]}`. Read rows from `matches` (join `clubs` for
+  names, fall back to the id), and for each call
+  `require('../services/events').getProjection(match_id)` for status/score/version.
+- `GET /api/v1/products` -> `{products: await require('../services/store').listProducts(tenantId)}`.
+- `GET /api/v1/sports/:sport_id` -> `{sport_id, config}` from the `sports` table (404 SPORT_NOT_FOUND).
+- `GET /api/v1/matches/:match_id/pinned` -> `{product}` or `{product:null}` using
+  table `pinned_products(match_id, product_id)`.
+- `POST /api/v1/matches/:match_id/pin {product_id}` (league_organizer, club_manager,
+  super_admin) -> upsert `pinned_products`, emit a realtime `pinned_product` event.
+- `GET /api/v1/roster/:club_id` -> `{league_id, squad_id, transfer_window, squads:[{squad_id,
+  club_id, name}], players:[{player_id, name, position, role, squad_id,
+  parent_squad_id, registration_type}]}` from tables `squads`, `registrations`,
+  `roster_leagues` (the squad whose `club_id` = club_id).
+- Realtime: create `backend/src/lib/realtime.js` exporting a Node `EventEmitter`.
+  In `services/events.js`, after a successful 201 append, emit
+  `('match', match_id)`. Add route `GET /realtime/matches/:match_id` in `app.js`
+  (outside `/api/v1` so it is not rate limited): Server-Sent Events, headers
+  `Content-Type: text/event-stream`, `Cache-Control: no-cache`; on each emit for
+  that match send `event: score\ndata: <JSON of getScore(match_id)>\n\n`; on pin
+  send `event: pinned_product`; heartbeat comment every 15 s; clean up on close.
+
+### 8.2 Demo seed data (`backend/src/db/demoSeed.js`, called after `resetAndSeed`)
+
+Call it from `server.js` after `resetAndSeed()` and from `POST /audit/v1/reset`
+after `resetAndSeed(...)`. **Wrap it in try/catch and only log errors: it must never
+break `/reset` or `/health`.** Never change the response of `/reset`.
+- Give `league-alpha-1` a standings config (UPDATE leagues SET config = ...) with
+  teams `club-alpha-1`, `club-alpha-2`, `demo-club-3`, `demo-club-4` (insert the two
+  demo clubs into `clubs`, tenant-alpha) and 6 round-robin fixtures `demo-m1..demo-m6`
+  (insert into `matches` with `scheduled_at` and `venue`).
+- Use `require('../services/events').appendEvent(...)` to play `demo-m1` and
+  `demo-m2` to completion (match_start, a few score events, match_end), start
+  `demo-m3` (in progress, one goal), leave the rest upcoming. Event ids `demo-e-*`.
+- Roster: `require('../services/roster').setup({...})` for league `league-alpha-1`
+  with squads `demo-sq-alpha-1` (club-alpha-1) and `demo-sq-alpha-2` (club-alpha-2),
+  ~6 demo players each (positions incl. `gk`), transfer window covering today
+  (e.g. 2026-01-01 to 2026-12-31), `max_squad_size` 25, `required_positions {gk:1}`.
+- Pin `prod-jersey-001` to `demo-m3`.
+- Run the contract suite afterwards: demo data must not change any graded result.
+
+### 8.3 Fixtures unit tests (coverage bonus, 0.6 points)
+
+Write `tests/fixtures.test.js` (jest) for `backend/src/domain/fixtures/*`
+(round robin odd/even, legs 2, withdrawals both policies, Swiss round 1 exact
+and round 2 properties, NO_VALID_PAIRING, single elim n=6 example and third
+place, double elim counts and GF2 required). Target >= 90% line coverage, then run
+`./run_tests.sh` (it rewrites `COVERAGE.json`) and commit `COVERAGE.json`.
+
+### 8.4 Mobile app
+
+Follow `docs/MOBILE_BUILD_PLAN.md` exactly (decisions are final). Commit
+`mobile/release/app-release.apk`.
+
+### 8.5 Before the final push (14:30-14:50)
+
+1. `./run_tests.sh` passes; `COVERAGE.json` updated.
+2. Fresh-clone check: `cd /tmp && rm -rf fc && git clone https://github.com/tauseef-creator/nascon-app-dev fc && cd fc && DAY1_SALT=test docker compose -p fc up -d --build`
+   (stop the main stack first or it will clash on port 8080), `curl localhost:8080/health`, then `docker compose -p fc down -v`.
+3. Contract suite against the live stack:
+   `pip install pytest requests pypdf && cd tests/contract && pytest -q`
+   (on this laptop: `~/nascon-tools/venv/bin/python -m pytest -q`).
+4. Update `TRACEABILITY.md`, `ADR.md` (8 ADRs: section 2 lists the topics), README.
+5. `git status`: no `.env`, no `node_modules`. Push. Record the SHA: `git rev-parse HEAD`.
+
+### 8.6 Interpretation choices already made (keep consistent)
+
+- Missing club id on RBAC probes -> 404 `NOT_FOUND` (no catalogue code exists).
+- Roster: same `request_id` with a different body -> 409 `DUPLICATE_REQUEST_ID`.
+- Store: unknown payment token -> 402 `PAYMENT_DECLINED`; payment ids `auth_N`/`cap_N` per reset.
+- Standings: `resolved_by` is null for the last team of a tied group.
+- `VALIDATION_ERROR.details.fields` may list a nested field as top key, dotted path and leaf.

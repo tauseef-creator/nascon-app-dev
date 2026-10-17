@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import React from 'react';
+import { Image } from 'expo-image';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View } from 'react-native';
 import { Product } from '../../src/api/types';
 import { useBrand } from '../../src/auth/AuthContext';
@@ -39,6 +41,13 @@ export default function StoreTab() {
         ) : null
       }
     >
+      <View style={{ height: 150, borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card }} accessible accessibilityLabel="Matchday collection banner">
+        <Image source={require('../../assets/merch.jpg')} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" />
+        <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)']} style={{ flex: 1, justifyContent: 'flex-end', padding: spacing.lg }}>
+          <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700', letterSpacing: 0.8 }}>MATCHDAY COLLECTION</Text>
+          <Text style={{ color: colors.white, fontSize: 20, fontWeight: '700', marginTop: 2 }}>Wear your club colours</Text>
+        </LinearGradient>
+      </View>
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
       {q.loading && !q.data ? <LoadingView label="Loading products…" /> : null}
       {q.error && !q.data ? <ErrorBanner message={q.error} onRetry={q.refresh} testID="store-error" /> : null}

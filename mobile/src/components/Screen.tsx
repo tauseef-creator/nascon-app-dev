@@ -6,7 +6,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useBrand } from '../auth/AuthContext';
+import { ROLE_LABEL, useAuth, useBrand } from '../auth/AuthContext';
 import { colors, onColor, spacing, TOUCH } from '../theme';
 import { AppMark } from './AppMark';
 import { SyncBar } from './SyncBar';
@@ -76,6 +76,8 @@ export function Header({ title, subtitle, back, right }: { title: string; subtit
       </View>
     );
   }
+  const { user } = useAuth();
+  const role = user ? ROLE_LABEL[user.role] ?? user.role : null;
   return (
     <View style={styles.header}>
       <View style={styles.headerTop}>
@@ -83,7 +85,11 @@ export function Header({ title, subtitle, back, right }: { title: string; subtit
         <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
           {title}
         </Text>
-        {right ? <View style={styles.right}>{right}</View> : null}
+        {right ? <View style={styles.right}>{right}</View> : role ? (
+          <View style={styles.rolePill} testID="header-role" accessible accessibilityLabel={`Signed in as ${role}`}>
+            <Text style={styles.roleText}>{role}</Text>
+          </View>
+        ) : null}
       </View>
       {subtitle ? (
         <Text numberOfLines={1} style={styles.subtitle}>
@@ -144,6 +150,8 @@ const styles = StyleSheet.create({
   title: { flex: 1, fontSize: 28, fontWeight: '700', color: colors.white, letterSpacing: -0.6 },
   subtitle: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginTop: 2 },
   right: { flexDirection: 'row', alignItems: 'center' },
+  rolePill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.12)' },
+  roleText: { color: colors.white, fontSize: 12, fontWeight: '600' },
   body: { flex: 1 },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl },
 });

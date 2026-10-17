@@ -63,3 +63,5 @@ and returned per-action results).
 - `isConnected` from NetInfo drives Online/Offline; a reachable network with the backend down
   shows "Server unreachable" after the first failed request.
 - No dedicated tests (Appium/Selenium) yet; every interactive element has a testID.
+
+- 14:51 build: new tab icons, a role label in the main headers, and an Unsplash football banner on Store (`assets/merch.jpg`). APK 42379135 bytes, SHA-256 `86ecd8493f56032b9c2e135a59864c7f9336f9757d146f3598fefe9bfea20329`. Only one product is seeded, so the store shows one item.

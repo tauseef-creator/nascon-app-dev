@@ -35,17 +35,17 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Fixtures', tabBarIcon: icon('calendar-outline', 'calendar'), tabBarButtonTestID: 'tab-fixtures', tabBarAccessibilityLabel: 'Fixtures tab' }}
+        options={{ title: 'Fixtures', tabBarIcon: icon('football-outline', 'football'), tabBarButtonTestID: 'tab-fixtures', tabBarAccessibilityLabel: 'Fixtures tab' }}
       />
       <Tabs.Screen
         name="standings"
-        options={{ title: 'Standings', tabBarIcon: icon('podium-outline', 'podium'), tabBarButtonTestID: 'tab-standings', tabBarAccessibilityLabel: 'Standings tab' }}
+        options={{ title: 'Standings', tabBarIcon: icon('trophy-outline', 'trophy'), tabBarButtonTestID: 'tab-standings', tabBarAccessibilityLabel: 'Standings tab' }}
       />
       <Tabs.Screen
         name="store"
         options={{
           title: 'Store',
-          tabBarIcon: icon('bag-handle-outline', 'bag-handle'),
+          tabBarIcon: icon('bag-outline', 'bag'),
           tabBarButtonTestID: 'tab-store',
           tabBarAccessibilityLabel: cart.count ? `Store tab, ${cart.count} items in cart` : 'Store tab',
           tabBarBadge: cart.count ? cart.count : undefined,
@@ -53,11 +53,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="club"
-        options={{ title: 'Club', tabBarIcon: icon('shield-outline', 'shield'), tabBarButtonTestID: 'tab-club', tabBarAccessibilityLabel: 'Club tab' }}
+        options={{ title: 'Club', tabBarIcon: icon('shield-half-outline', 'shield-half'), tabBarButtonTestID: 'tab-club', tabBarAccessibilityLabel: 'Club tab' }}
       />
       <Tabs.Screen
         name="more"
-        options={{ title: 'More', tabBarIcon: icon('menu-outline', 'menu'), tabBarButtonTestID: 'tab-more', tabBarAccessibilityLabel: 'More tab' }}
+        options={{ title: 'More', tabBarIcon: icon('person-circle-outline', 'person-circle'), tabBarButtonTestID: 'tab-more', tabBarAccessibilityLabel: 'More tab' }}
       />
     </Tabs>
   );

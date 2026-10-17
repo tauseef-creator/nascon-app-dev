@@ -3,6 +3,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { StandingRow, Standings } from '../../src/api/types';
 import { useAuth, useBrand } from '../../src/auth/AuthContext';
+import { ClubCrest } from '../../src/components/ClubCrest';
 import { LeaguePicker } from '../../src/components/LeaguePicker';
 import { Screen } from '../../src/components/Screen';
 import { CachedNotice, Card, EmptyState, ErrorBanner, LoadingView, PillKind, SectionTitle, StatusPill } from '../../src/components/ui';
@@ -59,7 +60,8 @@ export default function StandingsTab() {
   else
     body = (
       <>
-        <Card style={{ padding: 0, overflow: 'hidden' }} testID="standings-table">
+        <Card style={{ padding: 0, overflow: 'hidden', borderRadius: 24 }} testID="standings-table">
+          <Text style={styles.tableTitle} accessibilityRole="header">{lg.league?.name ?? 'Table'}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator accessibilityLabel="Standings table, scroll sideways for more columns">
             <View>
               <View style={[styles.tr, styles.th]}>
@@ -88,13 +90,16 @@ export default function StandingsTab() {
                       pressed && { backgroundColor: colors.neutralBg },
                     ]}
                   >
-                    <View style={[styles.rankCell, inZone && { borderLeftColor: colors.accent }]}>
-                      <Text style={[styles.cell, { width: 36, fontWeight: '800' }]}>{r.rank}</Text>
+                    <View style={styles.rankCell}>
+                      <Text style={[styles.cell, { width: 36, fontWeight: '800' }, inZone && { color: colors.accent }]}>{r.rank}</Text>
                     </View>
-                    <Text style={[styles.cell, styles.teamCol, { fontWeight: '700' }]} numberOfLines={2}>
-                      {name(r.team_id)}
-                      {mine ? ' (you)' : ''}
-                    </Text>
+                    <View style={[styles.teamCol, styles.teamCell]}>
+                      <ClubCrest name={name(r.team_id)} size={18} />
+                      <Text style={[styles.cell, { fontWeight: '700', textAlign: 'left', flex: 1 }]} numberOfLines={2}>
+                        {name(r.team_id)}
+                        {mine ? ' (you)' : ''}
+                      </Text>
+                    </View>
                     {COLS.map((c) => (
                       <Text key={c.key} style={[styles.cell, { width: c.w }, c.key === 'points' && { fontWeight: '900' }]}>
                         {c.key === 'diff' && r.diff > 0 ? `+${r.diff}` : String(r[c.key])}
@@ -116,8 +121,8 @@ export default function StandingsTab() {
           </Text>
           {spots > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
-              <View style={{ width: 4, height: 24, borderRadius: 2, backgroundColor: colors.accent }} />
-              <Text style={[text.body, { flex: 1 }]}>Bar next to the rank: currently in the top {spots} qualification places.</Text>
+              <Text style={{ color: colors.accent, fontWeight: '800', fontSize: 16, width: 16, textAlign: 'center' }}>1</Text>
+              <Text style={[text.body, { flex: 1 }]}>Green rank number: currently in the top {spots} qualification places.</Text>
             </View>
           ) : null}
           <View style={{ gap: spacing.sm }}>
@@ -149,10 +154,12 @@ function LegendRow({ kind, text: t }: { kind: PillKind; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  tr: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  tableTitle: { color: colors.text, fontSize: 17, fontWeight: '700', textAlign: 'center', paddingTop: spacing.lg, paddingBottom: spacing.xs },
+  tr: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   th: { minHeight: 40 },
-  cell: { fontSize: 15, color: colors.text, textAlign: 'center', paddingVertical: 8, fontVariant: ['tabular-nums'] },
-  hcell: { fontWeight: '600', color: colors.textMuted, fontSize: 13 },
-  teamCol: { width: 150, textAlign: 'left', paddingHorizontal: 6 },
-  rankCell: { borderLeftWidth: 3, borderLeftColor: 'transparent', alignSelf: 'stretch', justifyContent: 'center' },
+  cell: { fontSize: 13, color: colors.text, textAlign: 'center', paddingVertical: 8, fontVariant: ['tabular-nums'] },
+  hcell: { fontWeight: '600', color: colors.textMuted, fontSize: 11 },
+  teamCol: { width: 170, textAlign: 'left', paddingHorizontal: 6 },
+  teamCell: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  rankCell: { alignSelf: 'stretch', justifyContent: 'center', paddingLeft: 4 },
 });

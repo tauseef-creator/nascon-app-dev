@@ -12,7 +12,7 @@ import { CachedNotice, Card, Chip, EmptyState, ErrorBanner, IconButton, LoadingV
 import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { humanize } from '../../src/hooks/useClubNames';
 import { useCart } from '../../src/store/CartContext';
-import { radius, spacing, text } from '../../src/theme';
+import { colors, radius, spacing, text } from '../../src/theme';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -56,7 +56,7 @@ export default function ProductScreen() {
     else toast(`Added ${qty} × ${product.name}${variant.size ? ` (${variant.size})` : ''} to your cart.`);
   };
 
-  const cartBtn = <IconButton icon="cart-outline" label="Open cart" badge={cart.count} color={brand.onPrimary} onPress={() => router.push('/cart')} testID="product-cart" />;
+  const cartBtn = <IconButton icon="cart-outline" label="Open cart" badge={cart.count} color={colors.text} onPress={() => router.push('/cart')} testID="product-cart" />;
 
   if (q.loading && !q.data) {
     return (
@@ -81,15 +81,15 @@ export default function ProductScreen() {
     <Screen title={product.name} back right={cartBtn} onRefresh={q.refresh} refreshing={q.refreshing} testID="product-screen">
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
       <Card>
-        <View style={{ height: 140, borderRadius: radius.md, backgroundColor: brand.primary, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md }}>
-          <Ionicons name={product.category === 'apparel' ? 'shirt' : 'pricetag'} size={72} color={brand.onPrimary} accessibilityLabel={`${humanize(product.category)} picture`} />
+        <View style={{ height: 140, borderRadius: radius.md, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md }}>
+          <Ionicons name={product.category === 'apparel' ? 'shirt' : 'pricetag'} size={64} color={colors.text} accessibilityLabel={`${humanize(product.category)} picture`} />
         </View>
         <Text style={text.h1} accessibilityRole="header">
           {product.name}
         </Text>
         <Text style={text.small}>{humanize(product.category)}</Text>
         {product.description ? <Text style={[text.body, { marginTop: spacing.sm }]}>{product.description}</Text> : null}
-        <Text style={{ fontSize: 28, fontWeight: '900', marginTop: spacing.md, color: brand.primaryText }} testID="product-price">
+        <Text style={{ fontSize: 28, fontWeight: '800', marginTop: spacing.md, color: colors.text }} testID="product-price">
           {variant ? money(variant.price_minor, variant.currency) : ''}
         </Text>
         {variant ? <StockText count={available(variant)} /> : null}
@@ -121,7 +121,6 @@ export default function ProductScreen() {
       <View style={{ gap: spacing.sm, marginTop: spacing.xl }}>
         <PrimaryButton
           title={avail > 0 ? `Buy now · ${variant ? money(variant.price_minor * qty, variant.currency) : ''}` : 'Sold out'}
-          icon="flash"
           disabled={!variant || avail <= 0}
           onPress={() => add(true)}
           testID="product-buy-now"

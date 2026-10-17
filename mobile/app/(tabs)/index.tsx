@@ -1,11 +1,22 @@
-import React, { useMemo } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Match } from '../../src/api/types';
 import { LeaguePicker } from '../../src/components/LeaguePicker';
 import { MatchCard } from '../../src/components/MatchCard';
 import { Screen } from '../../src/components/Screen';
-import { CachedNotice, EmptyState, ErrorBanner, LoadingView, SectionTitle } from '../../src/components/ui';
+import { CachedNotice, EmptyState, ErrorBanner, LoadingView } from '../../src/components/ui';
 import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { useLeague } from '../../src/store/LeagueContext';
+import { colors, spacing } from '../../src/theme';
+
+type Tab = 'results' | 'live' | 'upcoming';
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'results', label: 'Results' },
+  { key: 'live', label: 'Live' },
+  { key: 'upcoming', label: 'Upcoming' },
+];
+const EMPTY: Record<Tab, string> = { results: 'No Results Yet', live: 'No Live Matches', upcoming: 'No Upcoming Matches' };
 
 export default function Fixtures() {
   const lg = useLeague();
@@ -21,6 +32,10 @@ export default function Fixtures() {
       results: all.filter((m) => m.status === 'completed').sort((a, b) => -by(a, b)),
     };
   }, [q.data]);
+
+  const [picked, setPicked] = useState<Tab | null>(null);
+  const tab: Tab = picked ?? (groups.live.length ? 'live' : groups.upcoming.length ? 'upcoming' : 'results');
+  const shown = groups[tab];
 
   const refresh = () => {
     lg.refresh();
@@ -47,18 +62,42 @@ export default function Fixtures() {
     body = (
       <>
         {q.error ? <ErrorBanner message={q.error} onRetry={q.refresh} /> : null}
-        {groups.live.length ? <SectionTitle>Live now ({groups.live.length})</SectionTitle> : null}
-        {groups.live.map((m) => (
-          <MatchCard key={m.match_id} m={m} />
-        ))}
-        {groups.upcoming.length ? <SectionTitle>Upcoming ({groups.upcoming.length})</SectionTitle> : null}
-        {groups.upcoming.map((m) => (
-          <MatchCard key={m.match_id} m={m} />
-        ))}
-        {groups.results.length ? <SectionTitle>Results ({groups.results.length})</SectionTitle> : null}
-        {groups.results.map((m) => (
-          <MatchCard key={m.match_id} m={m} />
-        ))}
+        <View style={styles.panel} testID="fixtures-panel">
+          <View style={styles.segment} accessibilityRole="tablist">
+            {TABS.map((t) => {
+              const on = t.key === tab;
+              const n = groups[t.key].length;
+              return (
+                <Pressable
+                  key={t.key}
+                  testID={`fixtures-tab-${t.key}`}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={`${t.label}, ${n} match${n === 1 ? '' : 'es'}`}
+                  onPress={() => setPicked(t.key)}
+                  style={styles.segBtn}
+                >
+                  <View style={styles.segLabel}>
+                    {t.key === 'live' && n ? <View style={styles.liveDot} /> : null}
+                    <Text style={[styles.segText, on && styles.segTextOn]}>{t.label}</Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View style={styles.leagueRow}>
+            <View style={styles.leagueIcon}>
+              <Ionicons name="trophy" size={13} color={colors.accent} />
+            </View>
+            <Text style={styles.leagueName} numberOfLines={1}>{lg.league?.name ?? 'League'}</Text>
+            <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+          </View>
+          {shown.length ? (
+            shown.map((m) => <MatchCard key={m.match_id} m={m} />)
+          ) : (
+            <Text style={styles.none} testID={`fixtures-none-${tab}`}>{EMPTY[tab]}</Text>
+          )}
+        </View>
       </>
     );
 
@@ -70,3 +109,25 @@ export default function Fixtures() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  panel: { backgroundColor: 'rgba(28,28,30,0.92)', borderRadius: 24, overflow: 'hidden', paddingBottom: spacing.sm, marginBottom: spacing.md },
+  segment: { flexDirection: 'row', paddingHorizontal: spacing.sm, paddingTop: spacing.xs },
+  segBtn: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  segLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  segText: { color: colors.textMuted, fontSize: 16, fontWeight: '600' },
+  segTextOn: { color: colors.text, fontWeight: '700' },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.live },
+  leagueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  leagueIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' },
+  leagueName: { color: colors.text, fontSize: 14, fontWeight: '700', flexShrink: 1 },
+  none: { color: colors.text, fontSize: 20, fontWeight: '700', textAlign: 'center', paddingVertical: spacing.xxl },
+});

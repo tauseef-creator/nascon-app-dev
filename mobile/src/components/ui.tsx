@@ -218,7 +218,7 @@ export function LoadingView({ label = 'Loading…' }: { label?: string }) {
   const brand = useBrand();
   return (
     <View style={styles.loading} accessibilityRole="progressbar" accessibilityLabel={label} testID="loading">
-      <ActivityIndicator size="large" color={brand.primaryText} />
+      <ActivityIndicator size="large" color={colors.accent} />
       <Text style={[text.muted, { marginTop: spacing.md }]}>{label}</Text>
     </View>
   );

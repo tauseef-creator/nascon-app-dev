@@ -4,6 +4,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { ClubProfile } from '../../src/api/types';
 import { useAuth } from '../../src/auth/AuthContext';
+import { ClubCrest } from '../../src/components/ClubCrest';
 import { ClubProfileView } from '../../src/components/ClubProfileView';
 import { Screen } from '../../src/components/Screen';
 import { CachedNotice, EmptyState, ErrorBanner, LoadingView, PressableCard, SectionTitle } from '../../src/components/ui';
@@ -40,7 +41,7 @@ export default function ClubTab() {
       {others.map((c) => (
         <PressableCard key={c.club_id} testID={`club-item-${c.club_id}`} label={`${c.name}. Opens club profile.`} onPress={() => router.push(`/club/${c.club_id}`)}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-            <Ionicons name="shield" size={28} color={colors.textMuted} />
+            <ClubCrest name={c.name} size={34} />
             <View style={{ flex: 1 }}>
               <Text style={text.label}>{c.name}</Text>
               {c.home_venue?.name ? <Text style={text.small}>{c.home_venue.name}</Text> : null}

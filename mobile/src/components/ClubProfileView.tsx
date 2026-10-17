@@ -6,6 +6,7 @@ import { ClubProfile } from '../api/types';
 import { canManageRoster, useAuth, useBrand } from '../auth/AuthContext';
 import { humanize } from '../hooks/useClubNames';
 import { colors, spacing, text } from '../theme';
+import { ClubCrest } from './ClubCrest';
 import { Card, EmptyState, PrimaryButton, Row, SecondaryButton, SectionTitle } from './ui';
 
 const POS: Record<string, string> = { gk: 'Goalkeeper', df: 'Defender', mf: 'Midfielder', fw: 'Forward' };
@@ -28,12 +29,8 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
     <View testID="club-profile">
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-          <View
-            style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: brand.primary, alignItems: 'center', justifyContent: 'center' }}
-            accessible
-            accessibilityLabel={`${club.name} crest`}
-          >
-            <Text style={{ color: brand.onPrimary, fontWeight: '900', fontSize: 20 }}>{initials}</Text>
+          <View accessible accessibilityLabel={`${club.name} crest`}>
+            <ClubCrest name={club.name} size={56} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={text.h1} accessibilityRole="header">

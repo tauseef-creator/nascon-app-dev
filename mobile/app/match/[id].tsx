@@ -3,7 +3,7 @@ import { randomUUID } from 'expo-crypto';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '../../src/api/client';
 import { errorText } from '../../src/api/errors';
 import { Match, Product, ScoreProjection, TimelineEvent } from '../../src/api/types';
@@ -32,6 +32,8 @@ import { readCache, writeCache } from '../../src/offline/cache';
 import { listQueue, QueuedAction, subscribeQueue } from '../../src/offline/queue';
 import { useSync } from '../../src/offline/SyncProvider';
 import { colors, radius, spacing, text, TOUCH } from '../../src/theme';
+import { ClubCrest, crestColor } from '../../src/components/ClubCrest';
+import { LinearGradient } from 'expo-linear-gradient';
 
 type Pending = { action: string; title: string; message: string; destructive?: boolean; run: () => Promise<void> };
 
@@ -191,8 +193,13 @@ export default function MatchDetail() {
       {score.fromCache && score.updatedAt ? <CachedNotice updatedAt={score.updatedAt} /> : null}
 
       <Card testID="score-header" style={{ padding: 0, overflow: 'hidden' }}>
-        <ImageBackground source={require('../../assets/stadium.jpg')} resizeMode="cover">
-          <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.72)', padding: spacing.lg }}>
+        <LinearGradient
+          colors={[crestColor(homeName), '#1C1C1E', crestColor(awayName)]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          locations={[0, 0.5, 1]}
+        >
+          <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.35)', padding: spacing.lg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm }}>
           <StatusPill kind={matchPill(s.status)} testID="match-status" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
@@ -204,23 +211,25 @@ export default function MatchDetail() {
         </View>
         <View style={styles.scoreRow} accessible accessibilityLabel={`${homeName} ${s.home.score}, ${awayName} ${s.away.score}`}>
           <View style={styles.side}>
+            <Text style={[styles.scoreNum, s.away.score > s.home.score && styles.scoreDim]} testID="score-home">
+              {s.home.score}
+            </Text>
+            <View style={styles.crest}><ClubCrest name={homeName} size={44} /></View>
             <Text style={styles.teamName} numberOfLines={2}>
               {homeName}
             </Text>
-            <Text style={[styles.scoreNum, { color: colors.text }]} testID="score-home">
-              {s.home.score}
-            </Text>
-            <Text style={text.small}>Home</Text>
+            <Text style={styles.sideNote}>Home</Text>
           </View>
-          <Text style={styles.dash}>:</Text>
+          <Text style={styles.dash}>{s.status === 'in_progress' ? 'Live' : s.status === 'completed' ? 'Final' : 'vs'}</Text>
           <View style={styles.side}>
+            <Text style={[styles.scoreNum, s.home.score > s.away.score && styles.scoreDim]} testID="score-away">
+              {s.away.score}
+            </Text>
+            <View style={styles.crest}><ClubCrest name={awayName} size={44} /></View>
             <Text style={styles.teamName} numberOfLines={2}>
               {awayName}
             </Text>
-            <Text style={[styles.scoreNum, { color: colors.text }]} testID="score-away">
-              {s.away.score}
-            </Text>
-            <Text style={text.small}>Away</Text>
+            <Text style={styles.sideNote}>Away</Text>
           </View>
         </View>
         {s.status === 'completed' ? (
@@ -229,7 +238,7 @@ export default function MatchDetail() {
           </Text>
         ) : null}
           </View>
-        </ImageBackground>
+        </LinearGradient>
       </Card>
 
       {pinned.data?.product ? <PinnedCard product={pinned.data.product} /> : null}
@@ -445,7 +454,7 @@ function PinnedCard({ product }: { product: Product }) {
   const brand = useBrand();
   const v = product.variants?.[0];
     return (
-      <Card testID="pinned-product" style={{ borderLeftWidth: 3, borderLeftColor: brand.secondary }}>
+      <Card testID="pinned-product">
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
         <Ionicons name="star" size={18} color={colors.warning} />
         <Text style={[text.section, { color: colors.warning }]}>Featured in this match</Text>
@@ -525,11 +534,14 @@ function PinPicker({
 }
 
 const styles = StyleSheet.create({
-  scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.lg },
+  crest: { marginTop: spacing.xs, marginBottom: 6 },
+  scoreDim: { color: 'rgba(255,255,255,0.55)' },
+  sideNote: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.lg, gap: 4 },
   side: { flex: 1, alignItems: 'center' },
-  teamName: { fontSize: 16, fontWeight: '600', color: colors.text, textAlign: 'center', minHeight: 44 },
-  scoreNum: { fontSize: 64, fontWeight: '800', lineHeight: 72, fontVariant: ['tabular-nums'] },
-  dash: { fontSize: 36, fontWeight: '800', color: colors.textMuted, paddingHorizontal: spacing.sm },
+  teamName: { fontSize: 14, fontWeight: '600', color: colors.text, textAlign: 'center' },
+  scoreNum: { fontSize: 76, fontWeight: '800', lineHeight: 84, color: colors.text, fontVariant: ['tabular-nums'], minWidth: 40, textAlign: 'center' },
+  dash: { fontSize: 15, fontWeight: '700', color: colors.textMuted, paddingHorizontal: 2 },
   scoreGrid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm },
   scoreCol: { flex: 1 },
   tl: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, minHeight: TOUCH },

@@ -25,7 +25,7 @@ export default function StoreTab() {
       onRefresh={q.refresh}
       refreshing={q.refreshing}
       testID="store-screen"
-      right={<IconButton icon="cart-outline" label="Open cart" badge={cart.count} color={brand.onPrimary} onPress={() => router.push('/cart')} testID="store-cart" />}
+      right={<IconButton icon="cart-outline" label="Open cart" badge={cart.count} color={colors.text} onPress={() => router.push('/cart')} testID="store-cart" />}
       footer={
         cart.count ? (
           <View style={{ padding: spacing.md, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.divider }}>
@@ -59,10 +59,10 @@ export default function StoreTab() {
           >
             <View style={{ flexDirection: 'row', gap: spacing.md }}>
               <View
-                style={{ width: 72, height: 72, borderRadius: radius.md, backgroundColor: brand.primary, alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' }}
                 accessible={false}
               >
-                <Ionicons name={p.category === 'apparel' ? 'shirt' : 'pricetag'} size={36} color={brand.onPrimary} />
+                <Ionicons name={p.category === 'apparel' ? 'shirt' : 'pricetag'} size={32} color={colors.text} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={text.label} numberOfLines={2}>

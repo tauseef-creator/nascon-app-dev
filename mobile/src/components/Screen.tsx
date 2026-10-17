@@ -49,39 +49,52 @@ export function TenantLogo({ size = 36 }: { size?: number }) {
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: brand.primary,
+        backgroundColor: '#636366',
         alignItems: 'center',
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: onColor(brand.primary), fontWeight: '800', fontSize: size * 0.38 }}>{initials || 'N'}</Text>
+      <Text style={{ color: colors.white, fontWeight: '700', fontSize: size * 0.38 }}>{initials || 'N'}</Text>
     </View>
   );
 }
 
 export function Header({ title, subtitle, back, right }: { title: string; subtitle?: string; back?: boolean; right?: React.ReactNode }) {
+  if (back) {
+    return (
+      <View style={styles.subHeader}>
+        <Pressable
+          testID="header-back"
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.6 }]}
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.white} />
+        </Pressable>
+        <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: spacing.sm }}>
+          <Text accessibilityRole="header" numberOfLines={1} style={styles.subTitle}>
+            {title}
+          </Text>
+          {subtitle ? (
+            <Text numberOfLines={1} style={styles.subSubtitle}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        <View style={styles.subRight}>{right}</View>
+      </View>
+    );
+  }
   return (
     <View style={styles.header}>
       <View style={styles.headerTop}>
-        {back ? (
-          <Pressable
-            testID="header-back"
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
-            style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.6 }]}
-          >
-            <Ionicons name="chevron-back" size={22} color={colors.white} />
-          </Pressable>
-        ) : (
-          <TenantLogo size={30} />
-        )}
-        <View style={{ flex: 1 }} />
+        <TenantLogo size={30} />
+        <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
+          {title}
+        </Text>
         {right ? <View style={styles.right}>{right}</View> : null}
       </View>
-      <Text accessibilityRole="header" numberOfLines={1} style={[styles.title, back && styles.titleSmall]}>
-        {title}
-      </Text>
       {subtitle ? (
         <Text numberOfLines={1} style={styles.subtitle}>
           {subtitle}
@@ -124,20 +137,22 @@ export function Screen({ title, subtitle, back, right, children, scroll = true, 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
   wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
-  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.xs, paddingBottom: spacing.sm },
-  headerTop: { minHeight: TOUCH, flexDirection: 'row', alignItems: 'center' },
+  header: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.sm },
+  headerTop: { minHeight: TOUCH, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  subHeader: { minHeight: 56, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  subTitle: { fontSize: 17, fontWeight: '700', color: colors.white },
+  subSubtitle: { fontSize: 12, fontWeight: '600', color: colors.textMuted, marginTop: 1 },
+  subRight: { minWidth: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
   headerBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: TOUCH,
+    height: TOUCH,
+    borderRadius: TOUCH / 2,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: -spacing.xs,
   },
-  title: { fontSize: 34, fontWeight: '800', color: colors.white, letterSpacing: -0.6 },
-  titleSmall: { fontSize: 28 },
-  subtitle: { fontSize: 15, fontWeight: '600', color: colors.textMuted, marginTop: 2 },
+  title: { flex: 1, fontSize: 32, fontWeight: '700', color: colors.white, letterSpacing: -0.6 },
+  subtitle: { fontSize: 14, fontWeight: '600', color: colors.textMuted, marginTop: 2 },
   right: { flexDirection: 'row', alignItems: 'center' },
   body: { flex: 1 },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl },

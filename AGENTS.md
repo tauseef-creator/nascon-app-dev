@@ -136,7 +136,7 @@ against the live stack; see section 8 for what is left).
 | Production auth for app | `/api/v1/auth/login`, `/me`, `/clubs`, `/clubs/:id`, `/leagues`, `/tenants/:id/branding` | DONE |
 | App endpoints | `/api/v1/matches`, `/products`, `/sports/:id`, `/matches/:id/pinned`, `/matches/:id/pin`, `/roster/:club_id`, SSE `/realtime/matches/:id` | DONE (`routes/app.js`, `routes/realtime.js`, `lib/realtime.js`) |
 | Demo seed data | `demo-` matches, standings on league-alpha-1, roster squads demo-sq-alpha-1/2, pinned jersey on demo-m3 | DONE (`db/demoSeed.js`, runs after every reset) |
-| Mobile app | `mobile/`, `mobile/release/app-release.apk` | **TODO**: follow `docs/MOBILE_BUILD_PLAN.md` |
+| Mobile app | `mobile/` | All screens built, tsc + export clean (see `mobile/PROGRESS.md`). **TODO: device test, UI polish, release APK at `mobile/release/app-release.apk`** |
 
 Subtle rules that are easy to miss (read the spec section for each):
 - **5.6 sports:** `sport_id` regex `^[a-z0-9_-]{2,40}$`; SQL-injection id -> 400.

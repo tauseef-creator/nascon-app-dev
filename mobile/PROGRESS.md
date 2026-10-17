@@ -1,5 +1,10 @@
 # Mobile progress log
 
+## 2026-10-17 15:39 PKT final detail-screen APK
+
+- Release APK rebuilt after the Store overlay and match pinned-photo refinements; SHA-256 `9ac4d0f02464b7481e5a0917caf7f43552d42406d7ad9987e9dcd9bdc450afa6`. Installed successfully on Pixel 6a. On-device screenshot confirms all four Store products show readable names, prices, categories, and stock within their photos. The club, profile, product detail, and match detail screens were also inspected on the preceding build of this redesign.
+- The backend remains healthy. `adb reverse tcp:8080 tcp:8080` is active for the Pixel; the server URL remains `http://localhost:8080`. The last source change only moved text into Store photos, so other screens are unchanged from the inspected build.
+
 ## 2026-10-17 15:33 PKT Apple Sports detail-screen pass
 
 - Using the three local Apple Sports reference screenshots supplied by the user, redesigned the Clubs directory as a compact team list with a green gradient intro, and each club detail with a crest-led gradient hero, squad count, staff, venue, and tighter player rows. The shared match detail now has a score summary and a clearer play-by-play section.

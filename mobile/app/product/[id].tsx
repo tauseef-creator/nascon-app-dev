@@ -13,9 +13,7 @@ import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { humanize } from '../../src/hooks/useClubNames';
 import { useCart } from '../../src/store/CartContext';
 import { colors, radius, spacing, text } from '../../src/theme';
-import { JerseyArt } from '../../src/components/JerseyArt';
 import { ProductArt } from '../../src/components/ProductArt';
-import { Image } from 'expo-image';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

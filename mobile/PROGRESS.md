@@ -1,5 +1,11 @@
 # Mobile progress log
 
+## 2026-10-17 15:18 PKT demo data and merchandise imagery
+
+- Commit `3b15d63` added separate demo-only fixtures, completed results, realistic club details, and three merchandise products in `backend/src/db/demoSeed.js`. The binding baseline in `seedData.js` and audit reset are unchanged. The live Docker stack has not yet been rebuilt for these additions, so its current database still has the older catalog.
+- Store and product detail now use bundled product photos. The previous vector shirt artwork was removed from store, detail, and receipt. Four AI-generated product photos cover the two jerseys, scarf, and bottle; the fallback photo remains for any other product. `npx tsc --noEmit` passes. These photos are local assets and work offline.
+- Rebuild the release APK before expecting the new photos on a device. `mobile/android/` is generated and ignored; on Fedora, run `npm ci` and generate native files locally. Deploying the demo seed requires rebuilding/restarting the API, which resets local demo state at startup; avoid interrupting an active judge session.
+
 ## 2026-10-17 15:04 PKT device and requirements audit
 
 - Reinstalled the latest committed release APK on Galaxy A06; the existing `n-*` Docker stack is healthy on port 8080 and `adb reverse tcp:8080 tcp:8080` is active. A second Compose project started through the Windows repo symlink collided on port 8080; only those duplicate `nascon-app-dev-*` containers were stopped. Leave the healthy `n-*` stack running for judging.

@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, Text, View } from 'react-native';
 import { useBrand } from '../../src/auth/AuthContext';
-import { JerseyArt } from '../../src/components/JerseyArt';
+import { ProductArt } from '../../src/components/ProductArt';
 import { Order } from '../../src/api/types';
 import { Screen } from '../../src/components/Screen';
 import { useToast } from '../../src/components/Toast';
@@ -109,7 +109,7 @@ export default function Receipt() {
             return (
               <View key={i.variant_id} style={styles.item}>
                 <View style={styles.thumb}>
-                  <JerseyArt name={line?.name ?? nameFor(i.variant_id)} height={44} />
+                  <ProductArt product={{ product_id: line?.product_id ?? '' }} height={44} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.itemName} numberOfLines={2}>

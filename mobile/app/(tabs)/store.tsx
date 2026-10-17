@@ -6,7 +6,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View } from 'react-native';
 import { Product } from '../../src/api/types';
 import { useBrand } from '../../src/auth/AuthContext';
-import { JerseyArt } from '../../src/components/JerseyArt';
 import { ProductArt } from '../../src/components/ProductArt';
 import { Screen } from '../../src/components/Screen';
 import { available, StockText } from '../../src/components/StockText';

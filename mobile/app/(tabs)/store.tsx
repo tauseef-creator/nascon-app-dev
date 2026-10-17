@@ -1,9 +1,8 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { Product } from '../../src/api/types';
 import { useBrand } from '../../src/auth/AuthContext';
 import { ProductArt } from '../../src/components/ProductArt';
@@ -20,6 +19,9 @@ export default function StoreTab() {
   const cart = useCart();
   const q = useCachedQuery<{ products: Product[] }>('products', '/api/v1/products');
   const products = q.data?.products ?? [];
+  const [category, setCategory] = useState('all');
+  const categories = ['all', ...Array.from(new Set(products.map((p) => p.category)))];
+  const visible = category === 'all' ? products : products.filter((p) => p.category === category);
 
   return (
     <Screen
@@ -55,7 +57,14 @@ export default function StoreTab() {
       {q.data && !products.length ? (
         <EmptyState icon="bag-handle-outline" title="No products yet" message="Club merchandise will appear here when it is added." testID="store-empty" />
       ) : null}
-      {products.map((p) => {
+      {products.length ? <>
+        <Text style={[text.title, { marginVertical: spacing.md }]}>Shop the collection <Text style={{ color: colors.textMuted }}>({products.length})</Text></Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingBottom: spacing.lg }}>
+          {categories.map((c) => <Pressable key={c} testID={`store-filter-${c}`} accessibilityRole="button" accessibilityState={{ selected: c === category }} onPress={() => setCategory(c)} style={{ backgroundColor: c === category ? colors.white : colors.card, borderRadius: 20, minHeight: 36, paddingHorizontal: spacing.lg, justifyContent: 'center' }}><Text style={{ color: c === category ? colors.black : colors.text, fontSize: 12, fontFamily: 'Inter_700Bold' }}>{c === 'all' ? 'All' : humanize(c)}</Text></Pressable>)}
+        </ScrollView>
+      </> : null}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      {visible.map((p) => {
         const prices = p.variants.map((v) => v.price_minor);
         const min = prices.length ? Math.min(...prices) : 0;
         const stock = p.variants.reduce((n, v) => n + available(v), 0);
@@ -66,30 +75,21 @@ export default function StoreTab() {
             testID={`product-card-${p.product_id}`}
             label={`${p.name}, from ${money(min, cur)}. ${stock > 0 ? 'In stock' : 'Sold out'}. Opens product.`}
             onPress={() => router.push(`/product/${p.product_id}`)}
+            style={{ width: '48.5%', padding: 0, overflow: 'hidden', borderRadius: radius.lg }}
           >
-            <View style={{ flexDirection: 'row', gap: spacing.md }}>
-              <View
-                style={{ width: 72, height: 72, borderRadius: radius.md, overflow: 'hidden' }}
-                accessible={false}
-              >
-                <ProductArt product={p} height={72} />
+            <View accessible={false}><ProductArt product={p} height={142} /></View>
+            <View style={{ padding: spacing.md, minHeight: 128 }}>
+              <Text style={[text.small, { color: colors.accent, fontSize: 10, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 }]}>{humanize(p.category).toUpperCase()}</Text>
+              <Text style={[text.label, { fontSize: 13, minHeight: 36, marginTop: 4 }]} numberOfLines={2}>{p.name}</Text>
+              <Text style={[text.label, { fontSize: 14, marginTop: spacing.xs }]} numberOfLines={1}>
+                {prices.length > 1 && Math.max(...prices) !== min ? 'From ' : ''}{money(min, cur)}
+              </Text>
+              <View style={{ marginTop: 4 }}><StockText count={stock} /></View>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={text.label} numberOfLines={2}>
-                  {p.name}
-                </Text>
-                <Text style={text.small}>{humanize(p.category)}</Text>
-                <Text style={[text.label, { fontSize: 18, marginTop: 4 }]}>
-                  {prices.length > 1 && Math.max(...prices) !== min ? 'From ' : ''}
-                  {money(min, cur)}
-                </Text>
-                <StockText count={stock} />
-              </View>
-              <Ionicons name="chevron-forward" size={22} color={colors.textMuted} style={{ alignSelf: 'center' }} />
-            </View>
           </PressableCard>
         );
       })}
+      </View>
     </Screen>
   );
 }

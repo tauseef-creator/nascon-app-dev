@@ -1,13 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { ClubProfile } from '../../src/api/types';
 import { useAuth } from '../../src/auth/AuthContext';
 import { ClubCrest } from '../../src/components/ClubCrest';
 import { ClubProfileView } from '../../src/components/ClubProfileView';
 import { Screen } from '../../src/components/Screen';
-import { CachedNotice, EmptyState, ErrorBanner, LoadingView, PressableCard, SectionTitle } from '../../src/components/ui';
+import { CachedNotice, EmptyState, ErrorBanner, LoadingView, SectionTitle } from '../../src/components/ui';
 import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { useClubs } from '../../src/hooks/useClubNames';
 import { colors, spacing, text } from '../../src/theme';
@@ -34,22 +35,24 @@ export default function ClubTab() {
           {own.data ? <ClubProfileView club={own.data} /> : null}
         </>
       ) : null}
+      <LinearGradient colors={['#205A28', '#17331E', colors.card]} style={{ borderRadius: 24, padding: spacing.xl, marginBottom: spacing.lg }}>
+        <Ionicons name="shield-checkmark" size={28} color={colors.accent} />
+        <Text style={[text.h1, { marginTop: spacing.md }]}>{ownId ? 'The competition' : 'Find your team'}</Text>
+        <Text style={[text.small, { color: '#D5DED5', marginTop: spacing.xs }]}>{clubs.data?.clubs.length ?? 0} clubs • Players, staff and home grounds</Text>
+      </LinearGradient>
       <SectionTitle>{ownId ? 'Other clubs' : 'All clubs'}</SectionTitle>
       {clubs.loading && !clubs.data ? <LoadingView label="Loading clubs…" /> : null}
       {clubs.error && !clubs.data ? <ErrorBanner message={clubs.error} onRetry={clubs.refresh} /> : null}
       {clubs.data && !others.length ? <EmptyState icon="shield-outline" title="No clubs yet" message="Clubs in your organisation will be listed here." /> : null}
-      {others.map((c) => (
-        <PressableCard key={c.club_id} testID={`club-item-${c.club_id}`} label={`${c.name}. Opens club profile.`} onPress={() => router.push(`/club/${c.club_id}`)}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-            <ClubCrest name={c.name} size={34} />
-            <View style={{ flex: 1 }}>
-              <Text style={text.label}>{c.name}</Text>
-              {c.home_venue?.name ? <Text style={text.small}>{c.home_venue.name}</Text> : null}
-            </View>
-            <Ionicons name="chevron-forward" size={22} color={colors.textMuted} />
-          </View>
-        </PressableCard>
-      ))}
+      {others.length ? <View style={{ backgroundColor: colors.card, borderRadius: 24, paddingHorizontal: spacing.md, marginBottom: spacing.lg }}>
+        {others.map((c, i) => (
+          <Pressable key={c.club_id} testID={`club-item-${c.club_id}`} accessibilityRole="button" accessibilityLabel={`${c.name}. Opens club profile.`} onPress={() => router.push(`/club/${c.club_id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 68, borderBottomWidth: i === others.length - 1 ? 0 : 1, borderBottomColor: colors.divider }}>
+            <ClubCrest name={c.name} size={32} />
+            <View style={{ flex: 1 }}><Text style={text.label}>{c.name}</Text>{c.home_venue?.name ? <Text style={[text.small, { fontSize: 11 }]}>{c.home_venue.name}</Text> : null}</View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </Pressable>
+        ))}
+      </View> : null}
     </Screen>
   );
 }

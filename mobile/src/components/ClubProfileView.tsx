@@ -1,12 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
 import { Linking, Text, View } from 'react-native';
 import { ClubProfile } from '../api/types';
-import { canManageRoster, useAuth, useBrand } from '../auth/AuthContext';
+import { canManageRoster, useAuth } from '../auth/AuthContext';
 import { humanize } from '../hooks/useClubNames';
 import { colors, spacing, text } from '../theme';
-import { ClubCrest } from './ClubCrest';
+import { ClubCrest, crestColor } from './ClubCrest';
 import { Card, EmptyState, PrimaryButton, Row, SecondaryButton, SectionTitle } from './ui';
 
 const POS: Record<string, string> = { gk: 'Goalkeeper', df: 'Defender', mf: 'Midfielder', fw: 'Forward' };
@@ -14,35 +15,31 @@ export const positionLabel = (p: string | null | undefined) => (p ? POS[p] ?? p.
 
 export function ClubProfileView({ club }: { club: ClubProfile }) {
   const { user } = useAuth();
-  const brand = useBrand();
   const players = club.players ?? club.roster ?? [];
   const manages = canManageRoster(user?.role) && (user?.role === 'super_admin' || user?.club_id === club.club_id);
   const v = club.home_venue;
-  const initials = club.name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
-
   return (
     <View testID="club-profile">
-      <Card>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-          <View accessible accessibilityLabel={`${club.name} crest`}>
-            <ClubCrest name={club.name} size={56} />
+      <View style={{ borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card }}>
+        <LinearGradient colors={[crestColor(club.name), '#18291D', colors.card]} locations={[0, 0.58, 1]} style={{ padding: spacing.xl, minHeight: 220, justifyContent: 'space-between' }}>
+          <Text style={{ color: '#D3F7DC', fontSize: 11, letterSpacing: 1.2, fontFamily: 'Inter_700Bold' }}>{user?.club_id === club.club_id ? 'YOUR CLUB' : 'CLUB PROFILE'}</Text>
+          <View style={{ alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md }}>
+            <View accessible accessibilityLabel={`${club.name} crest`} style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: 'rgba(0,0,0,0.36)', alignItems: 'center', justifyContent: 'center' }}>
+              <ClubCrest name={club.name} size={56} />
+            </View>
+            <Text style={[text.h1, { color: colors.white, textAlign: 'center' }]} accessibilityRole="header">{club.name}</Text>
+            <Text style={[text.small, { color: '#D4D9D4' }]}>{v?.name ?? 'League club'}</Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={text.h1} accessibilityRole="header">
-              {club.name}
-            </Text>
-            {user?.club_id === club.club_id ? <Text style={[text.small, { fontFamily: 'Inter_700Bold' }]}>Your club</Text> : null}
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: spacing.lg }}>
+            <Text style={{ color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{players.length} PLAYERS</Text>
+            <Text style={{ color: '#D4D9D4', fontSize: 12 }}>•</Text>
+            <Text style={{ color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{Object.keys(club.staff ?? {}).length} STAFF</Text>
           </View>
-        </View>
+        </LinearGradient>
         {manages ? (
-          <PrimaryButton title="Manage roster" icon="people" onPress={() => router.push('/roster')} testID="club-manage-roster" style={{ marginTop: spacing.lg }} />
+          <PrimaryButton title="Manage roster" icon="people" onPress={() => router.push('/roster')} testID="club-manage-roster" style={{ margin: spacing.md }} />
         ) : null}
-      </Card>
+      </View>
 
       <SectionTitle>Home venue</SectionTitle>
       <Card testID="club-venue">
@@ -93,7 +90,7 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
         </>
       ) : null}
 
-      <SectionTitle>Players ({players.length})</SectionTitle>
+      <SectionTitle>Squad ({players.length})</SectionTitle>
       {players.length ? (
         <Card testID="club-players">
           {players.map((p, i) => (
@@ -110,9 +107,9 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
               accessible
               accessibilityLabel={`${p.name}, ${positionLabel(p.position)}${p.role ? `, ${humanize(p.role)}` : ''}`}
             >
-              <Ionicons name="person-circle-outline" size={28} color={colors.textMuted} />
-              <Text style={[text.label, { flex: 1 }]}>{p.name}</Text>
-              <Text style={text.small}>{positionLabel(p.position)}</Text>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="person" size={15} color={colors.textMuted} /></View>
+              <Text style={[text.label, { flex: 1, fontSize: 13 }]}>{p.name}</Text>
+              <Text style={[text.small, { fontSize: 11 }]}>{positionLabel(p.position)}</Text>
             </View>
           ))}
         </Card>

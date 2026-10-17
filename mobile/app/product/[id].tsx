@@ -1,14 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Text, View } from 'react-native';
 import { Product } from '../../src/api/types';
-import { useBrand } from '../../src/auth/AuthContext';
 import { Screen } from '../../src/components/Screen';
 import { Stepper } from '../../src/components/Stepper';
 import { available, StockText } from '../../src/components/StockText';
 import { useToast } from '../../src/components/Toast';
-import { CachedNotice, Card, Chip, EmptyState, ErrorBanner, IconButton, LoadingView, money, PrimaryButton, SecondaryButton, SectionTitle } from '../../src/components/ui';
+import { CachedNotice, Card, Chip, EmptyState, ErrorBanner, IconButton, LoadingView, money, PrimaryButton, SecondaryButton } from '../../src/components/ui';
 import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { humanize } from '../../src/hooks/useClubNames';
 import { useCart } from '../../src/store/CartContext';
@@ -17,7 +17,6 @@ import { ProductArt } from '../../src/components/ProductArt';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const brand = useBrand();
   const cart = useCart();
   const toast = useToast();
   const q = useCachedQuery<{ products: Product[] }>('products', '/api/v1/products');
@@ -81,22 +80,21 @@ export default function ProductScreen() {
   return (
     <Screen title={product.name} back right={cartBtn} onRefresh={q.refresh} refreshing={q.refreshing} testID="product-screen">
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
-      <Card>
-        <View style={{ height: 220, borderRadius: radius.md, overflow: 'hidden', marginBottom: spacing.md }} accessible accessibilityLabel={`${humanize(product.category)} picture`}>
-          <ProductArt product={product} height={220} />
-        </View>
-        <Text style={text.h1} accessibilityRole="header">
-          {product.name}
-        </Text>
-        <Text style={text.small}>{humanize(product.category)}</Text>
-        {product.description ? <Text style={[text.body, { marginTop: spacing.sm }]}>{product.description}</Text> : null}
-        <Text style={{ fontSize: 28, fontFamily: 'Inter_800ExtraBold', marginTop: spacing.md, color: colors.text }} testID="product-price">
-          {variant ? money(variant.price_minor, variant.currency) : ''}
-        </Text>
-        {variant ? <StockText count={available(variant)} /> : null}
+      <View style={{ height: 340, borderRadius: 26, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card }} accessible accessibilityLabel={`${humanize(product.category)} picture of ${product.name}`}>
+        <ProductArt product={product} height={340} />
+        <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.45)', 'rgba(0,0,0,0.92)']} locations={[0.3, 0.65, 1]} style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, justifyContent: 'flex-end', padding: spacing.lg }}>
+          <Text style={{ color: colors.accent, fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 1 }}>{humanize(product.category).toUpperCase()}</Text>
+          <Text style={[text.h1, { color: colors.white, marginTop: spacing.xs }]} accessibilityRole="header" numberOfLines={2}>{product.name}</Text>
+          <Text style={{ fontSize: 26, fontFamily: 'Inter_800ExtraBold', marginTop: spacing.sm, color: colors.white }} testID="product-price">{variant ? money(variant.price_minor, variant.currency) : ''}</Text>
+        </LinearGradient>
+      </View>
+      <Card style={{ borderRadius: radius.lg }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}><Ionicons name="checkmark-circle" size={18} color={colors.accent} /><Text style={[text.label, { flex: 1, fontSize: 13 }]}>Official club merchandise</Text>{variant ? <StockText count={available(variant)} /> : null}</View>
+        {product.description ? <Text style={[text.muted, { marginTop: spacing.md }]}>{product.description}</Text> : null}
       </Card>
 
-      <SectionTitle>Choose a size</SectionTitle>
+      <Card style={{ borderRadius: radius.lg }}>
+      <Text style={[text.title, { marginBottom: spacing.md }]}>Choose an option</Text>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap' }} accessibilityRole="radiogroup" accessibilityLabel="Size">
         {product.variants.map((v) => {
           const a = available(v);
@@ -114,10 +112,11 @@ export default function ProductScreen() {
           );
         })}
       </View>
-
-      <SectionTitle>Quantity</SectionTitle>
+      <View style={{ height: 1, backgroundColor: colors.divider, marginVertical: spacing.lg }} />
+      <Text style={[text.title, { marginBottom: spacing.md }]}>Quantity</Text>
       <Stepper value={qty} max={Math.max(1, avail)} onChange={setQty} testID="product-qty" label="Quantity" />
       {inCart ? <Text style={[text.small, { marginTop: spacing.sm }]}>You already have {inCart} of this size in your cart.</Text> : null}
+      </Card>
 
       <View style={{ gap: spacing.sm, marginTop: spacing.xl }}>
         <PrimaryButton

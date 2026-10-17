@@ -1,5 +1,11 @@
 # Mobile progress log
 
+## 2026-10-17 15:33 PKT Apple Sports detail-screen pass
+
+- Using the three local Apple Sports reference screenshots supplied by the user, redesigned the Clubs directory as a compact team list with a green gradient intro, and each club detail with a crest-led gradient hero, squad count, staff, venue, and tighter player rows. The shared match detail now has a score summary and a clearer play-by-play section.
+- Store uses photo-led two-column product cards and category filters. Product detail uses a full-bleed photo hero with price, then a compact stock/description card and grouped option controls. Profile uses a green gradient account hero and compact grouped actions. Existing routes, purchase/scoring/roster actions, test IDs, and data queries remain.
+- `npx tsc --noEmit` and `npx expo export --platform android` pass. This source is pushed separately from the previous APK; rebuild/install the release APK to see this pass on a device.
+
 ## 2026-10-17 15:27 PKT release on Pixel 6a
 
 - Rebuilt `mobile/release/app-release.apk` successfully (`assembleRelease`, arm64-v8a; SHA-256 `071a2a4119f2f50e08bb97bdac7c36992c2d482077df1e3e95cc92ec0a404f0a`) and installed it on Pixel 6a `19301FDEE003AS`. The new Fixtures hero, counts, and quick actions render on-device.

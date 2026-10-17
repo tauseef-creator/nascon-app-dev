@@ -192,14 +192,14 @@ export default function MatchDetail() {
     <Screen title={`${homeName} vs ${awayName}`} subtitle={info?.venue ?? undefined} back onRefresh={score.refresh} refreshing={score.refreshing} testID="match-screen">
       {score.fromCache && score.updatedAt ? <CachedNotice updatedAt={score.updatedAt} /> : null}
 
-      <Card testID="score-header" style={{ padding: 0, overflow: 'hidden' }}>
+      <Card testID="score-header" style={{ padding: 0, overflow: 'hidden', borderRadius: 26 }}>
         <LinearGradient
           colors={[crestColor(homeName), '#1C1C1E', crestColor(awayName)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           locations={[0, 0.5, 1]}
         >
-          <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.35)', padding: spacing.lg }}>
+          <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.48)', padding: spacing.lg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm }}>
           <StatusPill kind={matchPill(s.status)} testID="match-status" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
@@ -209,6 +209,7 @@ export default function MatchDetail() {
             </Text>
           </View>
         </View>
+        <Text style={{ color: '#E5E5E7', fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.8, textAlign: 'center', marginTop: spacing.xl }} numberOfLines={1}>{info?.venue ?? 'MATCH CENTRE'}</Text>
         <View style={styles.scoreRow} accessible accessibilityLabel={`${homeName} ${s.home.score}, ${awayName} ${s.away.score}`}>
           <View style={styles.side}>
             <Text style={[styles.scoreNum, s.away.score > s.home.score && styles.scoreDim]} testID="score-home">
@@ -240,6 +241,14 @@ export default function MatchDetail() {
           </View>
         </LinearGradient>
       </Card>
+
+      <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderRadius: 20, paddingVertical: spacing.md, marginBottom: spacing.md }} testID="match-summary">
+        <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ color: colors.white, fontFamily: 'Inter_800ExtraBold', fontSize: 20 }}>{events.filter((e) => e.type === 'score' && !e.compensated).length}</Text><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>SCORES</Text></View>
+        <View style={{ width: 1, backgroundColor: colors.divider }} />
+        <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ color: colors.white, fontFamily: 'Inter_800ExtraBold', fontSize: 20 }}>{events.length}</Text><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>PLAYS</Text></View>
+        <View style={{ width: 1, backgroundColor: colors.divider }} />
+        <View style={{ flex: 1, alignItems: 'center' }}><Ionicons name={isLive ? 'radio' : 'time-outline'} size={21} color={isLive ? colors.live : colors.accent} /><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>{isLive ? 'LIVE' : s.status === 'completed' ? 'FINAL' : 'UPCOMING'}</Text></View>
+      </View>
 
       {pinned.data?.product ? <PinnedCard product={pinned.data.product} /> : null}
 
@@ -320,7 +329,7 @@ export default function MatchDetail() {
         </>
       ) : null}
 
-      <SectionTitle>Timeline</SectionTitle>
+      <SectionTitle>Play-by-play</SectionTitle>
       {events.length === 0 ? (
         <EmptyState icon="time-outline" title="No events yet" message={isLive ? 'Scores will appear here as they happen.' : 'Events will appear here once the match starts.'} testID="timeline-empty" />
       ) : (

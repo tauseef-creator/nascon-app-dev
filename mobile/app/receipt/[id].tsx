@@ -27,6 +27,7 @@ export default function Receipt() {
     if (order || !id) return;
     readCache<FullOrder>(`order:${id}`)
       .then((c) => setOrder(c?.data ?? null))
+      .catch(() => setOrder(null))
       .finally(() => setLoading(false));
   }, [id, order]);
 

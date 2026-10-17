@@ -56,11 +56,16 @@ export default function CartScreen() {
         timeoutMs: 20000,
       });
       const full = { ...order, lines, discount_code: appliedCode };
+      const saved = await Promise.allSettled([
+        writeCache(`order:${order.order_id}`, full),
+        writeCache('order:last', { order_id: order.order_id }),
+      ]);
       cart.setLastOrder(full);
-      writeCache(`order:${order.order_id}`, full).catch(() => {});
-      writeCache('order:last', { order_id: order.order_id }).catch(() => {});
       cart.clear();
       router.replace(`/receipt/${order.order_id}`);
+      if (saved.some((result) => result.status === 'rejected')) {
+        toast('Payment succeeded, but the receipt could not be saved on this phone.', 'info');
+      }
     } catch (e) {
       const err = e instanceof AppError ? e : new AppError('UNKNOWN');
       if (err.isNetwork) setError("We couldn't reach the server, so nothing was charged. Check your connection and try again.");

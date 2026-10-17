@@ -1,5 +1,11 @@
 # Mobile progress log
 
+## 2026-10-17 15:27 PKT release on Pixel 6a
+
+- Rebuilt `mobile/release/app-release.apk` successfully (`assembleRelease`, arm64-v8a; SHA-256 `071a2a4119f2f50e08bb97bdac7c36992c2d482077df1e3e95cc92ec0a404f0a`) and installed it on Pixel 6a `19301FDEE003AS`. The new Fixtures hero, counts, and quick actions render on-device.
+- Rebuilt the live `n-api-1` container from the latest source and confirmed it is healthy. The local ignored `.env` now has the assigned salt; never copy it into Git. The demo database contains 12 fixtures and four products. The Pixel Store shows all four products with the newly bundled jersey, scarf, and bottle photos. Product image display on the phone is confirmed.
+- USB reconnects can remove `adb reverse tcp:8080 tcp:8080`; it was restored. The phone still uses `http://localhost:8080`. If the USB cable disconnects, reconnect and repeat that ADB reverse command, or switch Server settings to this laptop's reachable hotspot address (`http://10.213.195.190:8080` as of this checkpoint).
+
 ## 2026-10-17 15:20 PKT home screen
 
 - The Fixtures home now features the current live match, next fixture, or latest result over the bundled stadium photo, followed by live/upcoming/results counts and role-aware quick actions. All values come from the existing matches response, so the view works with offline cache and requires no new endpoint. The existing tabbed fixture list and test IDs remain.

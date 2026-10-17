@@ -1,0 +1,11 @@
+node_modules/
+coverage/
+.env
+*.log
+.DS_Store
+.expo/
+dist/
+web-build/
+mobile/android/
+mobile/ios/
+!mobile/release/app-release.apk

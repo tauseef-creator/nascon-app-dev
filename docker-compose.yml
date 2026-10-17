@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: nascon
+      POSTGRES_PASSWORD: nascon
+      POSTGRES_DB: nascon
+    command: ["postgres", "-c", "max_connections=200", "-c", "synchronous_commit=off"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nascon -d nascon"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  minio:
+    # minio/minio was removed from Docker Hub; this is the same MinIO release (2024-09-22).
+    image: bitnamilegacy/minio:2024.9.22
+    environment:
+      MINIO_ROOT_USER: nascon
+      MINIO_ROOT_PASSWORD: nascon-secret
+      MINIO_DEFAULT_BUCKETS: receipts
+
+  api:
+    build: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      DAY1_SALT: ${DAY1_SALT}
+      PORT: "8080"
+      DATABASE_URL: postgres://nascon:nascon@postgres:5432/nascon
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:-nascon-dev-jwt-secret-change-me}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: "9000"
+      MINIO_ACCESS_KEY: nascon
+      MINIO_SECRET_KEY: nascon-secret
+      MINIO_BUCKET: receipts
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/health || exit 1"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+    restart: unless-stopped
+
+  worker:
+    build: ./backend
+    command: ["node", "src/worker.js"]
+    environment:
+      DATABASE_URL: postgres://nascon:nascon@postgres:5432/nascon
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped

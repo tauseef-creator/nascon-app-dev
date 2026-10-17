@@ -1,5 +1,11 @@
 # Mobile progress log
 
+## 2026-10-17 14:10 PKT update
+
+- Apple Sports reference is the full Mobbin gallery screenshot supplied by the user. Commit `0882164` pushed the first dark UI pass. Its match cards are still too large and too blue compared with the reference; a tighter green-accented fixture layout is the next visual change.
+- New release APK built successfully at 14:04 PKT and installed on Galaxy A06 (`R8VY500M3DM`). `mobile/release/app-release.apk` is 42,102,723 bytes, SHA-256 `8a2ae2f3eb0c0936cc4fa5386be3137e363680c39086873021e1425c65bec798`; `apksigner verify` passed (v2), minSdk 29, arm64-v8a. The phone launched the release app and rendered the dark Fixtures screen with live backend data through `adb reverse tcp:8080 tcp:8080`.
+- The debug APK was also built and installed for a Metro preview. Metro on port 8082 has been unusually slow on Windows; the standalone release APK is the reliable review build. The generated `mobile/android/` directory and Windows-only Gradle workaround remain ignored; Fedora source compatibility is unchanged.
+
 ## 2026-10-17 Windows handoff (updated 13:52 PKT; update this checkpoint as work completes)
 
 - Synced `main` from GitHub, ran `npm install` in `mobile` (lockfile unchanged), and passed `npx tsc --noEmit` after the changes below. Native `mobile/android/` was generated with `npx expo prebuild -p android --no-install`; it is ignored by Git, so Fedora must generate its own native directory when building. Do not commit `mobile/android/`.

@@ -9,6 +9,7 @@ const { hub } = require('../lib/realtime');
 const { tenantScope } = require('../domain/rbac');
 const events = require('../services/events');
 const store = require('../services/store');
+const roster = require('../services/roster');
 
 const router = express.Router();
 const PIN_ROLES = ['super_admin', 'league_organizer', 'club_manager'];
@@ -135,6 +136,12 @@ router.get('/roster/:club_id', requireAuth, async (req, res) => {
     squads: squads.rows,
     players: players.rows,
   });
+});
+
+// POST /api/v1/roster/:club_id/players: add one player without replacing the league roster.
+router.post('/roster/:club_id/players', requireAuth, async (req, res) => {
+  const out = await roster.addPlayer(req.params.club_id, req.body, req.principal);
+  res.status(out.statusCode).json(out.body);
 });
 
 module.exports = router;

@@ -61,7 +61,7 @@ All use the password `Nascon@26` (quick-fill chips on the login screen):
 | `app/_layout.tsx` | Providers (Auth, Sync, Toast, League, Cart) and the sign-in gate |
 | `app/(tabs)/` | Fixtures (`index`), Standings, Store, Club, More |
 | `app/match/[id].tsx` | Live score (SSE with 5 s polling fallback), timeline, pinned product, scoring panel |
-| `app/club/[id].tsx`, `app/roster.tsx` | Club profile; roster transfer / loan / release (club manager) |
+| `app/club/[id].tsx`, `app/roster.tsx` | Club profile; roster add / transfer / loan / release (club manager) |
 | `app/product/[id].tsx`, `app/cart.tsx`, `app/receipt/[id].tsx` | Store flow with mock payment and receipt PDF |
 | `app/sync.tsx`, `app/settings.tsx`, `app/login.tsx` | Sync queue, server address, login |
 | `src/api/` | HTTP client (8 s timeout, Bearer token), error-code to plain-language mapping, types |
@@ -73,9 +73,12 @@ All use the password `Nascon@26` (quick-fill chips on the login screen):
 
 - Fixtures, standings, club profiles, products and match scores are cached in SQLite and
   shown with a "saved copy" notice when offline.
-- Scoring and roster actions made offline (or failing with a network error) are queued in
+- Scoring and roster transfer/loan/release actions made offline (or failing with a network error) are queued in
   the exact spec 5.14 format (`action_id`, `type`, `queued_at` UTC without millis,
   `base_version`, `payload`) and survive force-close.
+- Roster add uses the authenticated `POST /api/v1/roster/:club_id/players` endpoint and
+  requires a connection. The spec 5.14 offline queue supports transfer/loan/release,
+  but has no add-player action type. The app disables Add player while offline.
 - The queue syncs automatically on reconnect, on app foreground, every 20 s while items
   are pending, and through "Sync now" on the Sync queue screen. Each result (applied,
   rejected with a plain reason, already synced) is listed there.

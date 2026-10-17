@@ -9,6 +9,8 @@ const MESSAGES: Record<string, string> = {
   INVALID_DISCOUNT_CODE: "That discount code isn't valid.",
   TRANSFER_WINDOW_CLOSED: 'The transfer window is closed for that date.',
   SQUAD_FULL: 'The destination squad is already full.',
+  ROSTER_NOT_CONFIGURED: 'This club does not have a roster yet.',
+  DUPLICATE_PLAYER_ID: 'This player was already added. Refresh the roster to see the latest list.',
   MIN_POSITION_VIOLATION: 'This move would leave the squad short in that position.',
   PLAYER_ON_LOAN: 'This player is currently on loan.',
   NOT_IN_SQUAD: 'This player is not in the selected squad.',

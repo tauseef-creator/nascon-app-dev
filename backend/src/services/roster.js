@@ -2,8 +2,8 @@
 // Roster service (spec 5.11): loads state from Postgres, runs the pure rules, persists effects.
 // Used by routes/audit/roster.js and by offline sync (applyTransfer, getPlayerAuditCount).
 const { query, tx } = require('../db/pool');
-const { ApiError, validation, notFound, conflict } = require('../lib/errors');
-const { isDate, isId, nowIso, todayDate } = require('../lib/validate');
+const { ApiError, validation, notFound, conflict, forbidden } = require('../lib/errors');
+const { isDate, isId, isStr, nowIso, todayDate } = require('../lib/validate');
 const { bodyHash } = require('../lib/signing');
 const { publish } = require('../lib/queue');
 const R = require('../domain/roster');
@@ -199,4 +199,65 @@ async function getPlayerAuditCount(playerId) {
   return r.rows[0].n;
 }
 
-module.exports = { setup, applyTransfer, history, getPlayerAuditCount };
+// Production-only add action for the mobile manager screen. The graded audit
+// setup endpoint replaces a whole league, so it must never be used for one add.
+async function addPlayer(clubId, body, principal) {
+  const bad = [];
+  if (!isId(clubId)) bad.push('club_id');
+  if (!body || typeof body !== 'object' || Array.isArray(body)) bad.push('body');
+  else {
+    if (!isId(body.player_id)) bad.push('player_id');
+    if (!isStr(body.name) || !body.name.trim() || body.name.trim().length > 100) bad.push('name');
+    if (!isStr(body.position) || !body.position.trim() || body.position.trim().length > 32) bad.push('position');
+    if (body.role !== undefined && !['captain', 'vice_captain', 'starter', 'substitute'].includes(body.role)) bad.push('role');
+  }
+  if (bad.length) throw validation(bad);
+  if (principal.role !== 'super_admin' &&
+      (principal.role !== 'club_manager' || principal.club_id !== clubId)) {
+    throw forbidden();
+  }
+
+  const result = await tx(async (c) => {
+    await lock(c);
+    const club = await c.query('SELECT club_id, tenant_id FROM clubs WHERE club_id = $1', [clubId]);
+    if (!club.rowCount) throw notFound('NOT_FOUND', 'Club not found.', { club_id: clubId });
+    const tenantId = club.rows[0].tenant_id;
+    if (principal.role !== 'super_admin' && principal.tenant_id !== tenantId) {
+      throw forbidden();
+    }
+    const squad = await c.query('SELECT squad_id, league_id FROM squads WHERE club_id = $1 AND tenant_id = $2 ORDER BY squad_id LIMIT 1', [clubId, tenantId]);
+    if (!squad.rowCount) throw conflict('ROSTER_NOT_CONFIGURED', 'This club has no configured roster.');
+    const { squad_id: squadId, league_id: leagueId } = squad.rows[0];
+    const existing = await c.query('SELECT 1 FROM players WHERE player_id = $1 UNION SELECT 1 FROM registrations WHERE player_id = $1 LIMIT 1', [body.player_id]);
+    if (existing.rowCount) throw conflict('DUPLICATE_PLAYER_ID', 'This player ID is already in use.');
+    const cfg = await c.query('SELECT config FROM roster_leagues WHERE league_id = $1', [leagueId]);
+    const max = cfg.rows[0]?.config?.max_squad_size;
+    if (Number.isInteger(max)) {
+      const count = await c.query('SELECT count(*)::int AS n FROM registrations WHERE league_id = $1 AND squad_id = $2', [leagueId, squadId]);
+      if (count.rows[0].n >= max) throw conflict('SQUAD_FULL', 'This squad is already full.');
+    }
+    const player = {
+      player_id: body.player_id,
+      name: body.name.trim(),
+      position: body.position.trim(),
+      role: body.role || 'substitute',
+      squad_id: squadId,
+    };
+    await c.query('INSERT INTO players (player_id, tenant_id, club_id, name, position) VALUES ($1,$2,$3,$4,$5)',
+      [player.player_id, tenantId, clubId, player.name, player.position]);
+    await c.query(
+      `INSERT INTO registrations (player_id, league_id, name, position, squad_id, parent_squad_id,
+         registration_type, start_date, loan_end_date, role) VALUES ($1,$2,$3,$4,$5,NULL,'initial',$6,NULL,$7)`,
+      [player.player_id, leagueId, player.name, player.position, squadId, todayDate(), player.role]);
+    const entry = await appendAudit(c, {
+      action: 'add', player_id: player.player_id, league_id: leagueId,
+      from_squad_id: null, to_squad_id: squadId, effective_date: todayDate(),
+      who: principal.user_id, why: 'Added by club manager',
+    });
+    return { statusCode: 201, body: { player, audit_entry: entry } };
+  });
+  publish('roster.add', result.body.audit_entry);
+  return result;
+}
+
+module.exports = { setup, applyTransfer, history, getPlayerAuditCount, addPlayer };

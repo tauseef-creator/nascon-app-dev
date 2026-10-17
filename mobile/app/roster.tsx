@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { randomUUID } from 'expo-crypto';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { api } from '../src/api/client';
 import { AppError, errorText } from '../src/api/errors';
 import { RosterPlayer, RosterState } from '../src/api/types';
 import { canManageRoster, useAuth } from '../src/auth/AuthContext';
@@ -47,6 +48,14 @@ export default function Roster() {
   const [confirm, setConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const [addConfirm, setAddConfirm] = useState(false);
+  const [addBusy, setAddBusy] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [addId, setAddId] = useState(() => randomUUID());
+  const [addName, setAddName] = useState('');
+  const [addPosition, setAddPosition] = useState('');
+  const [addRole, setAddRole] = useState('substitute');
 
   const loadQueued = useCallback(() => {
     listQueue()
@@ -71,6 +80,54 @@ export default function Roster() {
     setLoanEnd(plusDays(today(), 30));
     setReason('');
     setFormError(null);
+  };
+
+  const openAdd = () => {
+    setAddId(randomUUID());
+    setAddName('');
+    setAddPosition('');
+    setAddRole('substitute');
+    setAddError(null);
+    setAdding(true);
+  };
+
+  const reviewAdd = () => {
+    if (!addName.trim() || addName.trim().length > 100) {
+      setAddError('Enter a player name of up to 100 characters.');
+    } else if (!addPosition.trim() || addPosition.trim().length > 32) {
+      setAddError('Enter a position of up to 32 characters.');
+    } else {
+      setAddError(null);
+      setAddConfirm(true);
+    }
+  };
+
+  const submitAdd = async () => {
+    if (!clubId) return;
+    setAddConfirm(false);
+    setAddBusy(true);
+    try {
+      await api(`/api/v1/roster/${encodeURIComponent(clubId)}/players`, {
+        method: 'POST',
+        body: { player_id: addId, name: addName.trim(), position: addPosition.trim(), role: addRole },
+      });
+      setAdding(false);
+      q.reload();
+      toast(`${addName.trim()} added to the roster.`);
+    } catch (e) {
+      const err = e instanceof AppError ? e : new AppError('UNKNOWN');
+      if (err.code === 'DUPLICATE_PLAYER_ID') {
+        setAdding(false);
+        q.reload();
+        toast('This player was already added. Roster refreshed.', 'info');
+      } else {
+        const msg = err.isNetwork ? "Couldn't add the player because the server is unreachable. Reconnect and try again." : errorText(err);
+        setAddError(msg);
+        toast(msg, 'error');
+      }
+    } finally {
+      setAddBusy(false);
+    }
   };
 
   const validate = (): string | null => {
@@ -146,12 +203,15 @@ export default function Roster() {
   return (
     <Screen title="Manage roster" subtitle={squadName(data?.squad_id ?? null)} back onRefresh={q.refresh} refreshing={q.refreshing} testID="roster-screen">
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
-      {!sync.online ? <InfoBanner tone="warning" icon="cloud-offline-outline" message="You're offline. Roster changes are saved on this phone and sent automatically when you reconnect." /> : null}
+      {!sync.online ? <InfoBanner tone="warning" icon="cloud-offline-outline" message="You're offline. Transfers, loans and releases will sync when you reconnect. Adding a new player needs a connection." /> : null}
       {data?.transfer_window ? (
         <InfoBanner icon="calendar-outline" message={`Transfer window: ${data.transfer_window.open} to ${data.transfer_window.close}. Releases are allowed on any date.`} testID="roster-window" />
       ) : null}
       {q.loading && !data ? <LoadingView label="Loading roster…" /> : null}
       {q.error && !data ? <ErrorBanner message={q.error} onRetry={q.refresh} /> : null}
+      {data?.squad_id ? (
+        <SecondaryButton title="Add player" icon="person-add-outline" onPress={openAdd} disabled={!sync.online} testID="roster-add" style={{ marginBottom: spacing.sm }} />
+      ) : null}
       {data && !players.length ? <EmptyState icon="people-outline" title="No players in this squad yet" message="Players registered to your squad will appear here." /> : null}
       {players.length ? <SectionTitle>Players ({players.length})</SectionTitle> : null}
       {players.map((p) => {
@@ -187,6 +247,39 @@ export default function Roster() {
           </Card>
         );
       })}
+
+      <Modal visible={adding && !addConfirm} animationType="slide" transparent onRequestClose={() => setAdding(false)} supportedOrientations={['portrait', 'landscape']}>
+        <View style={styles.backdrop}>
+          <View style={styles.sheet} testID="roster-add-form">
+            <ScrollView contentContainerStyle={{ padding: spacing.xl }} keyboardShouldPersistTaps="handled">
+              <Text style={[text.title, { marginBottom: spacing.md }]} accessibilityRole="header">Add a player</Text>
+              <Field label="Player name" testID="roster-add-name" value={addName} onChangeText={setAddName} autoCorrect={false} placeholder="Full name" />
+              <Field label="Position" testID="roster-add-position" value={addPosition} onChangeText={setAddPosition} autoCapitalize="characters" autoCorrect={false} placeholder="For example FW or Goalkeeper" />
+              <Text style={[text.section, { marginBottom: spacing.sm }]}>Squad role</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }} accessibilityRole="radiogroup">
+                {(['substitute', 'starter', 'vice_captain', 'captain'] as const).map((role) => (
+                  <Chip key={role} label={humanize(role)} selected={addRole === role} onPress={() => setAddRole(role)} testID={`roster-add-role-${role}`} />
+                ))}
+              </View>
+              {addError ? <ErrorBanner message={addError} testID="roster-add-error" /> : null}
+              <View style={{ gap: spacing.sm, marginTop: spacing.md }}>
+                <PrimaryButton title="Review new player" onPress={reviewAdd} loading={addBusy} testID="roster-add-review" />
+                <SecondaryButton title="Cancel" onPress={() => setAdding(false)} disabled={addBusy} testID="roster-add-cancel" />
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <ConfirmDialog
+        visible={addConfirm}
+        title="Add player to roster?"
+        message={`Add ${addName.trim()} as ${humanize(addRole)} in ${squadName(data?.squad_id ?? null)}?`}
+        confirmTitle="Add player"
+        onCancel={() => setAddConfirm(false)}
+        onConfirm={submitAdd}
+        testID="roster-add-confirm"
+      />
 
       <Modal visible={!!player && !confirm} animationType="slide" transparent onRequestClose={() => setPlayer(null)} supportedOrientations={['portrait', 'landscape']}>
         <View style={styles.backdrop}>

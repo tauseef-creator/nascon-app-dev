@@ -45,16 +45,16 @@ export const font = {
 };
 
 export const text: Record<string, TextStyle> = {
-  body: { fontSize: font.body, color: colors.text, lineHeight: 20 },
-  muted: { fontSize: font.body, color: colors.textMuted, lineHeight: 20 },
-  small: { fontSize: font.small, color: colors.textMuted, lineHeight: 18 },
-  label: { fontSize: font.label, color: colors.text, fontWeight: '600' },
-  title: { fontSize: font.title, color: colors.text, fontWeight: '700' },
-  h1: { fontSize: font.h1, color: colors.text, fontWeight: '700', letterSpacing: -0.4 },
+  body: { fontFamily: 'Inter_400Regular', fontSize: font.body, color: colors.text, lineHeight: 20 },
+  muted: { fontFamily: 'Inter_400Regular', fontSize: font.body, color: colors.textMuted, lineHeight: 20 },
+  small: { fontFamily: 'Inter_400Regular', fontSize: font.small, color: colors.textMuted, lineHeight: 18 },
+  label: { fontSize: font.label, color: colors.text, fontFamily: 'Inter_600SemiBold' },
+  title: { fontSize: font.title, color: colors.text, fontFamily: 'Inter_700Bold' },
+  h1: { fontSize: font.h1, color: colors.text, fontFamily: 'Inter_700Bold', letterSpacing: -0.4 },
   section: {
     fontSize: 15,
     color: colors.text,
-    fontWeight: '700',
+    fontFamily: 'Inter_700Bold',
   },
 };
 

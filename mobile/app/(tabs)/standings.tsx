@@ -91,17 +91,17 @@ export default function StandingsTab() {
                     ]}
                   >
                     <View style={styles.rankCell}>
-                      <Text style={[styles.cell, { width: 36, fontWeight: '800' }, inZone && { color: colors.accent }]}>{r.rank}</Text>
+                      <Text style={[styles.cell, { width: 36, fontFamily: 'Inter_800ExtraBold' }, inZone && { color: colors.accent }]}>{r.rank}</Text>
                     </View>
                     <View style={[styles.teamCol, styles.teamCell]}>
                       <ClubCrest name={name(r.team_id)} size={18} />
-                      <Text style={[styles.cell, { fontWeight: '700', textAlign: 'left', flex: 1 }]} numberOfLines={2}>
+                      <Text style={[styles.cell, { fontFamily: 'Inter_700Bold', textAlign: 'left', flex: 1 }]} numberOfLines={2}>
                         {name(r.team_id)}
                         {mine ? ' (you)' : ''}
                       </Text>
                     </View>
                     {COLS.map((c) => (
-                      <Text key={c.key} style={[styles.cell, { width: c.w }, c.key === 'points' && { fontWeight: '900' }]}>
+                      <Text key={c.key} style={[styles.cell, { width: c.w }, c.key === 'points' && { fontFamily: 'Inter_800ExtraBold' }]}>
                         {c.key === 'diff' && r.diff > 0 ? `+${r.diff}` : String(r[c.key])}
                       </Text>
                     ))}
@@ -121,7 +121,7 @@ export default function StandingsTab() {
           </Text>
           {spots > 0 ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
-              <Text style={{ color: colors.accent, fontWeight: '800', fontSize: 16, width: 16, textAlign: 'center' }}>1</Text>
+              <Text style={{ color: colors.accent, fontFamily: 'Inter_800ExtraBold', fontSize: 16, width: 16, textAlign: 'center' }}>1</Text>
               <Text style={[text.body, { flex: 1 }]}>Green rank number: currently in the top {spots} qualification places.</Text>
             </View>
           ) : null}
@@ -154,11 +154,11 @@ function LegendRow({ kind, text: t }: { kind: PillKind; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  tableTitle: { color: colors.text, fontSize: 17, fontWeight: '700', textAlign: 'center', paddingTop: spacing.lg, paddingBottom: spacing.xs },
+  tableTitle: { color: colors.text, fontSize: 17, fontFamily: 'Inter_700Bold', textAlign: 'center', paddingTop: spacing.lg, paddingBottom: spacing.xs },
   tr: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
   th: { minHeight: 40 },
   cell: { fontSize: 13, color: colors.text, textAlign: 'center', paddingVertical: 8, fontVariant: ['tabular-nums'] },
-  hcell: { fontWeight: '600', color: colors.textMuted, fontSize: 11 },
+  hcell: { fontFamily: 'Inter_600SemiBold', color: colors.textMuted, fontSize: 11 },
   teamCol: { width: 170, textAlign: 'left', paddingHorizontal: 6 },
   teamCell: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rankCell: { alignSelf: 'stretch', justifyContent: 'center', paddingLeft: 4 },

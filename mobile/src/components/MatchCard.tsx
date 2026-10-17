@@ -51,16 +51,16 @@ export function MatchCard({ m }: { m: Match }) {
 
 const styles = StyleSheet.create({
   card: { paddingVertical: spacing.md, marginHorizontal: spacing.md, minHeight: 84, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-  date: { color: '#6E6E73', fontSize: 11, fontWeight: '600', textAlign: 'center', marginBottom: 3 },
+  date: { color: '#6E6E73', fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center', marginBottom: 3 },
   matchRow: { flexDirection: 'row', alignItems: 'center' },
   club: { width: 76, alignItems: 'center', gap: 4 },
-  clubName: { color: colors.textMuted, fontSize: 11, fontWeight: '600', textAlign: 'center' },
-  score: { color: colors.text, fontSize: 30, fontWeight: '800', minWidth: 30, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  clubName: { color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
+  score: { color: colors.text, fontSize: 30, fontFamily: 'Inter_800ExtraBold', minWidth: 30, textAlign: 'center', fontVariant: ['tabular-nums'] },
   scoreDim: { color: colors.textMuted },
   middle: { flex: 1, alignItems: 'center', paddingHorizontal: spacing.xs },
-  status: { color: colors.text, fontSize: 15, fontWeight: '700', textAlign: 'center' },
+  status: { color: colors.text, fontSize: 15, fontFamily: 'Inter_700Bold', textAlign: 'center' },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.live },
-  liveText: { color: colors.live, fontSize: 14, fontWeight: '800', letterSpacing: 0.6 },
+  liveText: { color: colors.live, fontSize: 14, fontFamily: 'Inter_800ExtraBold', letterSpacing: 0.6 },
   venueText: { color: '#6E6E73', fontSize: 11, marginTop: 3, textAlign: 'center' },
 });

@@ -91,7 +91,7 @@ export default function SyncScreen() {
                 style={{ minHeight: TOUCH, flexDirection: 'row', alignItems: 'center', gap: 4 }}
               >
                 <Ionicons name={open === a.action_id ? 'chevron-up' : 'code-slash'} size={18} color={colors.text} />
-                <Text style={[text.body, { fontWeight: '600' }]}>{open === a.action_id ? 'Hide details' : 'Show details'}</Text>
+                <Text style={[text.body, { fontFamily: 'Inter_600SemiBold' }]}>{open === a.action_id ? 'Hide details' : 'Show details'}</Text>
               </Pressable>
               <SecondaryButton title="Discard" compact danger icon="trash-outline" onPress={() => setDiscard(a)} testID={`sync-discard-${a.action_id}`} />
             </View>

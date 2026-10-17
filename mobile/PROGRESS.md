@@ -65,3 +65,4 @@ and returned per-action results).
 - No dedicated tests (Appium/Selenium) yet; every interactive element has a testID.
 
 - 14:51 build: new tab icons, a role label in the main headers, and an Unsplash football banner on Store (`assets/merch.jpg`). APK 42379135 bytes, SHA-256 `86ecd8493f56032b9c2e135a59864c7f9336f9757d146f3598fefe9bfea20329`. Only one product is seeded, so the store shows one item.
+- 14:57 build: Inter font (`@expo-google-fonts/inter`, loaded in `app/_layout.tsx`; style weights are mapped to the `Inter_600SemiBold` / `Inter_700Bold` / `Inter_800ExtraBold` families), a ball app mark, and drawn kit artwork for apparel (`src/components/JerseyArt.tsx`). APK 45426879 bytes, SHA-256 `5fb09a3a10f0b6456271bb00f1df7eeb765bb5911a6f78e65cff063e274f60ce`. Run `npm ci` after pulling, because a dependency was added.

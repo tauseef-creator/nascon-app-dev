@@ -13,7 +13,7 @@ export function StockText({ count }: { count: number }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} accessible accessibilityLabel={label}>
       <Ionicons name={out ? 'close-circle' : low ? 'alert-circle' : 'checkmark-circle'} size={18} color={color} />
-      <Text style={{ color, fontSize: 15, fontWeight: '700' }}>{label}</Text>
+      <Text style={{ color, fontSize: 15, fontFamily: 'Inter_700Bold' }}>{label}</Text>
     </View>
   );
 }

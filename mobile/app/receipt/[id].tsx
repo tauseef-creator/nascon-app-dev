@@ -79,7 +79,7 @@ export default function Receipt() {
           <Ionicons name="checkmark-circle" size={64} color={colors.success} />
           <Text style={text.h1}>Payment successful</Text>
           <Text style={[text.muted, { textAlign: 'center' }]}>Thank you for your order. Your receipt is below.</Text>
-          <Text style={{ fontSize: 32, fontWeight: '900', color: colors.text }} testID="receipt-total">
+          <Text style={{ fontSize: 32, fontFamily: 'Inter_800ExtraBold', color: colors.text }} testID="receipt-total">
             {money(order.total_minor, order.currency)}
           </Text>
         </View>
@@ -92,7 +92,7 @@ export default function Receipt() {
         <View style={{ height: 1, backgroundColor: colors.divider, marginVertical: spacing.sm }} />
         <Row label="Subtotal" value={money(order.subtotal_minor, order.currency)} />
         <Row label={order.discount_code ? `Discount (${order.discount_code})` : 'Discount'} value={order.discount_minor ? `− ${money(order.discount_minor, order.currency)}` : 'None'} />
-        <Row label="Total paid" value={<Text style={{ fontSize: 20, fontWeight: '900', color: colors.text }}>{money(order.total_minor, order.currency)}</Text>} />
+        <Row label="Total paid" value={<Text style={{ fontSize: 20, fontFamily: 'Inter_800ExtraBold', color: colors.text }}>{money(order.total_minor, order.currency)}</Text>} />
       </Card>
       <SectionTitle>Order details</SectionTitle>
       <Card>

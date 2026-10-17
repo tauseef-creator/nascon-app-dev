@@ -78,7 +78,7 @@ export default function Login() {
               returnKeyType="next"
               error={emailErr}
             />
-            <Text style={[text.small, { marginBottom: spacing.xs, fontWeight: '600' }]}>Password</Text>
+            <Text style={[text.small, { marginBottom: spacing.xs, fontFamily: 'Inter_600SemiBold' }]}>Password</Text>
             <View style={[styles.pwRow, pwErr ? { borderColor: colors.danger } : null]}>
               <TextInput
                 testID="login-password"
@@ -101,7 +101,7 @@ export default function Login() {
                 style={styles.eye}
               >
                 <Ionicons name={show ? 'eye-off' : 'eye'} size={24} color={colors.textMuted} />
-                <Text style={{ color: colors.textMuted, fontSize: 14, fontWeight: '600' }}>{show ? 'Hide' : 'Show'}</Text>
+                <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>{show ? 'Hide' : 'Show'}</Text>
               </Pressable>
             </View>
             {pwErr ? <Text style={{ color: colors.danger, fontSize: 14, marginTop: 4 }}>{pwErr}</Text> : null}

@@ -422,7 +422,7 @@ function TimelineRow({
       <Ionicons name={icon} size={24} color={e.compensated ? colors.textMuted : colors.text} />
       <View style={{ flex: 1 }}>
         <Text
-          style={[text.body, { fontWeight: '600' }, e.compensated && { textDecorationLine: 'line-through', color: colors.textMuted }]}
+          style={[text.body, { fontFamily: 'Inter_600SemiBold' }, e.compensated && { textDecorationLine: 'line-through', color: colors.textMuted }]}
           accessibilityLabel={`${title}${e.compensated ? ', corrected' : ''}`}
         >
           #{e.sequence} {title}
@@ -443,7 +443,7 @@ function TimelineRow({
           style={styles.undoBtn}
         >
           <Ionicons name="arrow-undo" size={20} color={colors.danger} />
-          <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 15 }}>Undo</Text>
+          <Text style={{ color: colors.danger, fontFamily: 'Inter_700Bold', fontSize: 15 }}>Undo</Text>
         </Pressable>
       ) : null}
     </View>
@@ -539,9 +539,9 @@ const styles = StyleSheet.create({
   sideNote: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 },
   scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.lg, gap: 4 },
   side: { flex: 1, alignItems: 'center' },
-  teamName: { fontSize: 14, fontWeight: '600', color: colors.text, textAlign: 'center' },
-  scoreNum: { fontSize: 64, fontWeight: '800', lineHeight: 70, color: colors.text, fontVariant: ['tabular-nums'], minWidth: 40, textAlign: 'center' },
-  dash: { fontSize: 15, fontWeight: '700', color: colors.textMuted, paddingHorizontal: 2 },
+  teamName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text, textAlign: 'center' },
+  scoreNum: { fontSize: 64, fontFamily: 'Inter_800ExtraBold', lineHeight: 70, color: colors.text, fontVariant: ['tabular-nums'], minWidth: 40, textAlign: 'center' },
+  dash: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.textMuted, paddingHorizontal: 2 },
   scoreGrid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm },
   scoreCol: { flex: 1 },
   tl: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md, minHeight: TOUCH },

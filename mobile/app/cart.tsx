@@ -111,7 +111,7 @@ export default function CartScreen() {
               style={styles.remove}
             >
               <Ionicons name="trash-outline" size={22} color={colors.danger} />
-              <Text style={{ color: colors.danger, fontWeight: '700', fontSize: 15 }}>Remove</Text>
+              <Text style={{ color: colors.danger, fontFamily: 'Inter_700Bold', fontSize: 15 }}>Remove</Text>
             </Pressable>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm, flexWrap: 'wrap', gap: spacing.sm }}>
@@ -175,7 +175,7 @@ export default function CartScreen() {
         <Row label="Subtotal" value={money(cart.subtotal)} />
         <Row label="Discount" value={appliedCode ? 'Applied at payment' : 'None'} />
         <View style={{ height: 1, backgroundColor: colors.divider, marginVertical: spacing.sm }} />
-        <Row label="Estimated total" value={<Text style={{ fontSize: 22, fontWeight: '900', color: colors.text }}>{money(cart.subtotal)}</Text>} />
+        <Row label="Estimated total" value={<Text style={{ fontSize: 22, fontFamily: 'Inter_800ExtraBold', color: colors.text }}>{money(cart.subtotal)}</Text>} />
       </Card>
 
       {!sync.online ? <InfoBanner tone="warning" icon="cloud-offline-outline" message="You're offline. Payment needs a connection, so your cart is kept until you're back online." /> : null}

@@ -65,5 +65,5 @@ const styles = StyleSheet.create({
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  text: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  text: { color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 });

@@ -36,7 +36,7 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
             <Text style={text.h1} accessibilityRole="header">
               {club.name}
             </Text>
-            {user?.club_id === club.club_id ? <Text style={[text.small, { fontWeight: '700' }]}>Your club</Text> : null}
+            {user?.club_id === club.club_id ? <Text style={[text.small, { fontFamily: 'Inter_700Bold' }]}>Your club</Text> : null}
           </View>
         </View>
         {manages ? (

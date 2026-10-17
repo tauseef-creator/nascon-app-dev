@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Text, View } from 'react-native';
 import { Product } from '../../src/api/types';
 import { useBrand } from '../../src/auth/AuthContext';
+import { JerseyArt } from '../../src/components/JerseyArt';
 import { Screen } from '../../src/components/Screen';
 import { available, StockText } from '../../src/components/StockText';
 import { CachedNotice, EmptyState, ErrorBanner, IconButton, LoadingView, money, PressableCard, PrimaryButton } from '../../src/components/ui';
@@ -44,8 +45,8 @@ export default function StoreTab() {
       <View style={{ height: 150, borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card }} accessible accessibilityLabel="Matchday collection banner">
         <Image source={require('../../assets/merch.jpg')} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" />
         <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)']} style={{ flex: 1, justifyContent: 'flex-end', padding: spacing.lg }}>
-          <Text style={{ color: colors.accent, fontSize: 12, fontWeight: '700', letterSpacing: 0.8 }}>MATCHDAY COLLECTION</Text>
-          <Text style={{ color: colors.white, fontSize: 20, fontWeight: '700', marginTop: 2 }}>Wear your club colours</Text>
+          <Text style={{ color: colors.accent, fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 0.8 }}>MATCHDAY COLLECTION</Text>
+          <Text style={{ color: colors.white, fontSize: 20, fontFamily: 'Inter_700Bold', marginTop: 2 }}>Wear your club colours</Text>
         </LinearGradient>
       </View>
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
@@ -68,10 +69,10 @@ export default function StoreTab() {
           >
             <View style={{ flexDirection: 'row', gap: spacing.md }}>
               <View
-                style={{ width: 72, height: 72, borderRadius: radius.md, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' }}
+                style={{ width: 72, height: 72, borderRadius: radius.md, overflow: 'hidden' }}
                 accessible={false}
               >
-                <Ionicons name={p.category === 'apparel' ? 'shirt' : 'pricetag'} size={32} color={colors.text} />
+                {p.category === 'apparel' ? <JerseyArt name={p.name} height={72} /> : <Image source={require('../../assets/merch.jpg')} style={{ width: 72, height: 72 }} contentFit="cover" />}
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={text.label} numberOfLines={2}>

@@ -58,5 +58,5 @@ const styles = StyleSheet.create({
     width: '100%',
     elevation: 6,
   },
-  text: { color: '#fff', fontSize: 16, fontWeight: '600', flex: 1 },
+  text: { color: '#fff', fontSize: 16, fontFamily: 'Inter_600SemiBold', flex: 1 },
 });

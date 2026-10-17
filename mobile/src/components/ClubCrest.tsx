@@ -31,6 +31,11 @@ export function crestColor(name: string): string {
   return PALETTES[(hash(name || 'club') >>> 4) % PALETTES.length]![0];
 }
 
+/** Both crest colours for a club, used for kit artwork. */
+export function crestColors(name: string): [string, string] {
+  return PALETTES[(hash(name || 'club') >>> 4) % PALETTES.length]!;
+}
+
 export function initials(name: string): string {
   const words = name.replace(/\b(FC|SC|CF|AFC|Club)\b/gi, '').split(/\s+/).filter(Boolean);
   const w = words.length ? words : name.split(/\s+/).filter(Boolean);

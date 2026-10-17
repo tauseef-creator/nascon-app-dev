@@ -1,5 +1,6 @@
 import { Stack, router, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Inter_400Regular, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, useFonts } from '@expo-google-fonts/inter';
 import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -40,6 +41,8 @@ function Gate() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold });
+  if (!fontsLoaded && !fontError) return null;
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />

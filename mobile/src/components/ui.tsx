@@ -299,7 +299,7 @@ export function Chip({
 export function Field({ label, testID, error, ...rest }: TextInputProps & { label: string; testID: string; error?: string | null }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <Text style={[text.small, { marginBottom: spacing.xs, fontWeight: '600' }]}>{label}</Text>
+      <Text style={[text.small, { marginBottom: spacing.xs, fontFamily: 'Inter_600SemiBold' }]}>{label}</Text>
       <TextInput
         testID={testID}
         accessibilityLabel={label}
@@ -386,7 +386,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   btnCompact: { minHeight: 40, paddingHorizontal: spacing.md },
-  btnText: { fontSize: 15, fontWeight: '600', textAlign: 'center', flexShrink: 1 },
+  btnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', textAlign: 'center', flexShrink: 1 },
   iconBtn: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '800' },
+  badgeText: { color: '#fff', fontSize: 12, fontFamily: 'Inter_800ExtraBold' },
   empty: { alignItems: 'center', justifyContent: 'center', padding: spacing.xl, paddingTop: spacing.xxl },
   errorBox: {
     backgroundColor: colors.dangerBg,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
-  pillText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.4 },
+  pillText: { fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.4 },
   chip: {
     minHeight: 38,
     paddingHorizontal: 14,
@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     marginBottom: spacing.sm,
   },
-  chipText: { fontSize: 14, fontWeight: '600' },
+  chipText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
   input: {
     minHeight: TOUCH,
     borderWidth: 1,

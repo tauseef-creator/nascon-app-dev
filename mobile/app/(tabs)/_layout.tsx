@@ -20,7 +20,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accent,
         tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
         tabBarStyle: {
           backgroundColor: '#0D0D0D',
           borderTopColor: colors.divider,

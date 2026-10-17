@@ -13,6 +13,8 @@ import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { humanize } from '../../src/hooks/useClubNames';
 import { useCart } from '../../src/store/CartContext';
 import { colors, radius, spacing, text } from '../../src/theme';
+import { JerseyArt } from '../../src/components/JerseyArt';
+import { Image } from 'expo-image';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -81,15 +83,15 @@ export default function ProductScreen() {
     <Screen title={product.name} back right={cartBtn} onRefresh={q.refresh} refreshing={q.refreshing} testID="product-screen">
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
       <Card>
-        <View style={{ height: 140, borderRadius: radius.md, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.md }}>
-          <Ionicons name={product.category === 'apparel' ? 'shirt' : 'pricetag'} size={64} color={colors.text} accessibilityLabel={`${humanize(product.category)} picture`} />
+        <View style={{ height: 220, borderRadius: radius.md, overflow: 'hidden', marginBottom: spacing.md }} accessible accessibilityLabel={`${humanize(product.category)} picture`}>
+          {product.category === 'apparel' ? <JerseyArt name={product.name} height={220} /> : <Image source={require('../../assets/merch.jpg')} style={{ height: 220 }} contentFit="cover" />}
         </View>
         <Text style={text.h1} accessibilityRole="header">
           {product.name}
         </Text>
         <Text style={text.small}>{humanize(product.category)}</Text>
         {product.description ? <Text style={[text.body, { marginTop: spacing.sm }]}>{product.description}</Text> : null}
-        <Text style={{ fontSize: 28, fontWeight: '800', marginTop: spacing.md, color: colors.text }} testID="product-price">
+        <Text style={{ fontSize: 28, fontFamily: 'Inter_800ExtraBold', marginTop: spacing.md, color: colors.text }} testID="product-price">
           {variant ? money(variant.price_minor, variant.currency) : ''}
         </Text>
         {variant ? <StockText count={available(variant)} /> : null}

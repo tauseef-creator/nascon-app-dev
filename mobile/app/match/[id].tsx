@@ -3,7 +3,7 @@ import { randomUUID } from 'expo-crypto';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ImageBackground, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '../../src/api/client';
 import { errorText } from '../../src/api/errors';
 import { Match, Product, ScoreProjection, TimelineEvent } from '../../src/api/types';
@@ -190,7 +190,9 @@ export default function MatchDetail() {
     <Screen title={`${homeName} vs ${awayName}`} subtitle={info?.venue ?? undefined} back onRefresh={score.refresh} refreshing={score.refreshing} testID="match-screen">
       {score.fromCache && score.updatedAt ? <CachedNotice updatedAt={score.updatedAt} /> : null}
 
-      <Card testID="score-header">
+      <Card testID="score-header" style={{ padding: 0, overflow: 'hidden' }}>
+        <ImageBackground source={require('../../assets/stadium.jpg')} resizeMode="cover">
+          <View style={{ backgroundColor: 'rgba(7, 12, 22, 0.84)', padding: spacing.lg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm }}>
           <StatusPill kind={matchPill(s.status)} testID="match-status" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
@@ -226,6 +228,8 @@ export default function MatchDetail() {
             {s.winner_team_id ? `${teamName(s.winner_team_id)} won` : s.outcome === 'draw' ? 'Draw' : 'Full time'}
           </Text>
         ) : null}
+          </View>
+        </ImageBackground>
       </Card>
 
       {pinned.data?.product ? <PinnedCard product={pinned.data.product} /> : null}
@@ -440,8 +444,8 @@ function TimelineRow({
 function PinnedCard({ product }: { product: Product }) {
   const brand = useBrand();
   const v = product.variants?.[0];
-  return (
-    <Card testID="pinned-product" style={{ borderLeftWidth: 6, borderLeftColor: brand.secondary }}>
+    return (
+      <Card testID="pinned-product" style={{ borderLeftWidth: 3, borderLeftColor: brand.secondary }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
         <Ionicons name="star" size={18} color={colors.warning} />
         <Text style={[text.section, { color: colors.warning }]}>Featured in this match</Text>

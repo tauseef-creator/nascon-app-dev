@@ -96,7 +96,7 @@ export default function SyncScreen() {
               <SecondaryButton title="Discard" compact danger icon="trash-outline" onPress={() => setDiscard(a)} testID={`sync-discard-${a.action_id}`} />
             </View>
             {open === a.action_id ? (
-              <Text selectable style={{ fontFamily: 'monospace', fontSize: 13, backgroundColor: '#F3F4F6', padding: spacing.sm, borderRadius: radius.sm, color: colors.text }}>
+              <Text selectable style={{ fontFamily: 'monospace', fontSize: 13, backgroundColor: colors.neutralBg, padding: spacing.sm, borderRadius: radius.sm, color: colors.text }}>
                 {JSON.stringify({ action_id: a.action_id, type: a.type, queued_at: a.queued_at, base_version: a.base_version, payload: a.payload }, null, 2)}
               </Text>
             ) : null}

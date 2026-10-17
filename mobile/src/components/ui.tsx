@@ -45,7 +45,7 @@ export function PressableCard({
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={onPress}
-      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85, backgroundColor: '#F9FAFB' }, style]}
+      style={({ pressed }) => [styles.card, pressed && { opacity: 0.85, backgroundColor: '#242A35' }, style]}
     >
       {children}
     </Pressable>
@@ -66,7 +66,6 @@ type ButtonProps = {
 };
 
 export function PrimaryButton({ title, onPress, testID, loading, disabled, icon, style, accessibilityLabel, accessibilityHint, compact }: ButtonProps) {
-  const brand = useBrand();
   const off = disabled || loading;
   return (
     <Pressable
@@ -80,17 +79,17 @@ export function PrimaryButton({ title, onPress, testID, loading, disabled, icon,
       style={({ pressed }) => [
         styles.btn,
         compact && styles.btnCompact,
-        { backgroundColor: off ? '#9CA3AF' : brand.primary },
+        { backgroundColor: off ? '#9CA3AF' : colors.ink },
         pressed && !off && { opacity: 0.85 },
         style,
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={brand.onPrimary} />
+        <ActivityIndicator color={colors.white} />
       ) : icon ? (
-        <Ionicons name={icon} size={20} color={off ? '#FFFFFF' : brand.onPrimary} />
+        <Ionicons name={icon} size={20} color={colors.white} />
       ) : null}
-      <Text style={[styles.btnText, { color: off ? '#FFFFFF' : brand.onPrimary }]} numberOfLines={2}>
+      <Text style={[styles.btnText, { color: colors.white }]} numberOfLines={2}>
         {loading ? 'Please wait…' : title}
       </Text>
     </Pressable>
@@ -113,8 +112,8 @@ export function SecondaryButton({ title, onPress, testID, loading, disabled, ico
       style={({ pressed }) => [
         styles.btn,
         compact && styles.btnCompact,
-        { backgroundColor: colors.card, borderWidth: 2, borderColor: off ? colors.border : fg },
-        pressed && !off && { backgroundColor: '#F3F4F6' },
+        { backgroundColor: colors.card, borderWidth: 1, borderColor: off ? colors.border : colors.border },
+        pressed && !off && { backgroundColor: '#242A35' },
         style,
       ]}
     >
@@ -229,17 +228,17 @@ export type PillKind = 'live' | 'ft' | 'upcoming' | 'clinched' | 'eliminated' | 
 
 const PILL: Record<PillKind, { label: string; icon: IconName; bg: string; fg: string }> = {
   live: { label: 'LIVE', icon: 'radio-button-on', bg: colors.dangerBg, fg: colors.live },
-  ft: { label: 'FT', icon: 'flag', bg: colors.neutralBg, fg: '#1F2937' },
-  upcoming: { label: 'UPCOMING', icon: 'time-outline', bg: colors.infoBg, fg: '#1E3A8A' },
-  clinched: { label: 'CLINCHED', icon: 'checkmark-circle', bg: colors.successBg, fg: '#065F46' },
-  eliminated: { label: 'OUT', icon: 'close-circle', bg: colors.dangerBg, fg: '#7F1D1D' },
-  possible: { label: 'IN CONTENTION', icon: 'ellipse-outline', bg: colors.neutralBg, fg: '#1F2937' },
+  ft: { label: 'FT', icon: 'flag', bg: colors.neutralBg, fg: colors.textMuted },
+  upcoming: { label: 'UPCOMING', icon: 'time-outline', bg: colors.infoBg, fg: colors.info },
+  clinched: { label: 'CLINCHED', icon: 'checkmark-circle', bg: colors.successBg, fg: colors.success },
+  eliminated: { label: 'OUT', icon: 'close-circle', bg: colors.dangerBg, fg: colors.danger },
+  possible: { label: 'IN CONTENTION', icon: 'ellipse-outline', bg: colors.neutralBg, fg: colors.textMuted },
   pending: { label: 'PENDING', icon: 'cloud-upload-outline', bg: colors.warningBg, fg: colors.warning },
-  applied: { label: 'APPLIED', icon: 'checkmark-circle', bg: colors.successBg, fg: '#065F46' },
-  rejected: { label: 'REJECTED', icon: 'close-circle', bg: colors.dangerBg, fg: '#7F1D1D' },
-  duplicate: { label: 'ALREADY SYNCED', icon: 'copy-outline', bg: colors.neutralBg, fg: '#1F2937' },
+  applied: { label: 'APPLIED', icon: 'checkmark-circle', bg: colors.successBg, fg: colors.success },
+  rejected: { label: 'REJECTED', icon: 'close-circle', bg: colors.dangerBg, fg: colors.danger },
+  duplicate: { label: 'ALREADY SYNCED', icon: 'copy-outline', bg: colors.neutralBg, fg: colors.textMuted },
   corrected: { label: 'CORRECTED', icon: 'arrow-undo', bg: colors.warningBg, fg: colors.warning },
-  offline: { label: 'SAVED COPY', icon: 'cloud-offline-outline', bg: colors.neutralBg, fg: '#1F2937' },
+  offline: { label: 'SAVED COPY', icon: 'cloud-offline-outline', bg: colors.neutralBg, fg: colors.textMuted },
 };
 
 export function StatusPill({ kind, label, testID }: { kind: PillKind; label?: string; testID?: string }) {
@@ -284,13 +283,13 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
-        selected ? { backgroundColor: brand.primary, borderColor: brand.primary } : { backgroundColor: colors.card, borderColor: colors.border },
+        selected ? { backgroundColor: '#1B2A43', borderColor: brand.primaryText } : { backgroundColor: colors.card, borderColor: colors.border },
         disabled && { opacity: 0.45 },
         pressed && { opacity: 0.8 },
       ]}
     >
-      {selected ? <Ionicons name="checkmark" size={18} color={brand.onPrimary} /> : null}
-      <Text style={[styles.chipText, { color: selected ? brand.onPrimary : colors.text }]} numberOfLines={1}>
+      {selected ? <Ionicons name="checkmark" size={16} color={brand.primaryText} /> : null}
+      <Text style={[styles.chipText, { color: selected ? colors.text : colors.textMuted }]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
@@ -375,11 +374,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: spacing.lg,
     marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.divider,
     ...shadow,
   },
   btn: {
     minHeight: TOUCH + 4,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.sm,
     flexDirection: 'row',
@@ -388,7 +389,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   btnCompact: { minHeight: TOUCH, paddingHorizontal: spacing.md },
-  btnText: { fontSize: 18, fontWeight: '700', textAlign: 'center', flexShrink: 1 },
+  btnText: { fontSize: 16, fontWeight: '700', textAlign: 'center', flexShrink: 1 },
   iconBtn: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',
@@ -435,7 +436,7 @@ const styles = StyleSheet.create({
     minHeight: TOUCH,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.pill,
-    borderWidth: 2,
+    borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

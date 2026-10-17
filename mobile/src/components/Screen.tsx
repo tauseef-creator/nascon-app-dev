@@ -48,14 +48,14 @@ export function TenantLogo({ size = 36 }: { size?: number }) {
         width: size,
         height: size,
         borderRadius: size / 2,
-        backgroundColor: brand.secondary,
+        backgroundColor: colors.card,
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
-        borderColor: '#fff',
+        borderColor: brand.primaryText,
       }}
     >
-      <Text style={{ color: brand.onSecondary, fontWeight: '900', fontSize: size * 0.4 }}>{initials || 'N'}</Text>
+      <Text style={{ color: brand.primaryText, fontWeight: '800', fontSize: size * 0.38 }}>{initials || 'N'}</Text>
     </View>
   );
 }
@@ -63,7 +63,7 @@ export function TenantLogo({ size = 36 }: { size?: number }) {
 export function Header({ title, subtitle, back, right }: { title: string; subtitle?: string; back?: boolean; right?: React.ReactNode }) {
   const brand = useBrand();
   return (
-    <View style={[styles.header, { backgroundColor: brand.primary }]}>
+    <View style={[styles.header, { borderBottomColor: brand.primary }]}>
       {back ? (
         <Pressable
           testID="header-back"
@@ -72,19 +72,19 @@ export function Header({ title, subtitle, back, right }: { title: string; subtit
           onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
           style={({ pressed }) => [styles.headerBtn, pressed && { opacity: 0.6 }]}
         >
-          <Ionicons name="arrow-back" size={26} color={brand.onPrimary} />
+          <Ionicons name="arrow-back" size={24} color={colors.white} />
         </Pressable>
       ) : (
         <View style={{ paddingHorizontal: spacing.sm }}>
-          <TenantLogo />
+          <TenantLogo size={30} />
         </View>
       )}
       <View style={{ flex: 1, paddingHorizontal: spacing.xs }}>
-        <Text accessibilityRole="header" numberOfLines={1} style={[styles.title, { color: brand.onPrimary }]}>
+        <Text accessibilityRole="header" numberOfLines={1} style={styles.title}>
           {title}
         </Text>
         {subtitle ? (
-          <Text numberOfLines={1} style={[styles.subtitle, { color: brand.onPrimary }]}>
+          <Text numberOfLines={1} style={styles.subtitle}>
             {subtitle}
           </Text>
         ) : null}
@@ -97,7 +97,7 @@ export function Header({ title, subtitle, back, right }: { title: string; subtit
 export function Screen({ title, subtitle, back, right, children, scroll = true, refreshing, onRefresh, testID, footer }: Props) {
   const brand = useBrand();
   return (
-    <SafeAreaView style={[styles.safe, { backgroundColor: brand.primary }]} edges={['top', 'left', 'right']} testID={testID}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']} testID={testID}>
       <SyncBar />
       <Header title={title} subtitle={subtitle} back={back} right={right} />
       <View style={styles.body}>
@@ -121,12 +121,12 @@ export function Screen({ title, subtitle, back, right, children, scroll = true, 
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1 },
-  header: { minHeight: 56, flexDirection: 'row', alignItems: 'center', paddingRight: spacing.xs },
+  safe: { flex: 1, backgroundColor: '#111827' },
+  header: { minHeight: 56, flexDirection: 'row', alignItems: 'center', paddingRight: spacing.xs, backgroundColor: '#111827', borderBottomWidth: 2 },
   headerBtn: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.xs },
-  title: { fontSize: 20, fontWeight: '800' },
-  subtitle: { fontSize: 14, fontWeight: '600', opacity: 0.95 },
+  title: { fontSize: 18, fontWeight: '800', color: colors.white },
+  subtitle: { fontSize: 12, fontWeight: '600', color: '#B9C5D3' },
   right: { flexDirection: 'row', alignItems: 'center' },
   body: { flex: 1, backgroundColor: colors.bg },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  content: { padding: spacing.md, paddingBottom: spacing.xxl },
 });

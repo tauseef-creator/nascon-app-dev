@@ -1,17 +1,13 @@
 import React, { useMemo } from 'react';
-import { Text } from 'react-native';
 import { Match } from '../../src/api/types';
-import { useAuth } from '../../src/auth/AuthContext';
 import { LeaguePicker } from '../../src/components/LeaguePicker';
 import { MatchCard } from '../../src/components/MatchCard';
 import { Screen } from '../../src/components/Screen';
 import { CachedNotice, EmptyState, ErrorBanner, LoadingView, SectionTitle } from '../../src/components/ui';
 import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { useLeague } from '../../src/store/LeagueContext';
-import { text } from '../../src/theme';
 
 export default function Fixtures() {
-  const { user } = useAuth();
   const lg = useLeague();
   const id = lg.league?.league_id ?? null;
   const q = useCachedQuery<{ matches: Match[] }>(id ? `matches:${id}` : null, id ? `/api/v1/matches?league_id=${encodeURIComponent(id)}` : null);
@@ -68,9 +64,6 @@ export default function Fixtures() {
 
   return (
     <Screen title="Fixtures" subtitle={lg.league?.name} onRefresh={refresh} refreshing={q.refreshing} testID="fixtures-screen">
-      <Text style={[text.muted, { marginBottom: 8 }]} testID="fixtures-greeting">
-        Hello, {user?.display_name ?? 'there'}. Tap a match for the live score and timeline.
-      </Text>
       <LeaguePicker />
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
       {body}

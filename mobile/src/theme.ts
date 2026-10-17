@@ -3,22 +3,23 @@
 import { Platform, TextStyle, ViewStyle } from 'react-native';
 
 export const colors = {
-  bg: '#F5F6F8',
-  card: '#FFFFFF',
-  text: '#111827',
-  textMuted: '#4B5563',
-  border: '#D1D5DB',
-  divider: '#E5E7EB',
-  success: '#047857',
-  successBg: '#D1FAE5',
-  danger: '#B91C1C',
-  dangerBg: '#FEE2E2',
-  warning: '#92400E',
-  warningBg: '#FEF3C7',
-  info: '#1D4ED8',
-  infoBg: '#DBEAFE',
-  neutralBg: '#E5E7EB',
-  live: '#B91C1C',
+  bg: '#090B10',
+  card: '#191C23',
+  ink: '#263C61',
+  text: '#F5F7FB',
+  textMuted: '#A4ADBA',
+  border: '#343944',
+  divider: '#2A2E37',
+  success: '#72D9A9',
+  successBg: '#16372C',
+  danger: '#FF737A',
+  dangerBg: '#40252A',
+  warning: '#F5CB72',
+  warningBg: '#3C3322',
+  info: '#8DB4FF',
+  infoBg: '#1E304B',
+  neutralBg: '#2A2E37',
+  live: '#FF6B72',
   white: '#FFFFFF',
   black: '#000000',
 };
@@ -27,7 +28,7 @@ export const DEFAULT_PRIMARY = '#0B5FFF';
 export const DEFAULT_SECONDARY = '#FFB800';
 
 export const spacing = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 };
-export const radius = { sm: 8, md: 12, lg: 16, pill: 999 };
+export const radius = { sm: 8, md: 14, lg: 18, pill: 999 };
 export const TOUCH = 48;
 
 export const font = {
@@ -56,12 +57,12 @@ export const text: Record<string, TextStyle> = {
 };
 
 export const shadow: ViewStyle = Platform.select({
-  android: { elevation: 2 },
+  android: { elevation: 1 },
   default: {
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 1 },
   },
 }) as ViewStyle;
 
@@ -102,6 +103,16 @@ export function darken(hex: string, amount: number): string {
 export function readableOnWhite(hex: string): string {
   let c = hex;
   for (let i = 0; i < 10 && contrast(c, '#FFFFFF') < 4.5; i++) c = darken(c, 0.12);
+  return c;
+}
+
+/** Bright tenant accent that stays readable on the dark app surface. */
+export function readableOnDark(hex: string): string {
+  let c = hex;
+  for (let i = 0; i < 10 && contrast(c, '#090B10') < 4.5; i++) {
+    const [r, g, b] = hexToRgb(c).map((v) => Math.min(255, Math.round(v + (255 - v) * 0.12)));
+    c = '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+  }
   return c;
 }
 

@@ -6,7 +6,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { api, loadBaseUrl, setToken, setUnauthorizedHandler } from '../api/client';
 import { AppError } from '../api/errors';
 import { Role, Tenant, User } from '../api/types';
-import { DEFAULT_PRIMARY, DEFAULT_SECONDARY, isValidHex, onColor, readableOnWhite } from '../theme';
+import { DEFAULT_PRIMARY, DEFAULT_SECONDARY, isValidHex, onColor, readableOnDark } from '../theme';
 
 const TOKEN_KEY = 'nascon_token';
 const PROFILE_KEY = 'nascon.profile';
@@ -135,7 +135,7 @@ export function useBrand(): Brand {
       secondary: s,
       onPrimary: onColor(p),
       onSecondary: onColor(s),
-      primaryText: readableOnWhite(p),
+      primaryText: readableOnDark(p),
       tenantName: tenant?.name ?? 'NaSCon League',
       logoUrl: tenant?.logo_url ?? null,
     };

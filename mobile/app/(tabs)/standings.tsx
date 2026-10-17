@@ -85,7 +85,7 @@ export default function StandingsTab() {
                     style={({ pressed }) => [
                       styles.tr,
                       mine && { backgroundColor: '#EFF6FF' },
-                      pressed && { backgroundColor: '#F3F4F6' },
+                      pressed && { backgroundColor: colors.neutralBg },
                     ]}
                   >
                     <View style={[styles.rankCell, inZone && { borderLeftColor: brand.primary }]}>
@@ -150,7 +150,7 @@ function LegendRow({ kind, text: t }: { kind: PillKind; text: string }) {
 
 const styles = StyleSheet.create({
   tr: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderBottomWidth: 1, borderBottomColor: colors.divider },
-  th: { backgroundColor: '#F9FAFB', minHeight: 44 },
+  th: { backgroundColor: colors.neutralBg, minHeight: 44 },
   cell: { fontSize: 16, color: colors.text, textAlign: 'center', paddingVertical: 8 },
   hcell: { fontWeight: '800', color: colors.textMuted, fontSize: 15 },
   teamCol: { width: 150, textAlign: 'left', paddingHorizontal: 6 },

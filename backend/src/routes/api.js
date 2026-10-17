@@ -81,9 +81,21 @@ router.get('/clubs/:club_id', requireAuth, async (req, res) => {
   if (!rows.length) throw notFound('NOT_FOUND', `Club ${req.params.club_id} does not exist.`, { club_id: req.params.club_id });
   const club = rows[0];
   if (!authorize(req.principal, ACTIONS.CLUB_READ, { tenant_id: club.tenant_id, club_id: club.club_id })) throw forbidden();
-  const players = await query(
-    'SELECT player_id, name, position FROM players WHERE club_id = $1 AND tenant_id = $2 ORDER BY player_id',
+  // Once a roster is configured, registrations are the source of truth. The
+  // original players table is only a fallback for clubs without a roster yet.
+  const roster = await query(
+    'SELECT 1 FROM squads WHERE club_id = $1 AND tenant_id = $2 LIMIT 1',
     [club.club_id, club.tenant_id]);
+  const players = roster.rowCount
+    ? await query(
+      `SELECT DISTINCT ON (r.player_id) r.player_id, r.name, r.position, r.role
+         FROM registrations r JOIN squads s ON s.squad_id = r.squad_id
+        WHERE s.club_id = $1 AND s.tenant_id = $2
+        ORDER BY r.player_id, r.league_id`,
+      [club.club_id, club.tenant_id])
+    : await query(
+      'SELECT player_id, name, position FROM players WHERE club_id = $1 AND tenant_id = $2 ORDER BY player_id',
+      [club.club_id, club.tenant_id]);
   const data = club.data || {};
   res.status(200).json({
     club_id: club.club_id,

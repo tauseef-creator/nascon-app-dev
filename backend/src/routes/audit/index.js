@@ -23,6 +23,7 @@ router.use(require('./sports'));
 router.use(require('./fixtures'));
 router.use(require('./leagues'));
 router.use(require('./events'));
+router.use(require('./standings'));
 router.use(require('./roster'));
 router.use(require('./store'));
 router.use(require('./rbac'));

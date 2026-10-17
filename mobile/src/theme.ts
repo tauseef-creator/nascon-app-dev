@@ -36,23 +36,23 @@ export const radius = { sm: 12, md: 18, lg: 22, pill: 999 };
 export const TOUCH = 48;
 
 export const font = {
-  body: 16,
-  small: 14,
-  label: 16,
-  title: 20,
-  h1: 32,
+  body: 15,
+  small: 13,
+  label: 15,
+  title: 17,
+  h1: 26,
   score: 48,
 };
 
 export const text: Record<string, TextStyle> = {
-  body: { fontSize: font.body, color: colors.text, lineHeight: 22 },
-  muted: { fontSize: font.body, color: colors.textMuted, lineHeight: 22 },
-  small: { fontSize: font.small, color: colors.textMuted, lineHeight: 20 },
+  body: { fontSize: font.body, color: colors.text, lineHeight: 20 },
+  muted: { fontSize: font.body, color: colors.textMuted, lineHeight: 20 },
+  small: { fontSize: font.small, color: colors.textMuted, lineHeight: 18 },
   label: { fontSize: font.label, color: colors.text, fontWeight: '600' },
   title: { fontSize: font.title, color: colors.text, fontWeight: '700' },
-  h1: { fontSize: font.h1, color: colors.text, fontWeight: '800' },
+  h1: { fontSize: font.h1, color: colors.text, fontWeight: '700', letterSpacing: -0.4 },
   section: {
-    fontSize: 17,
+    fontSize: 15,
     color: colors.text,
     fontWeight: '700',
   },

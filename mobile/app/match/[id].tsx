@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
   scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.lg, gap: 4 },
   side: { flex: 1, alignItems: 'center' },
   teamName: { fontSize: 14, fontWeight: '600', color: colors.text, textAlign: 'center' },
-  scoreNum: { fontSize: 76, fontWeight: '800', lineHeight: 84, color: colors.text, fontVariant: ['tabular-nums'], minWidth: 40, textAlign: 'center' },
+  scoreNum: { fontSize: 64, fontWeight: '800', lineHeight: 70, color: colors.text, fontVariant: ['tabular-nums'], minWidth: 40, textAlign: 'center' },
   dash: { fontSize: 15, fontWeight: '700', color: colors.textMuted, paddingHorizontal: 2 },
   scoreGrid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm },
   scoreCol: { flex: 1 },

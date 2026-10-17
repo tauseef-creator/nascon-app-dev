@@ -113,9 +113,9 @@ export default function Fixtures() {
 const styles = StyleSheet.create({
   panel: { backgroundColor: 'rgba(28,28,30,0.92)', borderRadius: 24, overflow: 'hidden', paddingBottom: spacing.sm, marginBottom: spacing.md },
   segment: { flexDirection: 'row', paddingHorizontal: spacing.sm, paddingTop: spacing.xs },
-  segBtn: { flex: 1, minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  segBtn: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   segLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  segText: { color: colors.textMuted, fontSize: 16, fontWeight: '600' },
+  segText: { color: colors.textMuted, fontSize: 14, fontWeight: '600' },
   segTextOn: { color: colors.text, fontWeight: '700' },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.live },
   leagueRow: {
@@ -128,6 +128,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   leagueIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' },
-  leagueName: { color: colors.text, fontSize: 14, fontWeight: '700', flexShrink: 1 },
-  none: { color: colors.text, fontSize: 20, fontWeight: '700', textAlign: 'center', paddingVertical: spacing.xxl },
+  leagueName: { color: colors.text, fontSize: 13, fontWeight: '700', flexShrink: 1 },
+  none: { color: colors.text, fontSize: 17, fontWeight: '700', textAlign: 'center', paddingVertical: spacing.xxl },
 });

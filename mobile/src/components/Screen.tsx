@@ -8,6 +8,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBrand } from '../auth/AuthContext';
 import { colors, onColor, spacing, TOUCH } from '../theme';
+import { AppMark } from './AppMark';
 import { SyncBar } from './SyncBar';
 
 type Props = {
@@ -42,19 +43,8 @@ export function TenantLogo({ size = 36 }: { size?: number }) {
     );
   }
   return (
-    <View
-      accessible
-      accessibilityLabel={`${brand.tenantName} logo`}
-      style={{
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        backgroundColor: '#636366',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <Text style={{ color: colors.white, fontWeight: '700', fontSize: size * 0.38 }}>{initials || 'N'}</Text>
+    <View accessible accessibilityLabel={`${brand.tenantName} logo`}>
+      <AppMark size={size} />
     </View>
   );
 }
@@ -140,19 +130,19 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.sm },
   headerTop: { minHeight: TOUCH, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   subHeader: { minHeight: 56, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  subTitle: { fontSize: 17, fontWeight: '700', color: colors.white },
+  subTitle: { fontSize: 16, fontWeight: '600', color: colors.white },
   subSubtitle: { fontSize: 12, fontWeight: '600', color: colors.textMuted, marginTop: 1 },
   subRight: { minWidth: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end' },
   headerBtn: {
-    width: TOUCH,
-    height: TOUCH,
-    borderRadius: TOUCH / 2,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { flex: 1, fontSize: 32, fontWeight: '700', color: colors.white, letterSpacing: -0.6 },
-  subtitle: { fontSize: 14, fontWeight: '600', color: colors.textMuted, marginTop: 2 },
+  title: { flex: 1, fontSize: 28, fontWeight: '700', color: colors.white, letterSpacing: -0.6 },
+  subtitle: { fontSize: 13, fontWeight: '600', color: colors.textMuted, marginTop: 2 },
   right: { flexDirection: 'row', alignItems: 'center' },
   body: { flex: 1 },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl },

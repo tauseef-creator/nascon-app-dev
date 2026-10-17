@@ -1,7 +1,7 @@
 import React from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useLeague } from '../store/LeagueContext';
-import { spacing, text } from '../theme';
+import { spacing } from '../theme';
 import { Chip } from './ui';
 
 export function LeaguePicker() {
@@ -9,7 +9,6 @@ export function LeaguePicker() {
   if (leagues.length <= 1) return null;
   return (
     <View style={{ marginBottom: spacing.sm }} accessibilityRole="radiogroup" accessibilityLabel="Choose a league">
-      <Text style={[text.section, { marginBottom: spacing.sm }]}>League</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         {leagues.map((l) => (
           <Chip

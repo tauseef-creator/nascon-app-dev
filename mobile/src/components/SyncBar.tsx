@@ -53,7 +53,7 @@ export function SyncBar() {
 
 const styles = StyleSheet.create({
   bar: {
-    minHeight: 40,
+    minHeight: 34,
     marginHorizontal: spacing.lg,
     marginTop: spacing.xs,
     paddingHorizontal: 14,
@@ -65,5 +65,5 @@ const styles = StyleSheet.create({
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
   right: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  text: { color: colors.textMuted, fontSize: 13, fontWeight: '600' },
+  text: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
 });

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { errorText } from '../src/api/errors';
 import { getBaseUrl } from '../src/api/client';
 import { useAuth } from '../src/auth/AuthContext';
+import { AppMark } from '../src/components/AppMark';
 import { SyncBar } from '../src/components/SyncBar';
 import { Card, Chip, ErrorBanner, Field, InfoBanner, PrimaryButton, SecondaryButton } from '../src/components/ui';
 import { colors, radius, spacing, text, TOUCH } from '../src/theme';
@@ -53,7 +54,7 @@ export default function Login() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
             <View style={styles.logo} accessible accessibilityLabel="NaSCon League logo">
-              <Ionicons name="trophy" size={36} color={colors.black} />
+              <AppMark size={72} />
             </View>
             <Text style={text.h1} accessibilityRole="header">
               NaSCon League
@@ -148,15 +149,8 @@ const styles = StyleSheet.create({
   wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 360 },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, width: '100%', maxWidth: 560, alignSelf: 'center' },
   brand: { alignItems: 'center', marginVertical: spacing.lg, gap: spacing.xs },
-  logo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: colors.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.sm,
-  },
+  logo: { marginBottom: spacing.sm },
+
   pwRow: {
     flexDirection: 'row',
     alignItems: 'center',

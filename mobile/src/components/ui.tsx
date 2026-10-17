@@ -176,7 +176,7 @@ export function EmptyState({
 }) {
   return (
     <View testID={testID} style={styles.empty} accessible accessibilityLabel={`${title}. ${message ?? ''}`}>
-      <Ionicons name={icon} size={48} color={colors.textMuted} />
+      <Ionicons name={icon} size={36} color={colors.textMuted} />
       <Text style={[text.title, { textAlign: 'center', marginTop: spacing.md }]}>{title}</Text>
       {message ? <Text style={[text.muted, { textAlign: 'center', marginTop: spacing.sm }]}>{message}</Text> : null}
       {actionTitle && onAction ? (
@@ -245,7 +245,7 @@ export function StatusPill({ kind, label, testID }: { kind: PillKind; label?: st
   const p = PILL[kind];
   return (
     <View testID={testID} style={[styles.pill, { backgroundColor: p.bg }]} accessible accessibilityLabel={`Status: ${label ?? p.label}`}>
-      <Ionicons name={p.icon} size={16} color={p.fg} />
+      <Ionicons name={p.icon} size={12} color={p.fg} />
       <Text style={[styles.pillText, { color: p.fg }]}>{label ?? p.label}</Text>
     </View>
   );
@@ -279,6 +279,7 @@ export function Chip({
       accessibilityState={{ selected, disabled: !!disabled, checked: selected }}
       accessibilityLabel={accessibilityLabel ?? label}
       disabled={disabled}
+      hitSlop={6}
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   btn: {
-    minHeight: TOUCH + 4,
+    minHeight: TOUCH,
     borderRadius: radius.pill,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.sm,
@@ -384,8 +385,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing.sm,
   },
-  btnCompact: { minHeight: TOUCH, paddingHorizontal: spacing.md },
-  btnText: { fontSize: 16, fontWeight: '700', textAlign: 'center', flexShrink: 1 },
+  btnCompact: { minHeight: 40, paddingHorizontal: spacing.md },
+  btnText: { fontSize: 15, fontWeight: '600', textAlign: 'center', flexShrink: 1 },
   iconBtn: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',
@@ -425,10 +426,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
-  pillText: { fontSize: 13, fontWeight: '800', letterSpacing: 0.4 },
+  pillText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.4 },
   chip: {
-    minHeight: TOUCH,
-    paddingHorizontal: spacing.lg,
+    minHeight: 38,
+    paddingHorizontal: 14,
     borderRadius: radius.pill,
     borderWidth: 1,
     flexDirection: 'row',
@@ -438,9 +439,9 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     marginBottom: spacing.sm,
   },
-  chipText: { fontSize: font.body, fontWeight: '600' },
+  chipText: { fontSize: 14, fontWeight: '600' },
   input: {
-    minHeight: TOUCH + 4,
+    minHeight: TOUCH,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,

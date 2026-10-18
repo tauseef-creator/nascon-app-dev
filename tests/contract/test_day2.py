@@ -214,6 +214,12 @@ def test_moderation_dlq_and_concurrency(api):
     assert all(r.json()["kicked_users"] == ["user-spammer"] for r in res)
 
 
+def test_moderation_dlq_only_probe(api):
+    j = api.post("/audit/v1/moderation/test", {"chat_room_id": "chat-dlq", "incoming_messages": [],
+                                               "check_dlq": True, "simulate_failed_notifications": 1}).json()
+    assert j["filtered_messages"] == [] and j["dlq_status"]["queue_depth"] >= 1
+
+
 # ---------- 5.9 metrics and privacy ----------
 
 def test_metrics_and_privacy(api):

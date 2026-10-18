@@ -128,6 +128,12 @@ describe('GET /audit/v1/qr/:entity_id', () => {
     expect(p.short_url).toMatch(/\/q\/p-[a-f0-9]{10}$/);
   });
 
+  test('a seeded entity mapped on demand (reset window) gets its seeded code', async () => {
+    mockDb.qr.delete('match-m1');
+    const m = (await request(app).get('/audit/v1/qr/match-m1?inspect=true')).body;
+    expect(m.short_url).toBe('http://localhost:8080/q/m1-live');
+  });
+
   test('unknown entity -> 404 QR_NOT_FOUND', async () => {
     for (const id of ['nope-404', 'match-ghost', "x'; DROP TABLE qr_codes;--"]) {
       const r = await request(app).get(`/audit/v1/qr/${encodeURIComponent(id)}`);

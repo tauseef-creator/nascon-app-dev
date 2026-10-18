@@ -30,7 +30,8 @@ function validate(body) {
   const bad = [];
   if (!isId(body.chat_room_id)) bad.push('chat_room_id');
   const msgs = body.incoming_messages;
-  if (!Array.isArray(msgs) || msgs.length < 1 || msgs.length > MAX_MESSAGES) {
+  // An empty list is valid: a DLQ-only probe sends no messages (spec 5.8 sets no minimum).
+  if (!Array.isArray(msgs) || msgs.length > MAX_MESSAGES) {
     bad.push('incoming_messages');
   } else {
     msgs.forEach((m, i) => {

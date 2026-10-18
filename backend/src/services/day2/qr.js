@@ -49,7 +49,9 @@ async function entityStatus(type, entityId, f) {
 // Create the mapping on demand with a deterministic short code; fall back to a hashed code when
 // another entity already owns it. Returns { short_code, scan_count }.
 async function ensureMapping(entityId, type) {
-  for (const code of [Q.shortCodeFor(entityId, type), Q.fallbackShortCode(entityId, type)]) {
+  const seeded = require('../../db/day2Seed').QR_MAPPINGS.find((m) => m.entity_id === entityId);
+  const candidates = [seeded && seeded.short_code, Q.shortCodeFor(entityId, type), Q.fallbackShortCode(entityId, type)];
+  for (const code of candidates.filter(Boolean)) {
     await query('INSERT INTO qr_codes (entity_id, short_code) VALUES ($1, $2) ON CONFLICT DO NOTHING', [entityId, code]);
     const { rows } = await query('SELECT short_code, scan_count FROM qr_codes WHERE entity_id = $1', [entityId]);
     if (rows.length) return rows[0];

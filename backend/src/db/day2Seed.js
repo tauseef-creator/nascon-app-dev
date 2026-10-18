@@ -36,7 +36,11 @@ async function seedDay2() {
     [m.match_id, m.sport_id, m.league_id, m.home_team_id, m.away_team_id]);
   for (const e of M1_EVENTS) await appendEvent(e); // replay of an existing event_id returns 200
   for (const q of QR_MAPPINGS) {
-    await query('INSERT INTO qr_codes (entity_id, short_code, scan_count) VALUES ($1,$2,0) ON CONFLICT DO NOTHING',
+    // Upsert: a client polling /qr/{id} between reset and this seed may have inserted a fallback code.
+    await query(`DELETE FROM qr_codes WHERE short_code = $2 AND entity_id <> $1`, [q.entity_id, q.short_code]);
+    await query(
+      `INSERT INTO qr_codes (entity_id, short_code, scan_count) VALUES ($1,$2,0)
+       ON CONFLICT (entity_id) DO UPDATE SET short_code = EXCLUDED.short_code, scan_count = 0`,
       [q.entity_id, q.short_code]);
   }
   await query(

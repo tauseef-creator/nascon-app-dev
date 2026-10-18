@@ -9,10 +9,10 @@ compared literally by the grader.
 
 - Team T53 "NXT Mafia" (Tauseef Razaq, Abdul Wahab), room A103.
 - Repo: https://github.com/tauseef-creator/nascon-app-dev (public, required).
-- **Push windows (each missed window = -2 points):** at least one push inside
-  10:45-11:45, 11:45-12:45, 12:45-13:45, 13:45-14:45 PKT. Push early in each window.
+- **Day 2 (Oct 18) push windows (each missed window is penalised):** at least one push inside
+  10:15-11:30, 11:30-12:45, 12:45-13:45 and 13:45-14:00 PKT (final code freeze). Push early in each window.
 - **Hard deadline:** the grader checks out the last commit pushed at or before
-  **15:05:00 PKT**. Phase I locks at 15:00. Aim to finish by 14:45.
+  **14:05:00 PKT**; later commits are ignored. (Day 1 windows ended with a 15:05 lock.)
 - **Never** force-push, rebase, amend or squash on `main`. Day 2 must continue
   from the Day 1 SHA. No pushes between 15:05 today and 10:15 tomorrow.
 - **The salt (`DAY1_SALT`) must never be committed.** It lives only in the local
@@ -235,9 +235,9 @@ works, `git status` shows no `.env`, no `node_modules`.
 
 ## 8. NEXT STEPS (in priority order) for the next agent
 
-Time budget: push in every window (11:45-12:45, 12:45-13:45, 13:45-14:45). Final
-push by 14:50. Judges visit from 15:15: the backend must be running
-(`docker compose up -d --build`) and the APK installed on the phone.
+Time budget (Day 2): push in every window (10:15-11:30, 11:30-12:45, 12:45-13:45,
+13:45-14:00). Final push before 14:05:00. Desk audit from 14:30: the backend must be
+running (`docker compose up -d --build`) and the APK installed on the phone.
 
 ### 8.1 Backend endpoints the mobile app needs: DONE (kept for reference)
 

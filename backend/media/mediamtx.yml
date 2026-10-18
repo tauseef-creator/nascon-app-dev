@@ -67,7 +67,7 @@ webrtcAllowOrigin: '*'
 webrtcLocalUDPAddress: :8189
 webrtcLocalTCPAddress: :8189
 webrtcIPsFromInterfaces: yes
-webrtcAdditionalHosts: []
+webrtcAdditionalHosts: ['127.0.0.1']  # phone over adb reverse tcp:8189 (TCP ICE)
 webrtcICEServers2: []
 
 srt: no

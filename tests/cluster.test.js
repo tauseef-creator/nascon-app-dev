@@ -184,3 +184,31 @@ describe('WebSocket gauge across workers (services/day2/bus)', () => {
     realtime.disableClusterBus();
   });
 });
+
+describe('production chat rate window across workers (services/day2/moderation)', () => {
+  test('clustered: the shared window decides and reset clears the shared keys', async () => {
+    jest.resetModules();
+    const realtime = require('../backend/src/lib/realtime');
+    const moderation = require('../backend/src/services/day2/moderation');
+    const r = fakeRedis();
+    const pub = realtime.enableClusterBus({ createClient: r.make, origin: 'w1' });
+    const keys = [];
+    pub.eval = async (script, n, key) => { keys.push(key); return [0, Date.now()]; };
+    const stored = [];
+    const query = async (sql) => {
+      if (/FROM moderation_actions/.test(sql)) return { rows: [] };
+      stored.push(sql);
+      return [{ rows: [] }, { rows: [] }, { rows: [] }, { rows: [] }];
+    };
+    const out = await moderation.postChat({ roomId: 'room-1', sender: 'user-1', text: 'hello' }, { query });
+    expect(out.accepted).toBe(false);
+    expect(out.blocked.status).toBe(429);
+    expect(keys).toEqual(['rl:chat:room-1|user-1']);
+    const deleted = [];
+    pub.scan = async () => ['0', ['rl:chat:room-1|user-1']];
+    pub.del = async (...k) => { deleted.push(...k); return k.length; };
+    await moderation.resetRateLimits();
+    expect(deleted).toEqual(['rl:chat:room-1|user-1']);
+    realtime.disableClusterBus();
+  });
+});

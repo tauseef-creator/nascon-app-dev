@@ -11,7 +11,7 @@
   var KEY_RESUME = 'nascon.resume';
   var DEFAULT_VARIANT = 'var-jersey-001-L';
   var CHAT_POLL_MS = 1000;
-  var HLS_RETRY_MS = 10000;
+  var HLS_RETRY_MS = 3500; // on-demand playlists (co-stream composite) can take ~15 s to appear
 
   // ------------------------------------------------------------ helpers
   function $(id) { return document.getElementById(id); }
@@ -228,21 +228,45 @@
       String(p).replace(/^\/+/, '') + '/index.m3u8';
   }
 
+  var hlsRetryTimer = null;
+  var hlsAttempt = 0;
+
+  // "Go live" only makes sense while a stream is attached; aria-disabled keeps it focusable and 48px.
+  function setLiveReady(ready) {
+    $('ctl-live').setAttribute('aria-disabled', ready ? 'false' : 'true');
+  }
+
+  function stopHls() {
+    hlsAttempt++;
+    clearTimeout(hlsRetryTimer);
+    if (hls) { hls.destroy(); hls = null; }
+    setLiveReady(false);
+  }
+
   function playHls(url) {
     if (!url) return;
-    function retry() { setTimeout(function () { playHls(url); }, HLS_RETRY_MS); }
+    clearTimeout(hlsRetryTimer);
+    var attempt = ++hlsAttempt;
+    function retry() {
+      setLiveReady(false);
+      if (attempt !== hlsAttempt) return; // superseded by a newer playHls/stopHls
+      clearTimeout(hlsRetryTimer);
+      hlsRetryTimer = setTimeout(function () { if (attempt === hlsAttempt) playHls(url); }, HLS_RETRY_MS);
+    }
     if (window.Hls && window.Hls.isSupported()) {
       if (hls) { hls.destroy(); hls = null; }
       hls = new window.Hls({ lowLatencyMode: true, liveSyncDurationCount: 2, manifestLoadingMaxRetry: 1 });
       hls.on(window.Hls.Events.MANIFEST_PARSED, function () {
+        if (attempt !== hlsAttempt) return;
         overlay.hidden = true;
+        setLiveReady(true);
         restoreTimestamp();
         video.play().catch(function () { /* autoplay blocked: user presses play */ });
       });
       hls.on(window.Hls.Events.ERROR, function (evt, data) {
         if (data && data.fatal) {
-          hls.destroy();
-          hls = null;
+          if (attempt !== hlsAttempt) return;
+          if (hls) { hls.destroy(); hls = null; }
           showOverlay('Stream starting soon', 'The broadcast will appear here automatically.');
           retry();
         }
@@ -251,7 +275,7 @@
       hls.attachMedia(video);
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
       video.src = url;
-      video.onloadedmetadata = function () { overlay.hidden = true; restoreTimestamp(); video.play().catch(function () {}); };
+      video.onloadedmetadata = function () { overlay.hidden = true; setLiveReady(true); restoreTimestamp(); video.play().catch(function () {}); };
       video.onerror = function () { showOverlay('Stream starting soon', 'The broadcast will appear here automatically.'); retry(); };
     }
   }
@@ -278,6 +302,7 @@
       mute.setAttribute('aria-pressed', video.muted ? 'true' : 'false');
     });
     $('ctl-live').addEventListener('click', function () {
+      if ($('ctl-live').getAttribute('aria-disabled') === 'true') { toast('Nothing is playing yet.'); return; }
       if (hls && hls.liveSyncPosition) video.currentTime = hls.liveSyncPosition;
       else if (video.seekable && video.seekable.length) video.currentTime = video.seekable.end(video.seekable.length - 1);
     });
@@ -631,19 +656,40 @@
     });
   }
 
+  var COSTREAM_POLL_MS = 5000;
+
   function loadCostream() {
     $('match-title').textContent = 'Co-stream ' + route.id;
-    setStatus('in_progress');
+    $('status-chip').textContent = 'Connecting';
+    $('status-chip').classList.remove('is-live');
     $('video-grid').classList.add('is-costream');
     var label = document.createElement('span');
     label.className = 'cell-label';
-    label.textContent = '4-way co-stream';
+    label.textContent = 'Co-stream';
     video.parentNode.appendChild(label);
     video.setAttribute('aria-label', 'Co-stream video player');
-    api('GET', '/api/v1/guest/costream/' + enc(route.id)).then(function (r) {
-      var url = hlsUrlFor('costream/' + route.id, 8888);
-      if (r.status === 200 && r.data) {
-        var d = r.data;
+    var onAir = null; // null: unknown, true: session active and HLS attached, false: ended or not found
+
+    function showEnded() {
+      if (onAir === false) return;
+      onAir = false;
+      stopHls();
+      if (!video.paused) video.pause();
+      $('status-chip').textContent = 'Ended';
+      $('status-chip').classList.remove('is-live');
+      label.textContent = 'Off air';
+      showOverlay('Co-stream unavailable', 'This co-stream has ended or does not exist.');
+    }
+
+    function poll() {
+      api('GET', '/api/v1/guest/costream/' + enc(route.id)).then(function (r) {
+        var d = r.status === 200 ? r.data : null;
+        if (r.status === 404 || (d && (d.status === 'terminated' || d.status === 'ended'))) {
+          showEnded();
+          return;
+        }
+        if (!d) return; // transient error: keep the current state, try again on the next poll
+        var url = hlsUrlFor('costream/' + route.id, 8888);
         if (d.composite_playback_url && !params.get('hls') && !params.get('stream')) {
           try {
             var u = new URL(d.composite_playback_url, window.location.href);
@@ -655,11 +701,19 @@
         $('match-title').textContent = 'Co-stream ' + route.id + (who.length ? ' (' + who.length + ' on air)' : '');
         label.textContent = (d.layout ? d.layout + ' | ' : '') + (d.active_host ? 'Host ' + d.active_host : '4-way co-stream');
         if (d.status && d.status !== 'active' && d.status !== 'live') setStatus(d.status);
-      } else if (r.status === 404) {
-        showOverlay('Co-stream not started', 'This session has not gone live yet.');
-      }
-      playHls(url);
-    });
+        else setStatus('in_progress');
+        if (onAir !== true) {
+          onAir = true;
+          showOverlay('Stream starting soon', 'The co-stream will appear here automatically.');
+          playHls(url); // keeps retrying until the on-demand composite playlist exists
+        }
+      }).then(function () {
+        setTimeout(poll, COSTREAM_POLL_MS);
+      }, function () {
+        setTimeout(poll, COSTREAM_POLL_MS);
+      });
+    }
+    poll();
     var matchId = params.get('match');
     if (matchId) {
       startSse(matchId);

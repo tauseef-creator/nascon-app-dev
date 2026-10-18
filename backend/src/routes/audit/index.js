@@ -21,6 +21,13 @@ router.post('/reset', async (req, res) => {
   await seedDay2();
   require('../../services/day2/moderation').resetRateLimits?.();
   require('../../services/day2/qr').clearQrCache?.();
+  // Reset wipes every stream key, so sever publishers still on air with one (same rule as revoke).
+  // Fire and forget: the media server is best effort and must not slow the reset response.
+  (async () => {
+    const streaming = require('../../services/day2/streaming');
+    const paths = (await streaming.listPaths()) || [];
+    await streaming.kickPaths(paths.filter((it) => it && typeof it.name === 'string' && it.name.startsWith('live/')).map((it) => it.name));
+  })().catch(() => {});
   await seedDemoSafe();
   res.status(200).json(result);
 });

@@ -10,13 +10,13 @@ describe('match status state machine (FR-1.3)', () => {
 
   test.each([
     ['upcoming', 'postponed'], ['upcoming', 'cancelled'],
-    ['postponed', 'cancelled'], ['in_progress', 'abandoned'],
+    ['postponed', 'cancelled'], ['in_progress', 'abandoned'], ['in_progress', 'postponed'],
   ])('%s -> %s is allowed', (from, to) => {
     expect(MS.checkTransition(from, to)).toBeNull();
   });
 
   test.each([
-    ['upcoming', 'abandoned'], ['in_progress', 'cancelled'], ['in_progress', 'postponed'],
+    ['upcoming', 'abandoned'], ['in_progress', 'cancelled'],
     ['completed', 'cancelled'], ['cancelled', 'upcoming'], ['abandoned', 'upcoming'],
   ])('%s -> %s is rejected with ILLEGAL_TRANSITION', (from, to) => {
     const err = MS.checkTransition(from, to);

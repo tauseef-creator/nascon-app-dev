@@ -11,3 +11,4 @@ mobile/ios/
 !mobile/release/app-release.apk
 __pycache__/
 *.pyc
+inspiration-screens/

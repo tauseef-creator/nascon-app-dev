@@ -34,3 +34,16 @@ function bodyHash(obj) {
 }
 
 module.exports = { canonical, sign, getSalt, sha256Hex, lotsKey, bodyHash };
+
+// ---- Phase II (spec Part II 5.3): HMAC-SHA256(DAY2_SALT, entity_id + "|" + canonical(sig_payload)) ----
+function getDay2Salt() {
+  // Read verbatim from the environment: not trimmed, not hex-decoded. Never hard-coded.
+  return process.env.DAY2_SALT ?? '';
+}
+
+function signDay2(entityId, sigPayload, salt = getDay2Salt()) {
+  return sign(entityId, sigPayload, salt);
+}
+
+module.exports.getDay2Salt = getDay2Salt;
+module.exports.signDay2 = signDay2;

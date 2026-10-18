@@ -154,7 +154,7 @@ describe('/api/v1 production auth', () => {
     expect(res.status).toBe(200);
     expect(res.body.user).toEqual({
       user_id: 'user-manager', email: 'manager@nascon.test', role: 'club_manager', tenant_id: 'tenant-alpha',
-      league_id: null, club_id: 'club-alpha-1', player_id: null, display_name: 'Club Manager',
+      league_id: null, club_id: 'club-alpha-1', player_id: null, display_name: 'Sara Malik',
     });
     expect(res.body.user.password_hash).toBeUndefined();
     expect(res.body.tenant).toEqual({

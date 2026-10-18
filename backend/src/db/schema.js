@@ -191,6 +191,101 @@ CREATE TABLE IF NOT EXISTS domain_events (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- ===================== Phase II (Day 2) =====================
+-- Streaming (FR-3.2, 5.4)
+CREATE TABLE IF NOT EXISTS stream_keys (
+  stream_key TEXT PRIMARY KEY,
+  player_id TEXT NOT NULL,
+  label TEXT NOT NULL DEFAULT 'default',
+  status TEXT NOT NULL,              -- active | revoked
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  revoked_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS vods (
+  vod_id TEXT PRIMARY KEY,
+  stream_key TEXT NOT NULL,
+  player_id TEXT NOT NULL,
+  object_key TEXT,
+  duration_s INT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS follows (
+  follower_id TEXT NOT NULL,
+  athlete_id TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (follower_id, athlete_id)
+);
+-- Co-stream (FR-3.3, 5.5)
+CREATE TABLE IF NOT EXISTS costream_sessions (
+  session_id TEXT PRIMARY KEY,
+  body_hash TEXT NOT NULL,
+  status_code INT NOT NULL,
+  response JSONB NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- Chat (FR-3.3 unified chat, FR-5.3 moderation)
+CREATE TABLE IF NOT EXISTS chat_messages (
+  room_id TEXT NOT NULL,
+  seq BIGINT NOT NULL,
+  message_id TEXT NOT NULL,
+  sender TEXT NOT NULL,
+  text TEXT NOT NULL,
+  flagged BOOLEAN NOT NULL DEFAULT false,
+  reason TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (room_id, seq)
+);
+CREATE TABLE IF NOT EXISTS moderation_actions (
+  room_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  action TEXT NOT NULL,              -- kick | mute
+  first_seq BIGSERIAL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (room_id, user_id, action)
+);
+CREATE INDEX IF NOT EXISTS chat_messages_room_msg ON chat_messages (room_id, message_id);
+-- Notification bus DLQ (FR-5.2)
+CREATE TABLE IF NOT EXISTS dlq_events (
+  id BIGSERIAL PRIMARY KEY,
+  event_id TEXT NOT NULL,
+  event JSONB NOT NULL,
+  attempts INT NOT NULL,
+  last_error TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+-- Dynamic QR (FR-4.1, 5.6); scans keep no IP / UA / cookies (NFR-9)
+CREATE TABLE IF NOT EXISTS qr_codes (
+  entity_id TEXT PRIMARY KEY,
+  short_code TEXT NOT NULL UNIQUE,
+  scan_count BIGINT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS qr_scans (
+  id BIGSERIAL PRIMARY KEY,
+  entity_id TEXT NOT NULL,
+  device_family TEXT NOT NULL,       -- mobile | desktop
+  bucket TEXT NOT NULL               -- UTC hour bucket, e.g. 2026-10-18T11:00Z
+);
+-- Guest access and carts (FR-4.2 - FR-4.4, 5.7)
+CREATE TABLE IF NOT EXISTS guest_tokens (
+  token TEXT PRIMARY KEY,
+  user_id TEXT,                      -- linked member after merge (unlinked by privacy erasure)
+  merged BOOLEAN NOT NULL DEFAULT false,
+  revoked BOOLEAN NOT NULL DEFAULT false,
+  cart JSONB NOT NULL DEFAULT '[]',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS member_carts (
+  user_id TEXT PRIMARY KEY,
+  items JSONB NOT NULL DEFAULT '[]',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS cart_merges (
+  guest_token TEXT PRIMARY KEY,
+  body_hash TEXT NOT NULL,
+  response JSONB NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS app_state (
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL
@@ -201,6 +296,8 @@ const RESET_TABLES = [
   'tenants', 'users', 'sports', 'leagues', 'clubs', 'players', 'matches', 'match_events',
   'roster_leagues', 'squads', 'registrations', 'roster_live_matches', 'roster_audit', 'roster_requests',
   'products', 'variants', 'discount_codes', 'orders', 'pinned_products', 'match_status', 'offline_actions', 'app_state',
+  'stream_keys', 'vods', 'follows', 'costream_sessions', 'chat_messages', 'moderation_actions', 'dlq_events',
+  'qr_codes', 'qr_scans', 'guest_tokens', 'member_carts', 'cart_merges',
 ];
 
 module.exports = { SCHEMA, RESET_TABLES };

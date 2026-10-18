@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B0B0F">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Watch NaSCon matches live as a guest. No app or account needed.">
+  <title>NaSCon Live</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/web/assets/player.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="topbar">
+    <a class="brand" href="/web/matches/match-m1/live" aria-label="NaSCon Live home">
+      <span class="brand-dot" aria-hidden="true"></span>NaSCon <span class="brand-accent">Live</span>
+    </a>
+    <div class="topbar-actions">
+      <span class="guest-chip" id="identity-chip">Guest</span>
+      <button type="button" class="icon-btn cart-btn" id="cart-btn" aria-label="Guest cart, 0 items" aria-describedby="cart-hint">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M7 18a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm10 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM5.2 4l.4 2H21l-2 8H7.4l-.3-1.5L5.2 4H2V2h4.8l.4 2Z"/></svg>
+        <span class="cart-count" data-testid="guest-cart-count" id="guest-cart-count">0</span>
+      </button>
+      <span id="cart-hint" class="sr-only">Opens checkout. Checkout needs an account; your cart is kept.</span>
+      <button type="button" class="btn btn-ghost" id="signin-btn">Sign in</button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <!-- Notice / preview / vod status line -->
+    <section class="notice" id="notice" hidden role="status" aria-live="polite">
+      <h1 class="notice-title" id="notice-title">Match notice</h1>
+      <p class="notice-body" id="notice-body"></p>
+    </section>
+
+    <!-- Match / co-stream player shell (spec 6.2.2 DOM contract) -->
+    <div class="layout" id="match-view">
+      <section class="stage" aria-labelledby="match-title">
+        <div class="match-head">
+          <span class="status-chip" id="status-chip">Live</span>
+          <h1 class="match-title" id="match-title">Loading match</h1>
+        </div>
+
+        <div class="player" id="player">
+          <div class="video-grid" id="video-grid">
+            <div class="video-cell">
+              <video data-testid="guest-video-player" id="guest-video" class="video"
+                     playsinline muted preload="metadata" aria-label="Match video player"
+                     poster="/web/assets/poster.svg"></video>
+              <div class="video-overlay" id="video-overlay">
+                <p class="overlay-title">Stream starting soon</p>
+                <p class="overlay-sub" id="overlay-sub">The broadcast will appear here automatically.</p>
+              </div>
+            </div>
+          </div>
+          <div class="controls" role="group" aria-label="Video controls">
+            <button type="button" class="icon-btn" id="ctl-play" aria-label="Play video" aria-pressed="false">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path id="ctl-play-icon" fill="currentColor" d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button type="button" class="icon-btn" id="ctl-mute" aria-label="Unmute video" aria-pressed="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3Zm13.6 3a4.5 4.5 0 0 0-2.6-4v8a4.5 4.5 0 0 0 2.6-4Z"/></svg>
+            </button>
+            <button type="button" class="btn btn-ghost btn-live" id="ctl-live" aria-label="Jump to live edge">Go live</button>
+            <span class="spacer"></span>
+            <button type="button" class="icon-btn" id="ctl-full" aria-label="Enter full screen">
+              <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M5 5h5v2H7v3H5V5Zm9 0h5v5h-2V7h-3V5ZM5 14h2v3h3v2H5v-5Zm12 3v-3h2v5h-5v-2h3Z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="scoreboard" aria-label="Live score">
+          <span class="team team-home" id="team-home">Home</span>
+          <div class="score" data-testid="live-score-banner" id="live-score-banner"
+               role="status" aria-live="polite" aria-atomic="true" data-live="false">- - -</div>
+          <span class="team team-away" id="team-away">Away</span>
+        </div>
+        <p class="live-meta" id="live-meta">Connecting to live score</p>
+      </section>
+
+      <aside class="side">
+        <section class="card merch" data-testid="pinned-merch-card" id="pinned-merch-card"
+                 data-product-id="prod-jersey-001" data-variant-id="var-jersey-001-L" aria-labelledby="merch-name">
+          <img class="merch-img" id="merch-img" src="/media/products/prod-jersey-001.jpg"
+               alt="Alpha United Home Jersey" width="96" height="96" loading="lazy">
+          <div class="merch-body">
+            <p class="eyebrow">Pinned merch</p>
+            <h2 class="merch-name" id="merch-name">Alpha United Home Jersey</h2>
+            <p class="merch-meta"><span id="merch-variant">Size L</span> <span aria-hidden="true">|</span> <span id="merch-price">PKR 4,500.00</span></p>
+            <button type="button" class="btn btn-primary" data-testid="add-to-guest-cart-btn" id="add-to-guest-cart-btn">Add to cart</button>
+            <p class="merch-status" id="merch-status" role="status" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <section class="card chat" aria-labelledby="chat-title">
+          <h2 class="card-title" id="chat-title">Live chat</h2>
+          <ul class="chat-list" data-testid="chat-message-list" id="chat-message-list"
+              role="log" aria-live="polite" aria-label="Chat messages" tabindex="0"></ul>
+          <form class="chat-form" id="chat-form" novalidate>
+            <label for="chat-input" class="sr-only">Chat message</label>
+            <input type="text" id="chat-input" data-testid="chat-input-field" class="input"
+                   maxlength="500" autocomplete="off" placeholder="Say something" aria-describedby="chat-hint">
+            <button type="submit" class="btn btn-primary" data-testid="chat-send-btn" id="chat-send-btn">Send</button>
+          </form>
+          <p class="hint" id="chat-hint">Watching as a guest. Sending a message asks you to sign in.</p>
+        </section>
+      </aside>
+    </div>
+
+    <!-- Player / club pages -->
+    <section class="entity" id="entity-view" hidden aria-labelledby="entity-title">
+      <p class="eyebrow" id="entity-kind">Profile</p>
+      <h1 class="entity-title" id="entity-title">Loading</h1>
+      <p class="entity-sub" id="entity-sub"></p>
+      <div class="entity-grid" id="entity-body"></div>
+    </section>
+  </main>
+
+  <!-- Progressive registration (FR-4.4): hidden until a protected write is attempted -->
+  <div class="modal-backdrop" id="auth-backdrop" hidden></div>
+  <div class="modal" data-testid="progressive-auth-modal" id="progressive-auth-modal"
+       role="dialog" aria-modal="true" aria-labelledby="auth-title" aria-describedby="auth-desc" hidden>
+    <h2 class="modal-title" id="auth-title">Sign in to continue</h2>
+    <p class="modal-desc" id="auth-desc">Chat and checkout need a NaSCon account. Your guest cart and playback position are kept.</p>
+    <form id="auth-form" class="auth-form" novalidate>
+      <label for="auth-email">Email</label>
+      <input class="input" id="auth-email" name="email" type="email" autocomplete="username" required>
+      <label for="auth-password">Password</label>
+      <input class="input" id="auth-password" name="password" type="password" autocomplete="current-password" required>
+      <p class="form-error" id="auth-error" role="alert"></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="auth-cancel">Keep watching</button>
+        <button type="submit" class="btn btn-primary" id="auth-submit">Sign in</button>
+      </div>
+    </form>
+    <p class="hint">New here? Members are registered by their club; ask your club manager for an account.</p>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/web/vendor/hls.min.js" defer></script>
+  <script src="/web/assets/player.js" defer></script>
+</body>
+</html>

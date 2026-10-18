@@ -81,6 +81,7 @@ const PLAYERS = [
   { player_id: 'player-alpha-1', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', name: 'Ahmed Raza', position: 'fw' },
   { player_id: 'player-alpha-2', tenant_id: 'tenant-alpha', club_id: 'club-alpha-2', name: 'Usman Ghani', position: 'gk' },
   { player_id: 'player-beta-1', tenant_id: 'tenant-beta', club_id: 'club-beta-1', name: 'Kamran Akmal', position: 'df' },
+  { player_id: 'player-beta-2', tenant_id: 'tenant-beta', club_id: 'club-beta-1', name: 'Faisal Shah', position: 'mf' },
 ];
 
 const DEMO_PASSWORD = 'Nascon@26';

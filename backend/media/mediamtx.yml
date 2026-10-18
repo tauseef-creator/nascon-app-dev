@@ -1,0 +1,105 @@
+# MediaMTX v1.9.1 configuration (spec Part II FR-3.2, 6.1).
+# Ingest: RTMP :1935 (OBS/FFmpeg: rtmp://localhost:1935/live/<stream_key>)
+#         WebRTC WHIP :8889 (http://localhost:8889/live/<stream_key>/whip)
+# Playback: HLS :8888 (http://localhost:8888/live/<stream_key>/index.m3u8), WebRTC WHEP :8889,
+#           recorded VODs through the playback server :9996.
+# Every publish/read is authorised by the API (POST /audit/v1/internal/media/auth): only an active
+# stream key may publish on live/<key>; a revoked key is refused with 409 KEY_REVOKED. Revoke/rotate
+# also kicks the live publisher through the control API (:9997) so ingest stops within 2 s.
+# Image: bluenviron/mediamtx:1.9.1-ffmpeg (Alpine; its busybox wget runs the VOD hooks below).
+# Any setting can be overridden with MTX_<KEY> env vars, e.g. MTX_WEBRTCADDITIONALHOSTS=192.168.1.20.
+
+logLevel: info
+logDestinations: [stdout]
+
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 512
+udpMaxPayloadSize: 1472
+
+# ---------------------------------------------------------------- authentication
+authMethod: http
+authHTTPAddress: http://api:8080/audit/v1/internal/media/auth
+# The control API, metrics and pprof are reached only on the internal Docker network.
+authHTTPExclude:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+# ---------------------------------------------------------------- control API (kick, paths, bitrate)
+api: yes
+apiAddress: :9997
+
+metrics: no
+pprof: no
+
+# ---------------------------------------------------------------- VOD playback server
+playback: yes
+playbackAddress: :9996
+playbackAllowOrigin: '*'
+
+# ---------------------------------------------------------------- protocols
+rtsp: no
+
+rtmp: yes
+rtmpAddress: :1935
+rtmpEncryption: "no"
+
+hls: yes
+hlsAddress: :8888
+hlsEncryption: no
+hlsAllowOrigin: '*'
+# Muxers are created on the first playlist request. This must stay "no": with always-remux on,
+# MediaMTX never creates HLS muxers on demand, so the on-demand co-stream compositor would never start.
+hlsAlwaysRemux: no
+# Low-Latency HLS (LL-HLS) with short parts keeps HLS latency near 1-2 s on a LAN.
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+hlsMuxerCloseAfter: 60s
+
+webrtc: yes
+webrtcAddress: :8889
+webrtcEncryption: no
+webrtcAllowOrigin: '*'
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+webrtcIPsFromInterfaces: yes
+webrtcAdditionalHosts: []
+webrtcICEServers2: []
+
+srt: no
+
+# ---------------------------------------------------------------- paths
+pathDefaults:
+  source: publisher
+  overridePublisher: yes
+  record: no
+  recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordFormat: fmp4
+  recordPartDuration: 1s
+  recordSegmentDuration: 1h
+  recordDeleteAfter: 72h
+
+paths:
+  # Solo broadcasts: one path per stream key. Recorded for the VOD archive; the API indexes the VOD
+  # when the stream ends (runOnNotReady). Hooks are best effort: a failed hook never affects the stream.
+  "~^live/[^/]+$":
+    record: yes
+    runOnReady: wget -q -O /dev/null --post-data '{}' http://api:8080/audit/v1/internal/media/ready?path=$MTX_PATH
+    runOnNotReady: wget -q -O /dev/null --post-data '{}' http://api:8080/audit/v1/internal/media/not-ready?path=$MTX_PATH
+
+  # Co-stream composite (chat room chat-<session_id>), played at
+  # http://localhost:8888/costream/<session_id>/index.m3u8. When the first viewer arrives MediaMTX starts
+  # the compositor: FFmpeg mixes the live participants (host first) into a grid with arguments built by
+  # the API. On handoff or a host control the API kicks the compositor and it restarts with the new
+  # grid; a terminated session gets no arguments, so no FFmpeg process outlives it. The process is
+  # stopped 10 s after the last viewer leaves.
+  "~^costream/[^/]+$":
+    record: no
+    runOnDemand: sh -c 'set -f; exec ffmpeg $(wget -qO- "http://api:8080/audit/v1/internal/media/composite?path=$MTX_PATH")'
+    runOnDemandRestart: yes
+    runOnDemandStartTimeout: 15s
+    runOnDemandCloseAfter: 10s

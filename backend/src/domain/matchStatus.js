@@ -10,7 +10,7 @@ const ADMIN_TARGETS = ['upcoming', 'postponed', 'abandoned', 'cancelled'];
 const TRANSITIONS = {
   upcoming: ['postponed', 'cancelled'],
   postponed: ['upcoming', 'cancelled'], // back to upcoming = rescheduled (needs a new date)
-  in_progress: ['abandoned'],
+  in_progress: ['abandoned', 'postponed'], // a live match can be suspended and postponed (weather, floodlights)
   completed: [],
   abandoned: [],
   cancelled: [],

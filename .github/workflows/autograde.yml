@@ -1,0 +1,110 @@
+# Phase II autograde pipeline (spec 1.3, 5.2, 6.1, 6.2.1, 6.4, 7.3).
+# Unit and contract failures fail the run; the heavy browser/load QA steps report
+# results without blocking (their reports are uploaded as the qa-reports artifact).
+name: autograde
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: autograde-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  autograde:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Real salts come only from repository secrets; the fallbacks are harmless CI dummies.
+      DAY1_SALT: ${{ secrets.DAY1_SALT || 'ci-dummy-day1-xx' }}
+      DAY2_SALT: ${{ secrets.DAY2_SALT || 'ci-dummy-day2-xx' }}
+      DAY1_BASE_SHA: c9f87fc
+      API_URL: http://localhost:8080
+      GRID_URL: http://localhost:4444
+    steps:
+      - name: Checkout (full history for the ancestry check)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Phase I commit ancestry
+        run: git merge-base --is-ancestor "$DAY1_BASE_SHA" HEAD
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Start stack (docker compose up -d --build)
+        run: |
+          start=$(date +%s)
+          docker compose up -d --build
+          TIMEOUT=120 scripts/qa/wait_ready.sh
+          echo "Stack ready in $(( $(date +%s) - start ))s (build included)"
+          docker compose ps
+
+      - name: Grid status
+        run: curl -s "$GRID_URL/status" | python3 -m json.tool | head -40
+
+      - name: Backend unit tests
+        working-directory: backend
+        run: |
+          npm ci --no-audit --no-fund
+          npx jest --config jest.config.js
+
+      - name: Install Python test dependencies
+        run: pip install pytest pytest-xdist requests pypdf selenium
+
+      - name: Contract tests
+        env:
+          BASE_URL: http://localhost:8080
+        run: pytest tests/contract -q -k 'not rate_limit'
+
+      - name: Selenium Grid suite
+        continue-on-error: true
+        env:
+          BASE_URL: http://backend:8080
+          SELENIUM_GRID_URL: http://localhost:4444
+        run: |
+          mkdir -p tests/reports
+          curl -s -X POST "$API_URL/audit/v1/reset" -H 'Content-Type: application/json' -d '{}' >/dev/null
+          pytest -n 3 tests/selenium --junitxml=tests/reports/selenium-report.xml
+
+      - name: Appium suite (no device on the runner, records a skipped report)
+        continue-on-error: true
+        run: SKIP_SELENIUM=1 SKIP_K6=1 scripts/qa/run_all.sh
+
+      - name: k6 smoke (50 VUs, 10 s)
+        continue-on-error: true
+        run: |
+          curl -s -X POST "$API_URL/audit/v1/reset" -H 'Content-Type: application/json' -d '{}' >/dev/null
+          scripts/qa/run_k6.sh scripts/qa/k6_smoke.js tests/reports/k6-smoke-summary.json
+
+      - name: k6 full profile (550 VUs, 15 s)
+        continue-on-error: true
+        run: |
+          curl -s -X POST "$API_URL/audit/v1/reset" -H 'Content-Type: application/json' -d '{}' >/dev/null
+          scripts/qa/run_k6.sh tests/k6_load.js tests/reports/k6-summary.json
+
+      - name: Service logs
+        if: always()
+        run: docker compose logs --no-color --tail 200 > tests/reports/compose-logs.txt 2>&1 || true
+
+      - name: Upload QA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports
+          path: tests/reports/
+          if-no-files-found: warn
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

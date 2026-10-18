@@ -127,7 +127,7 @@ apiRouter.get('/athletes/:player_id', async (req, res) => {
     `SELECT type, count(*)::int AS n FROM match_events WHERE payload->>'player_id' = $1 GROUP BY type ORDER BY type`,
     [player.player_id]);
   const vods = await query(
-    'SELECT vod_id, stream_key, object_key, duration_s, created_at FROM vods WHERE player_id = $1 ORDER BY created_at DESC LIMIT 50',
+    'SELECT vod_id, stream_key, object_key, duration_s, created_at, storage_bucket, storage_keys FROM vods WHERE player_id = $1 ORDER BY created_at DESC LIMIT 50',
     [player.player_id]);
   const principal = optionalPrincipal(req);
   let following = null;
@@ -150,6 +150,7 @@ apiRouter.get('/athletes/:player_id', async (req, res) => {
       vod_id: v.vod_id, duration_s: v.duration_s,
       recorded_at: new Date(v.created_at).toISOString().replace(/\.\d{3}Z$/, 'Z'),
       playback_url: streaming.vodPlaybackUrl(v.object_key, v.duration_s),
+      storage: v.storage_bucket ? { bucket: v.storage_bucket, object_keys: v.storage_keys || [] } : null,
     })),
     follower_count: await followerCount(player.player_id),
     following,

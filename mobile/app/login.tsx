@@ -10,7 +10,7 @@ import { useAuth } from '../src/auth/AuthContext';
 import { AppMark } from '../src/components/AppMark';
 import { SyncBar } from '../src/components/SyncBar';
 import { Card, Chip, ErrorBanner, Field, InfoBanner, PrimaryButton, SecondaryButton } from '../src/components/ui';
-import { colors, radius, spacing, text, TOUCH } from '../src/theme';
+import { gradients, colors, radius, spacing, text, TOUCH } from '../src/theme';
 
 const DEMO = [
   { label: 'Organizer', email: 'organizer@nascon.test' },
@@ -48,8 +48,8 @@ export default function Login() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'left', 'right']}>
-      <LinearGradient pointerEvents="none" colors={[colors.headerTint, colors.bg]} style={styles.wash} />
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'left', 'right']} testID="login-screen">
+      <LinearGradient pointerEvents="none" colors={gradients.wash} locations={gradients.washLocations} style={styles.wash} />
       <SyncBar />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
@@ -130,11 +130,19 @@ export default function Login() {
           </View>
 
           <SecondaryButton
+            title="Scan a QR code"
+            icon="qr-code-outline"
+            onPress={() => router.push('/scan')}
+            testID="login-scan"
+            style={{ marginTop: spacing.lg }}
+            accessibilityHint="Open a match, club or stream without signing in"
+          />
+          <SecondaryButton
             title="Server settings"
             icon="settings-outline"
             onPress={() => router.push('/settings')}
             testID="login-settings"
-            style={{ marginTop: spacing.lg }}
+            style={{ marginTop: spacing.sm }}
             accessibilityHint="Change the server address the app connects to"
           />
           <Text style={[text.small, { textAlign: 'center', marginTop: spacing.sm }]} testID="login-server">

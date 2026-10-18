@@ -158,3 +158,24 @@ describe('guest cart staging', () => {
       .toEqual({ ok: false, error: { code: 'OUT_OF_STOCK', details: { variant_id: 'm', requested: 2, available: 1 } } });
   });
 });
+
+describe('guest token lifetime (FR-4.2)', () => {
+  const G = require('../backend/src/domain/day2/guest');
+  test('ttl from env with a 24 h default', () => {
+    expect(G.guestTokenTtlS(undefined)).toBe(86400);
+    expect(G.guestTokenTtlS('abc')).toBe(86400);
+    expect(G.guestTokenTtlS('0')).toBe(86400);
+    expect(G.guestTokenTtlS('-5')).toBe(86400);
+    expect(G.guestTokenTtlS('600')).toBe(600);
+  });
+  test('expiry instant and check', () => {
+    const exp = G.guestTokenExpiry(1000, 60);
+    expect(exp.getTime()).toBe(61000);
+    expect(G.isGuestTokenExpired(exp, 60999)).toBe(false);
+    expect(G.isGuestTokenExpired(exp, 61000)).toBe(true);
+    expect(G.isGuestTokenExpired(new Date(61000).toISOString(), 70000)).toBe(true);
+    expect(G.isGuestTokenExpired(null, 1e15)).toBe(false);
+    expect(G.isGuestTokenExpired(undefined, 1e15)).toBe(false);
+    expect(G.isGuestTokenExpired('not a date', 1e15)).toBe(false);
+  });
+});

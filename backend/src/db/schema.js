@@ -207,8 +207,12 @@ CREATE TABLE IF NOT EXISTS vods (
   player_id TEXT NOT NULL,
   object_key TEXT,
   duration_s INT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  storage_bucket TEXT,               -- MinIO bucket of the archived recording (FR-3.2)
+  storage_keys JSONB NOT NULL DEFAULT '[]'  -- MinIO object keys of the recorded segments
 );
+ALTER TABLE vods ADD COLUMN IF NOT EXISTS storage_bucket TEXT;
+ALTER TABLE vods ADD COLUMN IF NOT EXISTS storage_keys JSONB NOT NULL DEFAULT '[]';
 CREATE TABLE IF NOT EXISTS follows (
   follower_id TEXT NOT NULL,
   athlete_id TEXT NOT NULL,
@@ -273,8 +277,10 @@ CREATE TABLE IF NOT EXISTS guest_tokens (
   merged BOOLEAN NOT NULL DEFAULT false,
   revoked BOOLEAN NOT NULL DEFAULT false,
   cart JSONB NOT NULL DEFAULT '[]',
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  expires_at TIMESTAMPTZ             -- short-lived (FR-4.2); NULL never expires (seeded fixture)
 );
+ALTER TABLE guest_tokens ADD COLUMN IF NOT EXISTS expires_at TIMESTAMPTZ;
 CREATE TABLE IF NOT EXISTS member_carts (
   user_id TEXT PRIMARY KEY,
   items JSONB NOT NULL DEFAULT '[]',

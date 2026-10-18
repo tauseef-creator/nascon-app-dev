@@ -12,6 +12,10 @@ import { colors, radius, spacing, text } from '../../src/theme';
 
 type IconName = React.ComponentProps<typeof Icon>['name'];
 
+const CAN_BROADCAST = new Set(['player', 'league_organizer', 'super_admin', 'club_manager']);
+// Seeded co-stream session (spec 5.5 / 6.3).
+const DEMO_SESSION = 'cs-session-101';
+
 function initialsOf(name: string, email: string) {
   const words = name.trim().split(/\s+/).filter(Boolean);
   const letters = words.length ? words.slice(0, 2).map((w) => w[0]!) : [email[0] ?? '?'];
@@ -73,6 +77,14 @@ export default function More() {
         </View>
       </View>
 
+      <SectionTitle>Live</SectionTitle>
+      <View style={styles.group}>
+      {CAN_BROADCAST.has(user.role) ? (
+        <LinkRow icon="videocam-outline" title="Go live" detail="Stream key and ingest URLs for OBS or FFmpeg" onPress={() => router.push('/broadcast')} testID="more-broadcast" />
+      ) : null}
+      <LinkRow icon="grid-outline" title="Co-stream" detail={`Watch and chat in ${DEMO_SESSION}`} onPress={() => router.push(`/stream/${DEMO_SESSION}`)} testID="more-costream" last />
+      </View>
+
       <SectionTitle>App</SectionTitle>
       <View style={styles.group}>
       <LinkRow
@@ -88,6 +100,7 @@ export default function More() {
       {cart.lastOrder ? (
         <LinkRow icon="receipt-outline" title="Last receipt" detail={`Order ${cart.lastOrder.order_id.slice(0, 8)}…`} onPress={() => router.push(`/receipt/${cart.lastOrder!.order_id}`)} testID="more-receipt" />
       ) : null}
+      <LinkRow icon="qr-code-outline" title="Scan a QR code" detail="Open a match, club, athlete or stream" onPress={() => router.push('/scan')} testID="more-scan" />
       <LinkRow icon="settings-outline" title="Settings" detail="Server address and device details" onPress={() => router.push('/settings')} testID="more-settings" last />
       </View>
 
@@ -119,7 +132,7 @@ export default function More() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(28,28,30,0.86)',
     borderRadius: 24,
     padding: spacing.xl,
     marginBottom: spacing.sm,
@@ -137,7 +150,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { color: colors.accent, fontSize: 22, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
-  name: { color: colors.text, fontSize: 20, fontFamily: 'Inter_700Bold', letterSpacing: -0.3 },
+  name: { color: colors.text, fontSize: 22, lineHeight: 28, fontFamily: 'Inter_800ExtraBold', letterSpacing: -0.6 },
   cardFoot: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -157,11 +170,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accentBg,
   },
   roleText: { color: colors.accent, fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-  group: { backgroundColor: colors.card, borderRadius: 20, overflow: 'hidden', marginBottom: spacing.lg },
+  group: { backgroundColor: 'rgba(28,28,30,0.86)', borderRadius: 20, overflow: 'hidden', marginBottom: spacing.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.08)' },
   row: { minHeight: 60, flexDirection: 'row', alignItems: 'center', paddingLeft: spacing.lg, gap: spacing.md },
-  rowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cardHi },
+  rowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cardHi, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.1)' },
   rowBody: { flex: 1, minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingRight: spacing.lg, paddingVertical: spacing.sm },
   rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
-  rowTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
-  rowDetail: { color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  rowTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold', letterSpacing: -0.1 },
+  rowDetail: { color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_500Medium', marginTop: 2 },
 });

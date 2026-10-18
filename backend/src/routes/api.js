@@ -55,6 +55,17 @@ router.post('/auth/login', async (req, res) => {
   res.status(200).json({ token: issueToken(user), user: publicUser(user), tenant: await loadTenant(user.tenant_id) });
 });
 
+// POST /api/v1/auth/register {email, password, display_name?, tenant_id?, guest_token?}
+// Progressive registration (FR-4.4). The guest token travels in the body, never as a Bearer, so
+// the global guest write guard (FR-4.3) still rejects every write made with a guest Bearer token.
+router.post('/auth/register', async (req, res) => {
+  // eslint-disable-next-line global-require
+  const { user, cart_merge: cartMerge } = await require('../services/day2/registration').register(req.body);
+  res.status(201).json({
+    token: issueToken(user), user: publicUser(user), tenant: await loadTenant(user.tenant_id), cart_merge: cartMerge,
+  });
+});
+
 // GET /api/v1/me
 router.get('/me', requireAuth, async (req, res) => {
   const { rows } = await query(`SELECT ${USER_COLS} FROM users WHERE user_id = $1`, [req.principal.user_id]);

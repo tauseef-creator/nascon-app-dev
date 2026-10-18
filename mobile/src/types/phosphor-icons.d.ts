@@ -206,3 +206,39 @@ declare module 'phosphor-icons/XCircle' {
 declare module 'phosphor-icons/X' {
   export { XIcon } from 'phosphor-react-native';
 }
+declare module 'phosphor-icons/Bell' {
+  export { BellIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/ChatsCircle' {
+  export { ChatsCircleIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/GridFour' {
+  export { GridFourIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/Key' {
+  export { KeyIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/Link' {
+  export { LinkIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/Microphone' {
+  export { MicrophoneIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/MicrophoneSlash' {
+  export { MicrophoneSlashIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/QrCode' {
+  export { QrCodeIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/Scan' {
+  export { ScanIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/UserMinus' {
+  export { UserMinusIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/VideoCamera' {
+  export { VideoCameraIcon } from 'phosphor-react-native';
+}
+declare module 'phosphor-icons/Crown' {
+  export { CrownIcon } from 'phosphor-react-native';
+}

@@ -26,6 +26,7 @@ import {
   PrimaryButton,
   SecondaryButton,
   SectionTitle,
+  Sheen,
   StatusPill,
 } from '../../src/components/ui';
 import { useCachedQuery } from '../../src/hooks/useCachedQuery';
@@ -34,11 +35,13 @@ import { useLiveMatch } from '../../src/hooks/useLiveMatch';
 import { readCache, writeCache } from '../../src/offline/cache';
 import { listQueue, QueuedAction, subscribeQueue } from '../../src/offline/queue';
 import { useSync } from '../../src/offline/SyncProvider';
-import { colors, radius, spacing, text, TOUCH } from '../../src/theme';
+import { colors, radius, spacing, surface, text, TOUCH, type } from '../../src/theme';
 import { ClubCrest, crestColor } from '../../src/components/ClubCrest';
 import { ProductArt } from '../../src/components/ProductArt';
 import { LinearGradient } from 'expo-linear-gradient';
 import { frozenMessage, isFrozen, OFF_SCHEDULE, statusLabel } from '../../src/utils/matchStatus';
+import { QrCard } from '../../src/components/QrCard';
+import { useNotify } from '../../src/realtime/NotificationProvider';
 
 type StatusAction = 'postponed' | 'upcoming' | 'cancelled' | 'abandoned';
 
@@ -141,6 +144,12 @@ export default function MatchDetail() {
     loadQueued();
     return subscribeQueue(loadQueued);
   }, [loadQueued]);
+
+  // Keep this match's score notifications coming after the user leaves the screen (FR-5.2).
+  const { watchMatch } = useNotify();
+  useEffect(() => {
+    if (id) watchMatch(id);
+  }, [id, watchMatch]);
 
   const live = useLiveMatch(id, sync.online, {
     onScore: (p) => {
@@ -308,14 +317,14 @@ export default function MatchDetail() {
 
   if (score.loading && !s) {
     return (
-      <Screen title="Match" back>
+      <Screen title="Match" back testID="match-screen">
         <LoadingView label="Loading match…" />
       </Screen>
     );
   }
   if (!s) {
     return (
-      <Screen title="Match" back>
+      <Screen title="Match" back testID="match-screen">
         <ErrorBanner message={score.error ?? "We couldn't load this match."} onRetry={score.refresh} testID="match-error" />
       </Screen>
     );
@@ -335,6 +344,12 @@ export default function MatchDetail() {
   return (
     <Screen title={`${homeName} vs ${awayName}`} subtitle={info?.venue ?? undefined} back onRefresh={score.refresh} refreshing={score.refreshing} testID="match-screen">
       {score.fromCache && score.updatedAt ? <CachedNotice updatedAt={score.updatedAt} /> : null}
+      {!user ? (
+        <View style={{ marginBottom: spacing.md }}>
+          <InfoBanner message="You are watching as a guest. Sign in to buy merchandise or chat." testID="match-guest" />
+          <SecondaryButton title="Sign in" icon="log-in-outline" onPress={() => router.push('/login')} testID="match-guest-signin" />
+        </View>
+      ) : null}
 
       <Card testID="score-header" style={{ padding: 0, overflow: 'hidden', borderRadius: 26 }}>
         <LinearGradient
@@ -390,14 +405,15 @@ export default function MatchDetail() {
 
           </View>
         </LinearGradient>
+        <Sheen radius={26} height="35%" />
       </Card>
 
-      <View style={{ flexDirection: 'row', backgroundColor: colors.card, borderRadius: 20, paddingVertical: spacing.md, marginBottom: spacing.md }} testID="match-summary">
-        <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ color: colors.white, fontFamily: 'Inter_800ExtraBold', fontSize: 20 }}>{events.filter((e) => e.type === 'score' && !e.compensated).length}</Text><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>SCORES</Text></View>
+      <View style={{ flexDirection: 'row', backgroundColor: surface.glass, borderWidth: StyleSheet.hairlineWidth, borderColor: surface.edge, borderRadius: 20, paddingVertical: spacing.md, marginBottom: spacing.md }} testID="match-summary">
+        <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ ...type.score, fontSize: 22, lineHeight: 26, color: colors.white }}>{events.filter((e) => e.type === 'score' && !e.compensated).length}</Text><Text style={{ ...type.overline, fontSize: 10, letterSpacing: 0.7, color: colors.textMuted, marginTop: 2 }}>SCORES</Text></View>
         <View style={{ width: 1, backgroundColor: colors.divider }} />
-        <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ color: colors.white, fontFamily: 'Inter_800ExtraBold', fontSize: 20 }}>{events.length}</Text><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>PLAYS</Text></View>
+        <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ ...type.score, fontSize: 22, lineHeight: 26, color: colors.white }}>{events.length}</Text><Text style={{ ...type.overline, fontSize: 10, letterSpacing: 0.7, color: colors.textMuted, marginTop: 2 }}>PLAYS</Text></View>
         <View style={{ width: 1, backgroundColor: colors.divider }} />
-        <View style={{ flex: 1, alignItems: 'center' }}><Icon name={isLive ? 'radio' : off ? off.icon : 'time-outline'} size={21} color={isLive ? colors.live : off ? off.color : colors.accent} /><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>{isLive ? 'LIVE' : eff === 'completed' ? 'FINAL' : statusLabel(eff).toUpperCase()}</Text></View>
+        <View style={{ flex: 1, alignItems: 'center' }}><Icon name={isLive ? 'radio' : off ? off.icon : 'time-outline'} size={21} color={isLive ? colors.live : off ? off.color : colors.accent} /><Text style={{ ...type.overline, fontSize: 10, letterSpacing: 0.7, color: colors.textMuted, marginTop: 2 }}>{isLive ? 'LIVE' : eff === 'completed' ? 'FINAL' : statusLabel(eff).toUpperCase()}</Text></View>
       </View>
 
       {frozen ? (
@@ -557,6 +573,8 @@ export default function MatchDetail() {
           ))}
         </Card>
       )}
+
+      {id ? <QrCard entityId={id} title="Share this match" /> : null}
 
       <ConfirmDialog
         visible={!!confirm}
@@ -792,11 +810,11 @@ function PinPicker({
 const styles = StyleSheet.create({
   crest: { marginTop: spacing.xs, marginBottom: 6 },
   scoreDim: { color: 'rgba(255,255,255,0.55)' },
-  sideNote: { color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 2 },
+  sideNote: { color: 'rgba(255,255,255,0.7)', fontSize: 12, fontFamily: 'Inter_500Medium', marginTop: 2 },
   scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginVertical: spacing.lg, gap: 4 },
   side: { flex: 1, alignItems: 'center' },
-  teamName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text, textAlign: 'center' },
-  scoreNum: { fontSize: 64, fontFamily: 'Inter_800ExtraBold', lineHeight: 70, color: colors.text, fontVariant: ['tabular-nums'], minWidth: 40, textAlign: 'center' },
+  teamName: { fontSize: 15, lineHeight: 20, fontFamily: 'Inter_700Bold', letterSpacing: -0.2, color: colors.text, textAlign: 'center' },
+  scoreNum: { fontSize: 68, fontFamily: 'Inter_800ExtraBold', lineHeight: 74, letterSpacing: -3, color: colors.text, fontVariant: ['tabular-nums'], minWidth: 40, textAlign: 'center' },
   dash: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.textMuted, paddingHorizontal: 2 },
   scoreGrid: { flexDirection: 'row', gap: spacing.md, marginBottom: spacing.sm },
   scoreCol: { flex: 1 },

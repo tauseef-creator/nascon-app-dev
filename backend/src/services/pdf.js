@@ -44,32 +44,15 @@ function generateReceiptPdf(payload, { compress = true } = {}) {
   });
 }
 
-let minioClient = null;
-let bucketReady = null;
+const objectStore = require('../lib/objectStore');
 
 // Fire-and-forget copy of the receipt to MinIO. Never throws, never blocks the request.
 function uploadReceipt(orderId, buffer) {
-  if (!process.env.MINIO_ENDPOINT) return;
+  if (!objectStore.enabled()) return;
   try {
-    if (!minioClient) {
-      const Minio = require('minio');
-      minioClient = new Minio.Client({
-        endPoint: process.env.MINIO_ENDPOINT,
-        port: Number(process.env.MINIO_PORT || 9000),
-        useSSL: false,
-        accessKey: process.env.MINIO_ACCESS_KEY || '',
-        secretKey: process.env.MINIO_SECRET_KEY || '',
-      });
-    }
-    const bucket = process.env.MINIO_BUCKET || 'receipts';
-    if (!bucketReady) {
-      bucketReady = minioClient
-        .bucketExists(bucket)
-        .then((ok) => (ok ? null : minioClient.makeBucket(bucket)))
-        .catch(() => { bucketReady = null; });
-    }
-    bucketReady
-      .then(() => minioClient.putObject(bucket, `${orderId}.pdf`, buffer, buffer.length, { 'Content-Type': 'application/pdf' }))
+    const bucket = objectStore.defaultBucket();
+    objectStore.ensureBucket(bucket)
+      .then(() => objectStore.getClient().putObject(bucket, `${orderId}.pdf`, buffer, buffer.length, { 'Content-Type': 'application/pdf' }))
       .catch(() => {});
   } catch {
     // Storage is optional: the receipt is already returned inline as base64.

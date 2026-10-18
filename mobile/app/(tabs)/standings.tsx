@@ -95,7 +95,7 @@ export default function StandingsTab() {
                     </View>
                     <View style={[styles.teamCol, styles.teamCell]}>
                       <ClubCrest name={name(r.team_id)} size={18} />
-                      <Text style={[styles.cell, { fontFamily: 'Inter_700Bold', textAlign: 'left', flex: 1 }]} numberOfLines={2}>
+                      <Text style={[styles.cell, { fontFamily: 'Inter_600SemiBold', textAlign: 'left', flex: 1 }]} numberOfLines={2}>
                         {name(r.team_id)}
                         {mine ? ' (you)' : ''}
                       </Text>
@@ -154,11 +154,11 @@ function LegendRow({ kind, text: t }: { kind: PillKind; text: string }) {
 }
 
 const styles = StyleSheet.create({
-  tableTitle: { color: colors.text, fontSize: 17, fontFamily: 'Inter_700Bold', textAlign: 'center', paddingTop: spacing.lg, paddingBottom: spacing.xs },
-  tr: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  tableTitle: { color: colors.text, fontSize: 18, lineHeight: 24, fontFamily: 'Inter_700Bold', letterSpacing: -0.3, textAlign: 'center', paddingTop: spacing.lg, paddingBottom: spacing.xs },
+  tr: { flexDirection: 'row', alignItems: 'center', minHeight: 44, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: 'rgba(255,255,255,0.08)' },
   th: { minHeight: 40 },
-  cell: { fontSize: 13, color: colors.text, textAlign: 'center', paddingVertical: 8, fontVariant: ['tabular-nums'] },
-  hcell: { fontFamily: 'Inter_600SemiBold', color: colors.textMuted, fontSize: 11 },
+  cell: { fontSize: 14, fontFamily: 'Inter_500Medium', color: colors.text, textAlign: 'center', paddingVertical: 8, fontVariant: ['tabular-nums'] },
+  hcell: { fontFamily: 'Inter_600SemiBold', color: colors.textMuted, fontSize: 11, letterSpacing: 0.4 },
   teamCol: { width: 170, textAlign: 'left', paddingHorizontal: 6 },
   teamCell: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   rankCell: { alignSelf: 'stretch', justifyContent: 'center', paddingLeft: 4 },

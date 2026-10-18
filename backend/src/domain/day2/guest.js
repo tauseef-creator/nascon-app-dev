@@ -20,6 +20,25 @@ function newGuestToken(randomHex) {
   return ANON_PREFIX + randomHex;
 }
 
+// Guest tokens are short-lived (FR-4.2). Lifetime in seconds from GUEST_TOKEN_TTL_S, default 24 h.
+const DEFAULT_GUEST_TTL_S = 24 * 60 * 60;
+function guestTokenTtlS(raw) {
+  const n = Number(raw);
+  return Number.isSafeInteger(n) && n > 0 ? n : DEFAULT_GUEST_TTL_S;
+}
+
+// Expiry instant for a token issued at nowMs.
+function guestTokenExpiry(nowMs, ttlS) {
+  return new Date(nowMs + ttlS * 1000);
+}
+
+// A null expiry never lapses (the seeded audit fixture token of spec 5.2).
+function isGuestTokenExpired(expiresAt, nowMs) {
+  if (expiresAt === null || expiresAt === undefined) return false;
+  const t = expiresAt instanceof Date ? expiresAt.getTime() : Date.parse(expiresAt);
+  return Number.isFinite(t) && t <= nowMs;
+}
+
 /**
  * Schema check of a POST /audit/v1/guest/cart-merge body (spec 5.7 step 1).
  * Returns { ok, fields, value } where value has unknown fields dropped and
@@ -189,6 +208,10 @@ module.exports = {
   CURRENCY,
   isGuestTokenFormat,
   newGuestToken,
+  DEFAULT_GUEST_TTL_S,
+  guestTokenTtlS,
+  guestTokenExpiry,
+  isGuestTokenExpired,
   validateMergeBody,
   mergeIdentity,
   aggregateItems,

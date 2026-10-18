@@ -72,6 +72,18 @@ import { WarningCircleIcon } from 'phosphor-icons/WarningCircle';
 import { WarningIcon } from 'phosphor-icons/Warning';
 import { XCircleIcon } from 'phosphor-icons/XCircle';
 import { XIcon } from 'phosphor-icons/X';
+import { BellIcon } from 'phosphor-icons/Bell';
+import { ChatsCircleIcon } from 'phosphor-icons/ChatsCircle';
+import { GridFourIcon } from 'phosphor-icons/GridFour';
+import { KeyIcon } from 'phosphor-icons/Key';
+import { LinkIcon } from 'phosphor-icons/Link';
+import { MicrophoneIcon } from 'phosphor-icons/Microphone';
+import { MicrophoneSlashIcon } from 'phosphor-icons/MicrophoneSlash';
+import { QrCodeIcon } from 'phosphor-icons/QrCode';
+import { ScanIcon } from 'phosphor-icons/Scan';
+import { UserMinusIcon } from 'phosphor-icons/UserMinus';
+import { VideoCameraIcon } from 'phosphor-icons/VideoCamera';
+import { CrownIcon } from 'phosphor-icons/Crown';
 
 type Weight = 'thin' | 'light' | 'regular' | 'bold' | 'fill' | 'duotone';
 type Glyph = React.ComponentType<{ size?: number; color?: string; weight?: Weight; style?: StyleProp<ViewStyle> }>;
@@ -172,6 +184,22 @@ const MAP = {
   trophy: [TrophyIcon, 'fill'],
   'trophy-outline': [TrophyIcon, 'regular'],
   warning: [WarningIcon, 'fill'],
+  chatbubbles: [ChatsCircleIcon, 'fill'],
+  'chatbubbles-outline': [ChatsCircleIcon, 'regular'],
+  grid: [GridFourIcon, 'fill'],
+  'grid-outline': [GridFourIcon, 'regular'],
+  key: [KeyIcon, 'regular'],
+  link: [LinkIcon, 'regular'],
+  mic: [MicrophoneIcon, 'fill'],
+  'mic-off': [MicrophoneSlashIcon, 'fill'],
+  notifications: [BellIcon, 'fill'],
+  'qr-code': [QrCodeIcon, 'fill'],
+  'qr-code-outline': [QrCodeIcon, 'regular'],
+  scan: [ScanIcon, 'bold'],
+  'person-remove': [UserMinusIcon, 'regular'],
+  videocam: [VideoCameraIcon, 'fill'],
+  'videocam-outline': [VideoCameraIcon, 'regular'],
+  crown: [CrownIcon, 'fill'],
 } satisfies Record<string, readonly [Glyph, Weight]>;
 
 export type IconName = keyof typeof MAP;

@@ -2,7 +2,7 @@ import { Icon } from '../../src/components/Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ClubProfile } from '../../src/api/types';
 import { useAuth } from '../../src/auth/AuthContext';
 import { ClubCrest } from '../../src/components/ClubCrest';
@@ -44,7 +44,7 @@ export default function ClubTab() {
       {clubs.loading && !clubs.data ? <LoadingView label="Loading clubs…" /> : null}
       {clubs.error && !clubs.data ? <ErrorBanner message={clubs.error} onRetry={clubs.refresh} /> : null}
       {clubs.data && !others.length ? <EmptyState icon="shield-outline" title="No clubs yet" message="Clubs in your organisation will be listed here." /> : null}
-      {others.length ? <View style={{ backgroundColor: colors.card, borderRadius: 24, paddingHorizontal: spacing.md, marginBottom: spacing.lg }}>
+      {others.length ? <View style={{ backgroundColor: 'rgba(28,28,30,0.86)', borderRadius: 24, paddingHorizontal: spacing.md, marginBottom: spacing.lg, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.08)' }}>
         {others.map((c, i) => (
           <Pressable key={c.club_id} testID={`club-item-${c.club_id}`} accessibilityRole="button" accessibilityLabel={`${c.name}. Opens club profile.`} onPress={() => router.push(`/club/${c.club_id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 68, borderBottomWidth: i === others.length - 1 ? 0 : 1, borderBottomColor: colors.divider }}>
             <ClubCrest name={c.name} size={32} />

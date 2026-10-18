@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Product } from '../../src/api/types';
 import { useBrand } from '../../src/auth/AuthContext';
 import { ProductArt } from '../../src/components/ProductArt';
@@ -44,11 +44,11 @@ export default function StoreTab() {
         ) : null
       }
     >
-      <View style={{ height: 150, borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card }} accessible accessibilityLabel="Matchday collection banner">
+      <View style={{ height: 150, borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)' }} accessible accessibilityLabel="Matchday collection banner">
         <Image source={require('../../assets/merch.jpg')} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" />
         <LinearGradient colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.85)']} style={{ flex: 1, justifyContent: 'flex-end', padding: spacing.lg }}>
           <Text style={{ color: colors.accent, fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 0.8 }}>MATCHDAY COLLECTION</Text>
-          <Text style={{ color: colors.white, fontSize: 20, fontFamily: 'Inter_700Bold', marginTop: 2 }}>Wear your club colours</Text>
+          <Text style={{ color: colors.white, fontSize: 24, lineHeight: 30, fontFamily: 'Inter_800ExtraBold', letterSpacing: -0.7, marginTop: 2 }}>Wear your club colours</Text>
         </LinearGradient>
       </View>
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
@@ -60,7 +60,7 @@ export default function StoreTab() {
       {products.length ? <>
         <Text style={[text.title, { marginVertical: spacing.md }]}>Shop the collection <Text style={{ color: colors.textMuted }}>({products.length})</Text></Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: spacing.sm, paddingBottom: spacing.lg }}>
-          {categories.map((c) => <Pressable key={c} testID={`store-filter-${c}`} accessibilityRole="button" accessibilityState={{ selected: c === category }} onPress={() => setCategory(c)} style={{ backgroundColor: c === category ? colors.white : colors.card, borderRadius: 20, minHeight: 36, paddingHorizontal: spacing.lg, justifyContent: 'center' }}><Text style={{ color: c === category ? colors.black : colors.text, fontSize: 12, fontFamily: 'Inter_700Bold' }}>{c === 'all' ? 'All' : humanize(c)}</Text></Pressable>)}
+          {categories.map((c) => <Pressable key={c} testID={`store-filter-${c}`} accessibilityRole="button" accessibilityState={{ selected: c === category }} hitSlop={6} onPress={() => setCategory(c)} style={{ backgroundColor: c === category ? colors.white : 'rgba(28,28,30,0.86)', borderWidth: StyleSheet.hairlineWidth, borderColor: c === category ? colors.white : 'rgba(255,255,255,0.1)', borderRadius: 20, minHeight: 36, paddingHorizontal: spacing.lg, justifyContent: 'center' }}><Text style={{ color: c === category ? colors.black : colors.text, fontSize: 13, fontFamily: 'Inter_600SemiBold' }}>{c === 'all' ? 'All' : humanize(c)}</Text></Pressable>)}
         </ScrollView>
       </> : null}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>

@@ -34,6 +34,8 @@ export async function saveBaseUrl(url: string): Promise<string> {
 }
 
 export const getBaseUrl = () => baseUrl;
+/** Current member token (for WebSocket query strings, which cannot carry headers). */
+export const getToken = () => token;
 export const setToken = (t: string | null) => {
   token = t;
 };

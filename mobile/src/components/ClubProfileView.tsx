@@ -2,7 +2,7 @@ import { Icon } from './Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
-import { Linking, Text, View } from 'react-native';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 import { ClubProfile } from '../api/types';
 import { canManageRoster, useAuth } from '../auth/AuthContext';
 import { humanize } from '../hooks/useClubNames';
@@ -23,7 +23,7 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
   const rosterHref = (user?.role === 'super_admin' && user?.club_id !== club.club_id ? `/roster?club=${encodeURIComponent(club.club_id)}` : '/roster') as '/roster';
   return (
     <View testID="club-profile">
-      <View style={{ borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card }}>
+      <View style={{ borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)' }}>
         <LinearGradient colors={[crestColor(club.name), '#18291D', colors.card]} locations={[0, 0.58, 1]} style={{ padding: spacing.xl, minHeight: 220, justifyContent: 'space-between' }}>
           <Text style={{ color: '#D3F7DC', fontSize: 11, letterSpacing: 1.2, fontFamily: 'Inter_700Bold' }}>{user?.club_id === club.club_id ? 'YOUR CLUB' : 'CLUB PROFILE'}</Text>
           <View style={{ alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md }}>
@@ -34,9 +34,9 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
             <Text style={[text.small, { color: '#D4D9D4' }]}>{v?.name ?? 'League club'}</Text>
           </View>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: spacing.lg }}>
-            <Text style={{ color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{players.length} PLAYERS</Text>
+            <Text style={{ color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 12, letterSpacing: 0.6 }}>{players.length} PLAYERS</Text>
             <Text style={{ color: '#D4D9D4', fontSize: 12 }}>•</Text>
-            <Text style={{ color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{Object.keys(club.staff ?? {}).length} STAFF</Text>
+            <Text style={{ color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 12, letterSpacing: 0.6 }}>{Object.keys(club.staff ?? {}).length} STAFF</Text>
           </View>
         </LinearGradient>
       </View>

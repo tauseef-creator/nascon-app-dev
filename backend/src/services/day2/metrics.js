@@ -34,18 +34,19 @@ async function mediaPaths() {
 }
 
 async function collect() {
-  const [media, activeKeys, dlq, scans] = await Promise.all([
+  const [media, activeKeys, dlq, scans, wsConnections] = await Promise.all([
     mediaPaths(),
     scalar("SELECT count(*)::int AS n FROM stream_keys WHERE status = 'active'"),
     scalar('SELECT count(*)::int AS n FROM dlq_events'),
     scalar('SELECT COALESCE(SUM(scan_count), 0)::bigint AS n FROM qr_codes'),
+    bus.totalConnections ? bus.totalConnections() : bus.connectionCount(),
   ]);
   const { paths, kbps } = media;
   const mediaUp = Array.isArray(paths);
   // Live ingest paths when the media server answers; otherwise the active (publishable) key count.
   const activeStreams = mediaUp ? countLivePaths(paths, 'live/') : activeKeys;
   return [
-    { name: 'nascon_active_ws_connections', type: 'gauge', help: 'Open real-time (WebSocket/SSE) client connections.', value: bus.connectionCount() },
+    { name: 'nascon_active_ws_connections', type: 'gauge', help: 'Open real-time (WebSocket/SSE) client connections.', value: wsConnections },
     { name: 'nascon_active_streams_total', type: 'gauge', help: 'Live solo ingest streams on the media server (active stream keys when it is unreachable).', value: activeStreams },
     { name: 'nascon_stream_bitrate_kbps', type: 'gauge', help: 'Aggregate ingest bitrate across live streams in kbit/s.', value: kbps },
     { name: 'nascon_dlq_depth', type: 'gauge', help: 'Notifications parked in the dead-letter queue.', value: dlq },

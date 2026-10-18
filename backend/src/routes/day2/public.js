@@ -301,6 +301,7 @@ router.post('/api/v1/guest/session', async (req, res) => {
     role: 'guest',
     read_only: true,
     scopes: ['stream:read', 'score:subscribe', 'cart:stage'],
+    expires_at: (r && r.expires_at) || null,
   });
 });
 

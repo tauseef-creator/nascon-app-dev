@@ -110,18 +110,19 @@ async function mergeGuestCart(rawBody) {
 
 // ---- Guest web player helpers (FR-4.2 / FR-4.4) ----
 
-/** Issues a new anonymous, read-only viewer token: { guest_token, role, read_only }. */
+/** Issues a new anonymous, read-only, short-lived viewer token: { guest_token, role, read_only, expires_at }. */
 async function issueGuestToken() {
   const token = G.newGuestToken(crypto.randomBytes(12).toString('hex'));
-  await query('INSERT INTO guest_tokens (token) VALUES ($1)', [token]);
-  return { guest_token: token, role: 'guest', read_only: true };
+  const expiresAt = G.guestTokenExpiry(Date.now(), G.guestTokenTtlS(process.env.GUEST_TOKEN_TTL_S));
+  await query('INSERT INTO guest_tokens (token, expires_at) VALUES ($1, $2)', [token, expiresAt]);
+  return { guest_token: token, role: 'guest', read_only: true, expires_at: expiresAt.toISOString() };
 }
 
-/** True when the token is a known guest token that is neither merged nor revoked. */
+/** True when the token is a known guest token that is neither merged, revoked nor expired. */
 async function isActiveGuestToken(token) {
   if (!G.isGuestTokenFormat(token)) return false;
-  const { rows } = await query('SELECT merged, revoked FROM guest_tokens WHERE token = $1', [token]);
-  return rows.length > 0 && !rows[0].merged && !rows[0].revoked;
+  const { rows } = await query('SELECT merged, revoked, expires_at FROM guest_tokens WHERE token = $1', [token]);
+  return rows.length > 0 && !rows[0].merged && !rows[0].revoked && !G.isGuestTokenExpired(rows[0].expires_at, Date.now());
 }
 
 async function cartView(client, token, items) {
@@ -137,17 +138,27 @@ function invalidToken() {
   return unauthenticated('Unknown or revoked guest token.');
 }
 
+function expiredToken(token) {
+  return new ApiError(401, 'GUEST_TOKEN_EXPIRED', 'This guest token has expired. Request a new guest session.', { guest_token: token });
+}
+
+// Throws 401 for an unknown, revoked or expired guest token row.
+function assertUsableToken(row, token) {
+  if (!row || row.revoked) throw invalidToken();
+  if (G.isGuestTokenExpired(row.expires_at, Date.now())) throw expiredToken(token);
+}
+
 /** Staged guest cart: { guest_token, currency, items, count, subtotal_minor }. 401 for an unknown token. */
 async function getGuestCart(token) {
   if (!G.isGuestTokenFormat(token)) throw invalidToken();
-  const { rows } = await query('SELECT cart, revoked FROM guest_tokens WHERE token = $1', [token]);
-  if (!rows.length || rows[0].revoked) throw invalidToken();
+  const { rows } = await query('SELECT cart, revoked, expires_at FROM guest_tokens WHERE token = $1', [token]);
+  assertUsableToken(rows[0], token);
   return cartView({ query }, token, Array.isArray(rows[0].cart) ? rows[0].cart : []);
 }
 
 /**
  * Adds quantity of a variant to the guest's staged cart (local staging only, no stock is reserved).
- * 400 VALIDATION_ERROR, 401 unknown token, 404 VARIANT_NOT_FOUND, 409 GUEST_TOKEN_ALREADY_MERGED
+ * 400 VALIDATION_ERROR, 401 unknown or expired token, 404 VARIANT_NOT_FOUND, 409 GUEST_TOKEN_ALREADY_MERGED
  * or OUT_OF_STOCK. Returns the cart view of getGuestCart.
  */
 async function stageGuestCart(token, variantId, quantity) {
@@ -157,8 +168,8 @@ async function stageGuestCart(token, variantId, quantity) {
   if (bad.length) throw validation(bad);
   if (!G.isGuestTokenFormat(token)) throw invalidToken();
   return tx(async (c) => {
-    const { rows } = await c.query('SELECT cart, merged, revoked FROM guest_tokens WHERE token = $1 FOR UPDATE', [token]);
-    if (!rows.length || rows[0].revoked) throw invalidToken();
+    const { rows } = await c.query('SELECT cart, merged, revoked, expires_at FROM guest_tokens WHERE token = $1 FOR UPDATE', [token]);
+    assertUsableToken(rows[0], token);
     if (rows[0].merged) throw conflict('GUEST_TOKEN_ALREADY_MERGED', 'This guest token has already been merged.', { guest_token: token });
     const variants = await loadVariants(c, [variantId]);
     if (!variants.known.has(variantId)) throw notFound('VARIANT_NOT_FOUND', `Variant ${variantId} does not exist.`, { variant_id: variantId });

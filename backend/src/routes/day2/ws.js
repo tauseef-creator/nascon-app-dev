@@ -4,13 +4,16 @@
 //   /ws/costream/{session_id}?token=  session state + unified chat chat-{session_id}; a participant's
 //                                     authenticated socket is its presence (close -> host handoff)
 //   /ws/chat/{room_id}                one chat room
-// Messages are JSON: {type: 'score'|'status'|'pinned_product'|'chat'|'costream'|'error', ...}.
+//   /ws/users/me?token=<jwt>          the signed-in user's own notifications: order status
+//                                     transitions of orders they placed (FR-5.2)
+// Messages are JSON: {type: 'score'|'status'|'pinned_product'|'chat'|'costream'|'order_status'|'error', ...}.
 const { WebSocketServer } = require('ws');
 const bus = require('../../services/day2/bus');
 const events = require('../../services/events');
 const matchStatus = require('../../services/matchStatus');
 const { query } = require('../../db/pool');
 const { verifyToken } = require('../../lib/auth');
+const { clusterRedis } = require('../../lib/realtime');
 
 const HEARTBEAT_MS = 15000;
 const ID_RE = /^[A-Za-z0-9_.:-]{1,128}$/;
@@ -95,18 +98,65 @@ function wireHub() {
   bus.on('pinned', (id) => { pushPinned(id); });
   bus.on('chat', (roomId, message) => broadcast(`chat:${roomId}`, { type: 'chat', room_id: roomId, data: message }));
   bus.on('costream', (sessionId, state) => broadcast(`costream:${sessionId}`, { type: 'costream', data: state }));
+  bus.on('order_status', (customerId, data) => broadcast(`user:${customerId}`, { type: 'order_status', data }));
+}
+
+// Rooms of the signed-in user: orders may name the account id or the linked player id as customer.
+function userRooms(principal) {
+  const ids = [principal.user_id, principal.player_id].filter((v) => typeof v === 'string' && ID_RE.test(v));
+  return [...new Set(ids)].map((id) => `user:${id}`);
+}
+
+// /ws/users/me: the JWT (?token=) decides whose notifications the socket receives.
+function subscribeUser(ws, route) {
+  let principal;
+  try { principal = verifyToken(route.params.get('token') || ''); } catch (e) {
+    send(ws, { type: 'error', code: 'UNAUTHENTICATED' });
+    ws.close(4401, 'unauthenticated');
+    return;
+  }
+  if (route.id !== 'me' && route.id !== principal.user_id) {
+    send(ws, { type: 'error', code: 'FORBIDDEN' });
+    ws.close(4403, 'forbidden');
+    return;
+  }
+  for (const room of userRooms(principal)) join(room, ws);
+  send(ws, { type: 'subscribed', user_id: principal.user_id });
 }
 
 // ---------------------------------------------------------------- co-stream presence
 
 // `${sessionId}|${playerId}` -> Set<WebSocket>
 const presence = new Map();
+// Clustered: a broadcaster's sockets may live on several workers. Each worker keeps its socket count
+// in the hash nascon:presence:<session>|<player> (field = pid); the handoff runs only when the last
+// socket on any worker closes. Without Redis (single process or Redis down) the local set decides.
+const PRESENCE_PREFIX = 'nascon:presence:';
+const PRESENCE_DROP_LUA = `
+local left = redis.call('HINCRBY', KEYS[1], ARGV[1], -1)
+if left <= 0 then redis.call('HDEL', KEYS[1], ARGV[1]) end
+local total = 0
+for _, v in ipairs(redis.call('HVALS', KEYS[1])) do total = total + tonumber(v) end
+return total
+`;
 
 function addPresence(sessionId, playerId, ws) {
   const k = `${sessionId}|${playerId}`;
   if (!presence.has(k)) presence.set(k, new Set());
   presence.get(k).add(ws);
   ws.presence = { sessionId, playerId, key: k };
+  const redis = clusterRedis();
+  if (redis) redis.hincrby(PRESENCE_PREFIX + k, String(process.pid), 1).catch(() => {});
+}
+
+async function othersConnected(key) {
+  const redis = clusterRedis();
+  if (!redis) return false;
+  try {
+    return Number(await redis.eval(PRESENCE_DROP_LUA, 1, PRESENCE_PREFIX + key, String(process.pid))) > 0;
+  } catch {
+    return false;
+  }
 }
 
 function dropPresence(ws) {
@@ -115,10 +165,18 @@ function dropPresence(ws) {
   ws.presence = null;
   const set = presence.get(key);
   if (set) set.delete(ws);
-  if (set && set.size) return; // another socket of the same broadcaster is still connected
+  if (set && set.size) {
+    // another socket of the same broadcaster is still connected to this worker
+    const redis = clusterRedis();
+    if (redis) redis.hincrby(PRESENCE_PREFIX + key, String(process.pid), -1).catch(() => {});
+    return;
+  }
   presence.delete(key);
   // Abrupt or clean disconnect of a broadcaster: deterministic handoff, well inside 1.5 s.
-  require('../../services/day2/costream').handleDisconnect(sessionId, playerId).catch(() => {});
+  othersConnected(key).then((still) => {
+    if (still) return null;
+    return require('../../services/day2/costream').handleDisconnect(sessionId, playerId);
+  }).catch(() => {});
 }
 
 async function registerBroadcaster(ws, sessionId, token) {
@@ -138,7 +196,7 @@ async function registerBroadcaster(ws, sessionId, token) {
 function parseRoute(url) {
   let u;
   try { u = new URL(url, 'http://localhost'); } catch (e) { return null; }
-  const m = /^\/ws\/(matches|costream|chat)\/([^/]+)\/?$/.exec(u.pathname);
+  const m = /^\/ws\/(matches|costream|chat|users)\/([^/]+)\/?$/.exec(u.pathname);
   if (!m) return null;
   let id;
   try { id = decodeURIComponent(m[2]); } catch (e) { return null; }
@@ -184,6 +242,8 @@ async function onConnection(ws, route) {
     send(ws, s ? { type: 'costream', data: { ...costream.publicView(s), muted: s.muted || [], spotlight: s.spotlight ?? null } }
       : { type: 'error', code: 'STREAM_NOT_FOUND' });
     await registerBroadcaster(ws, route.id, route.params.get('token'));
+  } else if (route.kind === 'users') {
+    subscribeUser(ws, route);
   } else {
     join(`chat:${route.id}`, ws);
     send(ws, { type: 'subscribed', room_id: route.id });
@@ -216,4 +276,4 @@ function attachWebSockets(server) {
   return wss;
 }
 
-module.exports = { attachWebSockets, parseRoute };
+module.exports = { attachWebSockets, parseRoute, userRooms, PRESENCE_PREFIX };

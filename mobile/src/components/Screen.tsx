@@ -7,7 +7,7 @@ import React from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useBrand } from '../auth/AuthContext';
-import { colors, onColor, spacing, TOUCH } from '../theme';
+import { colors, gradients, onColor, spacing, surface, TOUCH, type } from '../theme';
 import { AppMark } from './AppMark';
 import { SyncBar } from './SyncBar';
 
@@ -112,7 +112,8 @@ export function Screen({ title, subtitle, back, right, children, scroll = true, 
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']} testID={testID}>
       <LinearGradient
         pointerEvents="none"
-        colors={[colors.headerTint, colors.bg]}
+        colors={gradients.wash}
+        locations={gradients.washLocations}
         style={styles.wash}
       />
       <Header title={title} subtitle={subtitle} back={back} right={right} logoOnly={logoOnly} />
@@ -138,25 +139,27 @@ export function Screen({ title, subtitle, back, right, children, scroll = true, 
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 360 },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.sm },
   headerTop: { minHeight: TOUCH, flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   subHeader: { minHeight: 56, flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  subTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: colors.white },
-  subSubtitle: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.textMuted, marginTop: 1 },
+  subTitle: { ...type.title, fontSize: 16, color: colors.white },
+  subSubtitle: { ...type.caption, color: colors.textMuted, marginTop: 1 },
   subRight: { minWidth: 40, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: spacing.sm },
   headerBtn: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: surface.edgeStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: { flexShrink: 1, fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.white, letterSpacing: -0.4 },
+  title: { ...type.h1, flexShrink: 1, fontSize: 26, lineHeight: 32, color: colors.white },
   spacer: { flex: 1 },
   srOnly: { position: 'absolute', width: 1, height: 1, overflow: 'hidden', opacity: 0 },
-  subtitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.textMuted, marginTop: 2 },
+  subtitle: { ...type.caption, fontSize: 13, color: colors.textMuted, marginTop: 2 },
   right: { flexDirection: 'row', alignItems: 'center' },
   body: { flex: 1 },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl },

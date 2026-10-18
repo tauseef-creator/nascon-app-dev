@@ -2,9 +2,10 @@ import { Icon } from '../../src/components/Icon';
 import { Tabs } from 'expo-router/tabs';
 import type { BottomTabBarProps } from 'expo-router/tabs';
 import React, { useEffect, useRef } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useCart } from '../../src/store/CartContext';
-import { colors, TOUCH } from '../../src/theme';
+import { colors, gradients, TOUCH } from '../../src/theme';
 
 type IconName = React.ComponentProps<typeof Icon>['name'];
 
@@ -78,6 +79,7 @@ function TabItem({
 function PremiumTabBar({ state, descriptors, emitter, navigateToTab, insets }: BottomTabBarProps) {
   return (
     <View style={[styles.bar, { paddingBottom: Math.max(insets.bottom, 8) }]} accessibilityRole="tablist">
+      <LinearGradient pointerEvents="none" colors={gradients.bar} style={StyleSheet.absoluteFill} />
       {state.routes.map((route, index) => {
         const focused = index === state.index;
         const { options } = descriptors[route.key]!;
@@ -134,13 +136,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: BAR_BG,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: 'rgba(255,255,255,0.14)',
+    borderTopColor: 'rgba(255,255,255,0.16)',
     paddingTop: 8,
     paddingHorizontal: 6,
   },
   item: { flex: 1, minHeight: TOUCH + 8, alignItems: 'center', justifyContent: 'center' },
   pillWrap: { minWidth: 64, paddingHorizontal: 10, paddingVertical: 6, alignItems: 'center', justifyContent: 'center', gap: 3 },
-  pill: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 18, backgroundColor: PILL_BG },
+  pill: { position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, borderRadius: 18, backgroundColor: PILL_BG, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(48,209,88,0.32)' },
   label: { fontSize: 11, fontFamily: 'Inter_600SemiBold', letterSpacing: 0.1 },
   badge: {
     position: 'absolute',

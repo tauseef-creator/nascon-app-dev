@@ -1,6 +1,7 @@
 // Groups every management action for an object ("Manage match", "Manage club") in one
 // clearly labelled, accent-outlined card. Render it only for roles that may act.
 import { Icon } from './Icon';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
 import { Role } from '../api/types';
@@ -36,6 +37,11 @@ export function ManagePanel({
 }) {
   return (
     <View testID={testID} style={[styles.panel, style]}>
+      <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(48,209,88,0.13)', 'rgba(48,209,88,0)']}
+        style={styles.wash}
+      />
       <View style={styles.head}>
         <View style={styles.iconWrap}>
           <Icon name={icon} size={18} color={colors.accent} accessibilityLabel="Restricted tools" />
@@ -71,17 +77,18 @@ export function ManageSection({ title, children, first, testID }: { title: strin
 
 const styles = StyleSheet.create({
   panel: {
-    backgroundColor: colors.card,
+    backgroundColor: 'rgba(24,26,25,0.94)',
     borderRadius: radius.md,
     borderWidth: 1.5,
     borderColor: colors.accent,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
+  wash: { position: 'absolute', top: 0, left: 0, right: 0, height: 96, borderTopLeftRadius: radius.md, borderTopRightRadius: radius.md },
   head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.md },
-  iconWrap: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.accentBg, alignItems: 'center', justifyContent: 'center' },
+  iconWrap: { width: 34, height: 34, borderRadius: 17, backgroundColor: colors.accentBg, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(48,209,88,0.4)', alignItems: 'center', justifyContent: 'center' },
   caption: { color: colors.accent, fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.8 },
-  lock: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: colors.cardHi },
+  lock: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: colors.cardHi, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.12)' },
   lockText: { color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_600SemiBold' },
   section: { marginTop: spacing.lg, paddingTop: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
 });

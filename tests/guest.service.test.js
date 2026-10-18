@@ -26,7 +26,7 @@ function mockClientQuery(sql, p = []) {
   }
   if (sql.startsWith('INSERT INTO member_carts')) { if (!s.carts[p[0]]) s.carts[p[0]] = []; return rows([]); }
   if (sql.startsWith('SELECT items FROM member_carts')) return rows([{ items: JSON.parse(JSON.stringify(s.carts[p[0]])) }]);
-  if (sql.startsWith('SELECT merged, revoked FROM guest_tokens')) return rows(s.tokens[p[0]] ? [{ ...s.tokens[p[0]] }] : []);
+  if (sql.startsWith('SELECT merged, revoked FROM guest_tokens') || sql.startsWith('SELECT merged, revoked, expires_at FROM guest_tokens')) return rows(s.tokens[p[0]] ? [{ ...s.tokens[p[0]] }] : []);
   if (sql.startsWith('UPDATE member_carts SET items')) { s.carts[p[0]] = JSON.parse(p[1]); return rows([]); }
   if (sql.includes('INSERT INTO guest_tokens (token, user_id, merged, cart)')) {
     s.tokens[p[0]] = { ...(s.tokens[p[0]] || { revoked: false }), user_id: p[1], merged: true, cart: [] };
@@ -37,9 +37,9 @@ function mockClientQuery(sql, p = []) {
     s.merges[p[0]] = { body_hash: p[1], response: JSON.parse(JSON.stringify(p[2])) };
     return rows([]);
   }
-  if (sql.startsWith('INSERT INTO guest_tokens (token) VALUES')) { s.tokens[p[0]] = { user_id: null, merged: false, revoked: false, cart: [] }; return rows([]); }
-  if (sql.startsWith('SELECT cart, revoked FROM guest_tokens')) return rows(s.tokens[p[0]] ? [{ ...s.tokens[p[0]] }] : []);
-  if (sql.startsWith('SELECT cart, merged, revoked FROM guest_tokens')) return rows(s.tokens[p[0]] ? [JSON.parse(JSON.stringify(s.tokens[p[0]]))] : []);
+  if (sql.startsWith('INSERT INTO guest_tokens (token, expires_at) VALUES')) { s.tokens[p[0]] = { user_id: null, merged: false, revoked: false, cart: [], expires_at: p[1] }; return rows([]); }
+  if (sql.startsWith('SELECT cart, revoked, expires_at FROM guest_tokens')) return rows(s.tokens[p[0]] ? [{ ...s.tokens[p[0]] }] : []);
+  if (sql.startsWith('SELECT cart, merged, revoked, expires_at FROM guest_tokens')) return rows(s.tokens[p[0]] ? [JSON.parse(JSON.stringify(s.tokens[p[0]]))] : []);
   if (sql.startsWith('UPDATE guest_tokens SET cart')) { s.tokens[p[0]].cart = JSON.parse(p[1]); return rows([]); }
   throw new Error(`unexpected SQL: ${sql}`);
 }
@@ -190,5 +190,37 @@ describe('guest staging helpers', () => {
     await expect(guest.getGuestCart('guest_missing')).rejects.toMatchObject({ status: 401 });
     await post(MERGE);
     await expect(guest.stageGuestCart('guest_anon_tok_7721', 'var-jersey-001-L', 1)).rejects.toMatchObject({ code: 'GUEST_TOKEN_ALREADY_MERGED' });
+  });
+});
+
+describe('guest token expiry (FR-4.2)', () => {
+  const OLD_TTL = process.env.GUEST_TOKEN_TTL_S;
+  afterEach(() => {
+    if (OLD_TTL === undefined) delete process.env.GUEST_TOKEN_TTL_S;
+    else process.env.GUEST_TOKEN_TTL_S = OLD_TTL;
+  });
+
+  test('issued tokens carry an expiry from GUEST_TOKEN_TTL_S', async () => {
+    process.env.GUEST_TOKEN_TTL_S = '120';
+    const before = Date.now();
+    const r = await guest.issueGuestToken();
+    const exp = Date.parse(r.expires_at);
+    expect(exp).toBeGreaterThanOrEqual(before + 120000);
+    expect(exp).toBeLessThanOrEqual(Date.now() + 120000);
+  });
+
+  test('expired token is rejected with 401 GUEST_TOKEN_EXPIRED on cart reads and staging', async () => {
+    mockState.tokens.guest_anon_tok_stale = {
+      user_id: null, merged: false, revoked: false, cart: [], expires_at: new Date(Date.now() - 1000).toISOString(),
+    };
+    await expect(guest.getGuestCart('guest_anon_tok_stale')).rejects.toMatchObject({ status: 401, code: 'GUEST_TOKEN_EXPIRED' });
+    await expect(guest.stageGuestCart('guest_anon_tok_stale', 'var-jersey-001-L', 1))
+      .rejects.toMatchObject({ status: 401, code: 'GUEST_TOKEN_EXPIRED' });
+    expect(await guest.isActiveGuestToken('guest_anon_tok_stale')).toBe(false);
+  });
+
+  test('seeded fixture token (no expiry) stays valid', async () => {
+    expect(await guest.isActiveGuestToken('guest_anon_tok_7721')).toBe(true);
+    await expect(guest.getGuestCart('guest_anon_tok_7721')).resolves.toMatchObject({ guest_token: 'guest_anon_tok_7721' });
   });
 });

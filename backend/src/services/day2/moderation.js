@@ -15,7 +15,10 @@
 const crypto = require('crypto');
 const { escapeLiteral } = require('pg');
 const db = require('../../db/pool');
-const { hub } = require('../../lib/realtime');
+const realtime = require('../../lib/realtime');
+const { hit: sharedWindowHit } = require('../../lib/rateLimit');
+
+const { hub } = realtime;
 const { validation } = require('../../lib/errors');
 const { isId, isStr, isInt } = require('../../lib/validate');
 const engine = require('../../domain/day2/moderation');
@@ -184,15 +187,18 @@ async function moderateBatch(roomId, incoming, { query = db.query } = {}) {
 
 // ---- production chat (POST /api/v1/chat, mounted by the public router) ----
 
-// Sliding-window history per room+sender. Single API process (ADR-001); pruned when it grows.
+// Sliding-window history per room+sender. Single process: this in-memory map. Clustered
+// (WEB_CONCURRENCY > 1): a shared Redis window (lib/rateLimit hit) so a sender cannot spread posts
+// over workers; the map is then only the fallback while Redis is unreachable.
 const rateHistory = new Map();
 const RATE_PRUNE_AT = 10000;
+const SHARED_RATE_PREFIX = 'rl:chat:';
 
 function rateKey(roomId, sender) {
   return `${roomId}\u0000${sender}`;
 }
 
-function checkRate(roomId, sender, now) {
+function checkRateLocal(roomId, sender, now) {
   const key = rateKey(roomId, sender);
   const { limited, history } = engine.rateCheck(rateHistory.get(key), now);
   rateHistory.set(key, history);
@@ -202,9 +208,35 @@ function checkRate(roomId, sender, now) {
   return limited;
 }
 
+async function checkRate(roomId, sender, now) {
+  if (!realtime.clusterRedis()) return checkRateLocal(roomId, sender, now);
+  const r = await sharedWindowHit(`${SHARED_RATE_PREFIX}${roomId}|${sender}`, {
+    limit: engine.RATE_LIMIT, windowMs: engine.RATE_WINDOW_MS, now, store: rateHistory,
+  });
+  return !r.allowed;
+}
+
+async function clearSharedRates(redis) {
+  let cursor = '0';
+  do {
+    // eslint-disable-next-line no-await-in-loop
+    const [next, keys] = await redis.scan(cursor, 'MATCH', `${SHARED_RATE_PREFIX}*`, 'COUNT', 500);
+    cursor = next;
+    // eslint-disable-next-line no-await-in-loop
+    if (keys.length) await redis.del(...keys);
+  } while (cursor !== '0');
+}
+
+// /audit/v1/reset: clears this worker's windows, the shared Redis windows, and (via the hub) the
+// fallback windows of every other worker. Resolves when the shared windows are gone.
 function resetRateLimits() {
   rateHistory.clear();
+  const redis = realtime.clusterRedis();
+  if (!redis) return Promise.resolve();
+  hub.emit('moderation:reset');
+  return clearSharedRates(redis).catch(() => {});
 }
+hub.on('moderation:reset', () => { if (hub.isRemoteDelivery()) rateHistory.clear(); });
 
 function blocked(status, code, reason, message, extra = {}) {
   return { accepted: false, blocked: { status, code, reason, message, ...extra } };
@@ -244,7 +276,7 @@ async function postChat({ roomId, sender, text, messageId } = {}, { now = Date.n
     await storeBatch(roomId, [], [{ user_id: sender, action: 'mute' }], { refreshMute: true, query });
     return blocked(429, 'RATE_LIMITED', d.reason, 'Message blocked: character flood.', { retry_after_s: MUTE_MS / 1000 });
   }
-  if (checkRate(roomId, sender, now)) {
+  if (await checkRate(roomId, sender, now)) {
     await storeBatch(roomId, [], [{ user_id: sender, action: 'mute' }], { refreshMute: true, query });
     return blocked(429, 'RATE_LIMITED', engine.REASON_RATE, 'Too many messages: at most 3 per 2 seconds.', { retry_after_s: MUTE_MS / 1000 });
   }

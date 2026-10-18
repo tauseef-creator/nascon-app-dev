@@ -72,7 +72,7 @@ app.use(errorHandler);
 const binary = (res, cb) => { const c = []; res.on('data', (d) => c.push(d)); res.on('end', () => cb(null, Buffer.concat(c))); };
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)';
 
-beforeEach(resetDb);
+beforeEach(() => { resetDb(); qr.clearQrCache(); });
 
 describe('GET /audit/v1/qr/:entity_id', () => {
   test('spec 5.6 body, signature, scan increment and telemetry', async () => {
@@ -97,9 +97,12 @@ describe('GET /audit/v1/qr/:entity_id', () => {
 
   test('edge case 2: status change keeps short_url, mutates route and signature', async () => {
     const a = (await request(app).get('/audit/v1/qr/match-m1?inspect=true')).body;
+    const { hub } = require('../backend/src/lib/realtime');
     mockDb.logStatus['match-m1'] = 'completed';
+    hub.emit('match', 'match-m1'); // production: emitted after the match_end event commits
     const b = (await request(app).get('/audit/v1/qr/match-m1?inspect=true')).body;
     mockDb.overrides.set('match-m1', 'postponed');
+    hub.emit('status', 'match-m1'); // production: emitted after the status override commits
     const c = (await request(app).get('/audit/v1/qr/match-m1?inspect=true')).body;
     expect(b.short_url).toBe(a.short_url);
     expect(b.target_route).toBe('/web/matches/match-m1/vod');
@@ -171,5 +174,84 @@ describe('short code resolution (for GET /q/{code})', () => {
     await expect(qr.resolveShortCode('zzz')).rejects.toMatchObject({ status: 404, code: 'QR_NOT_FOUND' });
     await expect(qr.resolveShortCode('')).rejects.toMatchObject({ status: 404, code: 'QR_NOT_FOUND' });
     await expect(qr.resolveShortCode(undefined)).rejects.toMatchObject({ status: 404, code: 'QR_NOT_FOUND' });
+  });
+});
+
+describe('inspect read cache (NFR-2)', () => {
+  test('repeat inspect reads are cached and a match event invalidates the entry', async () => {
+    const { hub } = require('../backend/src/lib/realtime');
+    const first = await qr.resolveEntity('match-m1', { inspect: true });
+    const again = await qr.resolveEntity('match-m1', { inspect: true });
+    expect(again).toBe(first); // served from cache
+    hub.emit('match', 'match-m1');
+    const fresh = await qr.resolveEntity('match-m1', { inspect: true });
+    expect(fresh).not.toBe(first); // rebuilt after invalidation
+    expect(fresh.short_url).toBe(first.short_url);
+  });
+
+  test('a counted scan invalidates the cached entry', async () => {
+    const before = await qr.resolveEntity('match-m1', { inspect: true });
+    await qr.resolveEntity('match-m1', { inspect: false });
+    const after = await qr.resolveEntity('match-m1', { inspect: true });
+    expect(after.scan_count).toBe(before.scan_count + 1);
+  });
+});
+
+
+describe('inspect cache: single-flight and cross-worker generation', () => {
+  const realtime = require('../backend/src/lib/realtime');
+  afterEach(() => realtime.disableClusterBus());
+
+  test('concurrent misses share one build', async () => {
+    const [a, b, c] = await Promise.all([1, 2, 3].map(() => qr.resolveEntity('match-m1', { inspect: true })));
+    expect(a).toBe(b); // one build object shared by all three concurrent callers
+    expect(b).toBe(c);
+  });
+
+  test('a shared generation bump by another worker forces a rebuild', async () => {
+    const kv = new Map();
+    const fake = () => {
+      const c = new (require('events').EventEmitter)();
+      c.status = 'ready';
+      c.subscribe = async () => 1;
+      c.publish = async () => 1;
+      c.get = async (k) => (kv.has(k) ? String(kv.get(k)) : null);
+      c.incr = async (k) => { kv.set(k, (kv.get(k) || 0) + 1); return kv.get(k); };
+      c.disconnect = () => {};
+      return c;
+    };
+    realtime.enableClusterBus({ createClient: fake, origin: 'w-test' });
+    const first = await qr.resolveEntity('match-m1', { inspect: true });
+    expect(await qr.resolveEntity('match-m1', { inspect: true })).toBe(first);
+    kv.set('qr:gen', 41); // another worker counted a scan or saw a status change
+    const rebuilt = await qr.resolveEntity('match-m1', { inspect: true });
+    expect(rebuilt).not.toBe(first);
+    await qr.resolveEntity('match-m1', { inspect: false }); // this worker counts a scan
+    expect(kv.get('qr:gen')).toBeGreaterThanOrEqual(43); // bumped before and after the scan
+    expect((await qr.resolveEntity('match-m1', { inspect: true })).scan_count).toBe(first.scan_count + 1);
+    // A relayed (remote) event only drops the local entry; the origin worker already bumped Redis.
+    const g = kv.get('qr:gen');
+    realtime.deliverRemote(JSON.stringify({ o: 'other', e: 'match', a: ['match-m1'] }));
+    expect(kv.get('qr:gen')).toBe(g);
+    realtime.hub.emit('status', 'match-m1');
+    await new Promise((res) => setImmediate(res));
+    expect(kv.get('qr:gen')).toBe(g + 1);
+  });
+
+  test('Redis errors serve uncached instead of stale', async () => {
+    const fake = () => {
+      const c = new (require('events').EventEmitter)();
+      c.subscribe = async () => 1;
+      c.publish = async () => 1;
+      c.get = async () => { throw new Error('down'); };
+      c.incr = async () => { throw new Error('down'); };
+      c.disconnect = () => {};
+      return c;
+    };
+    realtime.enableClusterBus({ createClient: fake, origin: 'w-test' });
+    const a = await qr.resolveEntity('match-m1', { inspect: true });
+    const b = await qr.resolveEntity('match-m1', { inspect: true });
+    expect(b).not.toBe(a);
+    expect(b).toEqual(a);
   });
 });

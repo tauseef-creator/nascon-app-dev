@@ -1,6 +1,7 @@
 // Shared building blocks. Every interactive element has testID, accessibilityRole,
 // and a minimum 48 dp touch target.
 import { Icon } from './Icon';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -14,13 +15,27 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useBrand } from '../auth/AuthContext';
-import { colors, font, radius, spacing, text, TOUCH } from '../theme';
+import { colors, font, gradients, radius, spacing, surface, text, TOUCH, type } from '../theme';
 
 type IconName = React.ComponentProps<typeof Icon>['name'];
+
+/** Faint top-down gloss for a rounded surface. Purely decorative: it ignores touches and is hidden from screen readers. */
+export function Sheen({ radius: r = radius.md, height = '55%' }: { radius?: number; height?: `${number}%` | number }) {
+  return (
+    <LinearGradient
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      colors={gradients.sheen}
+      style={{ position: 'absolute', top: 0, left: 0, right: 0, height, borderTopLeftRadius: r, borderTopRightRadius: r }}
+    />
+  );
+}
 
 export function Card({ children, style, testID }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; testID?: string }) {
   return (
     <View testID={testID} style={[styles.card, style]}>
+      <Sheen />
       {children}
     </View>
   );
@@ -81,14 +96,21 @@ export function PrimaryButton({ title, onPress, testID, loading, disabled, icon,
         styles.btn,
         compact && styles.btnCompact,
         { backgroundColor: off ? colors.cardHi : colors.accent },
+        !off && styles.btnPrimaryEdge,
         pressed && !off && { opacity: 0.85 },
         style,
       ]}
     >
+      {off ? null : (
+        <LinearGradient pointerEvents="none" colors={gradients.primary} style={[StyleSheet.absoluteFill, { borderRadius: radius.pill }]} />
+      )}
+      {off ? null : <Sheen radius={radius.pill} height="50%" />}
       {loading ? (
         <ActivityIndicator color={fg} />
       ) : icon ? (
-        <Icon name={icon} size={20} color={fg} />
+        <View>
+          <Icon name={icon} size={20} color={fg} />
+        </View>
       ) : null}
       <Text style={[styles.btnText, { color: fg }]} numberOfLines={2}>
         {loading ? 'Please wait…' : title}
@@ -112,7 +134,7 @@ export function SecondaryButton({ title, onPress, testID, loading, disabled, ico
       style={({ pressed }) => [
         styles.btn,
         compact && styles.btnCompact,
-        { backgroundColor: colors.cardHi },
+        styles.btnSecondary,
         pressed && !off && { backgroundColor: colors.border },
         style,
       ]}
@@ -287,7 +309,7 @@ export function Chip({
       onPress={onPress}
       style={({ pressed }) => [
         styles.chip,
-        selected ? { backgroundColor: colors.white, borderColor: colors.white } : { backgroundColor: colors.card, borderColor: colors.card },
+        selected ? { backgroundColor: colors.white, borderColor: colors.white } : { backgroundColor: surface.glass, borderColor: surface.edge },
         disabled && { opacity: 0.45 },
         pressed && { opacity: 0.8 },
       ]}
@@ -303,7 +325,7 @@ export function Chip({
 export function Field({ label, testID, error, ...rest }: TextInputProps & { label: string; testID: string; error?: string | null }) {
   return (
     <View style={{ marginBottom: spacing.md }}>
-      <Text style={[text.small, { marginBottom: spacing.xs, fontFamily: 'Inter_600SemiBold' }]}>{label}</Text>
+      <Text style={[text.small, { marginBottom: 6, fontFamily: 'Inter_600SemiBold' }]}>{label}</Text>
       <TextInput
         testID={testID}
         accessibilityLabel={label}
@@ -323,7 +345,7 @@ export function Field({ label, testID, error, ...rest }: TextInputProps & { labe
 
 export function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <Text style={[text.section, { marginTop: spacing.lg, marginBottom: spacing.sm }]} accessibilityRole="header">
+    <Text style={[text.heading, { marginTop: spacing.xl, marginBottom: spacing.md }]} accessibilityRole="header">
       {children}
     </Text>
   );
@@ -374,8 +396,10 @@ export function CachedNotice({ updatedAt, testID = 'cached-notice' }: { updatedA
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
+    backgroundColor: surface.glass,
     borderRadius: radius.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: surface.edge,
     padding: spacing.lg,
     marginBottom: spacing.md,
   },
@@ -390,7 +414,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   btnCompact: { minHeight: 40, paddingHorizontal: spacing.md },
-  btnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', textAlign: 'center', flexShrink: 1 },
+  btnPrimaryEdge: { borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.35)' },
+  btnSecondary: { backgroundColor: colors.cardHi, borderWidth: StyleSheet.hairlineWidth, borderColor: surface.edgeStrong },
+  btnText: { ...type.label, textAlign: 'center', flexShrink: 1 },
   iconBtn: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center' },
   badge: {
     position: 'absolute',
@@ -408,6 +434,8 @@ const styles = StyleSheet.create({
   empty: { alignItems: 'center', justifyContent: 'center', padding: spacing.xl, paddingTop: spacing.xxl },
   errorBox: {
     backgroundColor: colors.dangerBg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,105,97,0.35)',
     borderRadius: radius.md,
     padding: spacing.md,
     marginBottom: spacing.md,
@@ -430,7 +458,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignSelf: 'flex-start',
   },
-  pillText: { fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.4 },
+  pillText: { fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 },
   chip: {
     minHeight: 38,
     paddingHorizontal: 14,
@@ -443,16 +471,17 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
     marginBottom: spacing.sm,
   },
-  chipText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  chipText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', letterSpacing: -0.1 },
   input: {
     minHeight: TOUCH,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: surface.edgeStrong,
     borderRadius: radius.sm,
     paddingHorizontal: spacing.md,
     fontSize: font.body,
+    fontFamily: 'Inter_400Regular',
     color: colors.text,
-    backgroundColor: colors.cardHi,
+    backgroundColor: 'rgba(44,44,46,0.92)',
   },
   row: {
     flexDirection: 'row',

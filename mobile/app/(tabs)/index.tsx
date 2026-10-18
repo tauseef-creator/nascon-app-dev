@@ -14,7 +14,8 @@ import { Screen } from '../../src/components/Screen';
 import { CachedNotice, EmptyState, ErrorBanner, formatDateTime, formatTime, LoadingView, PrimaryButton, SectionTitle } from '../../src/components/ui';
 import { useCachedQuery } from '../../src/hooks/useCachedQuery';
 import { useLeague } from '../../src/store/LeagueContext';
-import { colors, spacing } from '../../src/theme';
+import { colors, spacing, surface, type } from '../../src/theme';
+import { Sheen } from '../../src/components/ui';
 import { isFinished, isFrozen, isPending, statusLabel } from '../../src/utils/matchStatus';
 
 type Tab = 'results' | 'live' | 'upcoming';
@@ -116,7 +117,8 @@ export default function Fixtures() {
         {featured ? (
           <View style={styles.hero} testID="home-hero">
             <Image source={require('../../assets/stadium.jpg')} style={StyleSheet.absoluteFill} contentFit="cover" />
-            <LinearGradient colors={['rgba(0,0,0,0.38)', 'rgba(0,0,0,0.82)', '#101A14']} locations={[0, 0.53, 1]} style={StyleSheet.absoluteFill} />
+            <LinearGradient colors={['rgba(0,0,0,0.38)', 'rgba(0,0,0,0.82)', '#0E1C13']} locations={[0, 0.53, 1]} style={StyleSheet.absoluteFill} />
+            <Sheen radius={24} height="40%" />
             <Pressable
               testID="featured-match"
               accessibilityRole="button"
@@ -209,28 +211,28 @@ export default function Fixtures() {
 }
 
 const styles = StyleSheet.create({
-  hero: { borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card },
+  hero: { borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card, borderWidth: StyleSheet.hairlineWidth, borderColor: surface.edgeStrong },
   heroBody: { height: 224, padding: spacing.lg, justifyContent: 'space-between' },
   heroAction: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.65)', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 },
+  heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(0,0,0,0.6)', borderWidth: StyleSheet.hairlineWidth, borderColor: surface.edgeStrong, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 6 },
   badgeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.live },
   heroBadgeText: { color: colors.white, fontSize: 10, fontFamily: 'Inter_800ExtraBold', letterSpacing: 0.8 },
   heroTeams: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   heroClub: { width: 82, alignItems: 'center', gap: 5 },
-  heroClubName: { color: colors.white, fontSize: 11, lineHeight: 14, fontFamily: 'Inter_700Bold', textAlign: 'center' },
+  heroClubName: { color: colors.white, fontSize: 12, lineHeight: 15, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
   heroCenter: { flex: 1, alignItems: 'center' },
-  heroScore: { color: colors.white, fontSize: 31, fontFamily: 'Inter_800ExtraBold', letterSpacing: -1 },
-  heroDate: { color: '#E3E3E6', fontSize: 10, fontFamily: 'Inter_700Bold', textAlign: 'center', marginTop: 3 },
-  heroVenue: { color: '#D6D6DA', fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
+  heroScore: { ...type.score, fontSize: 38, lineHeight: 44, letterSpacing: -1.5, color: colors.white },
+  heroDate: { ...type.overline, fontSize: 10, letterSpacing: 0.6, color: '#E3E3E6', textAlign: 'center', marginTop: 2 },
+  heroVenue: { ...type.caption, color: '#D6D6DA', textAlign: 'center' },
   quickLinks: { flexDirection: 'row', gap: spacing.sm, marginBottom: spacing.lg },
-  quickLink: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: spacing.sm, borderRadius: 15, backgroundColor: colors.card },
-  quickText: { flex: 1, color: colors.text, fontSize: 11, fontFamily: 'Inter_700Bold' },
-  panel: { backgroundColor: 'rgba(28,28,30,0.92)', borderRadius: 24, overflow: 'hidden', paddingBottom: spacing.sm, marginBottom: spacing.md },
+  quickLink: { flex: 1, minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: spacing.md, borderRadius: 16, backgroundColor: surface.glass, borderWidth: StyleSheet.hairlineWidth, borderColor: surface.edge },
+  quickText: { flex: 1, color: colors.text, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  panel: { backgroundColor: surface.glass, borderRadius: 24, overflow: 'hidden', paddingBottom: spacing.sm, marginBottom: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderColor: surface.edge },
   segment: { flexDirection: 'row', paddingHorizontal: spacing.sm, paddingTop: spacing.xs },
   segBtn: { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   segLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  segText: { color: colors.textMuted, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+  segText: { color: colors.textMuted, fontSize: 14, fontFamily: 'Inter_500Medium' },
   segTextOn: { color: colors.text, fontFamily: 'Inter_700Bold' },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.live },
   leagueRow: {
@@ -243,6 +245,6 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   leagueIcon: { width: 24, height: 24, borderRadius: 12, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' },
-  leagueName: { color: colors.text, fontSize: 13, fontFamily: 'Inter_700Bold', flexShrink: 1 },
+  leagueName: { color: colors.text, fontSize: 13, fontFamily: 'Inter_600SemiBold', flexShrink: 1 },
   none: { color: colors.text, fontSize: 17, fontFamily: 'Inter_700Bold', textAlign: 'center', paddingVertical: spacing.xxl },
 });

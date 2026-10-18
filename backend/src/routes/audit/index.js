@@ -20,6 +20,7 @@ router.post('/reset', async (req, res) => {
   const result = await resetAndSeed({ seed: body.seed ?? 42, stock: body.stock || {} });
   await seedDay2();
   require('../../services/day2/moderation').resetRateLimits?.();
+  require('../../services/day2/qr').clearQrCache?.();
   await seedDemoSafe();
   res.status(200).json(result);
 });

@@ -61,17 +61,17 @@ export function MatchCard({ m, testID }: { m: Match; testID?: string }) {
 
 const styles = StyleSheet.create({
   card: { paddingVertical: spacing.md, marginHorizontal: spacing.md, minHeight: 84, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-  date: { color: '#6E6E73', fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center', marginBottom: 3 },
+  date: { color: '#8E8E93', fontSize: 11, fontFamily: 'Inter_500Medium', textAlign: 'center', marginBottom: 3 },
   matchRow: { flexDirection: 'row', alignItems: 'center' },
   club: { width: 76, alignItems: 'center', gap: 4 },
-  clubName: { color: colors.textMuted, fontSize: 11, fontFamily: 'Inter_600SemiBold', textAlign: 'center' },
-  score: { color: colors.text, fontSize: 30, fontFamily: 'Inter_800ExtraBold', minWidth: 30, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  clubName: { color: colors.textMuted, fontSize: 11, lineHeight: 14, fontFamily: 'Inter_500Medium', textAlign: 'center' },
+  score: { color: colors.text, fontSize: 32, lineHeight: 38, fontFamily: 'Inter_800ExtraBold', letterSpacing: -1, minWidth: 30, textAlign: 'center', fontVariant: ['tabular-nums'] },
   scoreDim: { color: colors.textMuted },
   middle: { flex: 1, alignItems: 'center', paddingHorizontal: spacing.xs },
-  status: { color: colors.text, fontSize: 15, fontFamily: 'Inter_700Bold', textAlign: 'center' },
+  status: { color: colors.text, fontSize: 15, fontFamily: 'Inter_700Bold', letterSpacing: -0.2, textAlign: 'center', fontVariant: ['tabular-nums'] },
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.live },
   liveText: { color: colors.live, fontSize: 14, fontFamily: 'Inter_800ExtraBold', letterSpacing: 0.6 },
   offText: { fontSize: 13, fontFamily: 'Inter_800ExtraBold', letterSpacing: 0.3 },
-  venueText: { color: '#6E6E73', fontSize: 11, marginTop: 3, textAlign: 'center' },
+  venueText: { color: '#8E8E93', fontSize: 11, fontFamily: 'Inter_500Medium', marginTop: 3, textAlign: 'center' },
 });

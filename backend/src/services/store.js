@@ -99,8 +99,23 @@ async function nextPaymentSeq() {
   return rows[0].seq;
 }
 
+// Real-time push of the transition to the owning user (FR-5.2) through the notification bus, so a
+// failed delivery is retried and dead-lettered. Fire and forget: checkout never waits on it.
+function pushOrderStatus(event) {
+  if (!event.customer_id) return;
+  // eslint-disable-next-line global-require
+  const bus = require('./day2/bus');
+  // eslint-disable-next-line global-require
+  require('./day2/notify').deliver(
+    { type: 'order_status', user_id: event.customer_id, ...event, status: event.to },
+    { transport: async (e) => { bus.emitOrderStatus(event.customer_id, e); } },
+  ).catch(() => {});
+}
+
 function emitStatus(req, from, to, reason = null) {
-  publish('order.status_changed', statusChangedEvent({ order_id: req.order_id, customer_id: req.customer_id, from, to, at: nowIso(), reason }));
+  const event = statusChangedEvent({ order_id: req.order_id, customer_id: req.customer_id, from, to, at: nowIso(), reason });
+  publish('order.status_changed', event);
+  pushOrderStatus(event);
 }
 
 async function checkout(body) {
@@ -229,4 +244,4 @@ async function listProducts(tenantId) {
   return [...out.values()];
 }
 
-module.exports = { checkout, getInventory, listProducts };
+module.exports = { checkout, getInventory, listProducts, pushOrderStatus };

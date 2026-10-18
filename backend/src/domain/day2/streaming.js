@@ -210,3 +210,32 @@ function upcomingFixtures(matches, nowMs, limit = 10) {
 
 module.exports.careerRecord = careerRecord;
 module.exports.upcomingFixtures = upcomingFixtures;
+
+// ---------------------------------------------------------------- VOD archive to MinIO (FR-3.2)
+
+// MediaMTX writes fMP4 segments under recordPath /recordings/%path/<timestamp>.mp4.
+const SEGMENT_RE = /^[A-Za-z0-9_.-]+\.mp4$/;
+// A segment written during the broadcast is modified at or after it went live; allow clock slack.
+const SEGMENT_SLACK_MS = 2000;
+
+/**
+ * Picks the recorded segments of one broadcast from a directory listing.
+ * entries: [{ name, mtimeMs }]. Keeps .mp4 files modified at or after startMs (minus slack),
+ * sorted by name (the timestamp in the name orders them). File times avoid timezone guessing.
+ */
+function selectVodSegments(entries, startMs) {
+  if (!Array.isArray(entries)) return [];
+  return entries
+    .filter((e) => e && typeof e.name === 'string' && SEGMENT_RE.test(e.name)
+      && Number.isFinite(e.mtimeMs) && e.mtimeMs >= startMs - SEGMENT_SLACK_MS)
+    .map((e) => e.name)
+    .sort();
+}
+
+// Object key of one archived segment: vods/<vod_id>/<segment file>.
+function vodObjectKey(vodId, segmentName) {
+  return `vods/${vodId}/${segmentName}`;
+}
+
+module.exports.selectVodSegments = selectVodSegments;
+module.exports.vodObjectKey = vodObjectKey;

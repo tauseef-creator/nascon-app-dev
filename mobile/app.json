@@ -50,7 +50,17 @@
       "expo-font",
       "expo-sharing",
       "expo-web-browser",
-      "expo-image"
+      "expo-image",
+      "expo-video",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "NaSCon League uses the camera to scan match, club and stream QR codes.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ]
     ]
   }
 }

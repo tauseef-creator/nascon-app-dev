@@ -208,6 +208,11 @@ async function onPathNotReady(path) {
     `INSERT INTO vods (vod_id, stream_key, player_id, object_key, duration_s) VALUES ($1, $2, $3, $4, $5)
      ON CONFLICT (vod_id) DO NOTHING`,
     [vodId, t.key, started.player_id, `${name}?start=${startIso}`, durationS]);
+  // Copy the recording to MinIO in the background; the row is already indexed (FR-3.2).
+  try {
+    // eslint-disable-next-line global-require
+    require('./vodArchive').scheduleArchive({ vodId, path: name, startMs: started.at.getTime() });
+  } catch (e) { /* archiving is best effort */ }
   bus.emitStream(started.player_id, { stream_key: t.key, status: 'ended', vod_id: vodId });
   return { indexed: true, vod_id: vodId };
 }

@@ -76,7 +76,86 @@ async function recordScan(entityId, userAgent) {
  * Full spec 5.6 body for an entity. opts.inspect = true reads without counting a scan.
  * Throws ApiError 404 QR_NOT_FOUND for an unknown entity.
  */
+// Read cache for ?inspect=true (NFR-2: 500 concurrent viewers). Entries are dropped the moment the
+// entity can change: match events and status overrides (hub 'match' / 'status', emitted after commit),
+// any counted scan, and /audit/v1/reset. The TTL is only a safety net.
+// - Single-flight: concurrent misses for one entity share one DB build.
+// - A local epoch is bumped on every invalidation, so a build that started before an invalidation is
+//   never cached or shared after it.
+// - Clustered (WEB_CONCURRENCY > 1): a Redis generation counter (qr:gen) is bumped on every
+//   invalidation and read before serving a hit, so a scan or status change handled by one worker is
+//   visible to the next inspect on any worker. If Redis fails, the request is served uncached.
+const INSPECT_TTL_MS = 2000;
+const GEN_KEY = 'qr:gen';
+const inspectCache = new Map();
+const inflight = new Map();
+let epoch = 0;
+const realtime = require('../../lib/realtime');
+
+function bumpShared() {
+  const redis = realtime.clusterRedis();
+  if (!redis) return Promise.resolve();
+  return redis.incr(GEN_KEY).then(() => {}, () => {});
+}
+function invalidateLocal(id) {
+  epoch += 1;
+  inspectCache.delete(id);
+  inflight.delete(id);
+}
+const invalidate = (id) => { invalidateLocal(id); return bumpShared(); };
+function clearQrCache() {
+  epoch += 1;
+  inspectCache.clear();
+  inflight.clear();
+  return bumpShared();
+}
+// Local listeners run on the worker that committed the change (which bumps the shared generation);
+// relayed copies from other workers only need the local drop.
+const onChange = (id) => (realtime.hub.isRemoteDelivery() ? invalidateLocal(id) : invalidate(id));
+realtime.hub.on('match', onChange);
+realtime.hub.on('status', onChange);
+
+async function sharedGen() {
+  const redis = realtime.clusterRedis();
+  if (!redis) return 0;
+  try {
+    return Number(await redis.get(GEN_KEY)) || 0;
+  } catch {
+    return null; // Redis unavailable: no cache hits until it is back
+  }
+}
+
+async function resolveInspect(entityId, userAgent) {
+  const gen = await sharedGen();
+  if (gen === null) return resolveEntityUncached(entityId, { inspect: true, userAgent });
+  const hit = inspectCache.get(entityId);
+  if (hit && hit.gen === gen && hit.epoch === epoch && Date.now() - hit.at < INSPECT_TTL_MS) return hit.body;
+  const running = inflight.get(entityId);
+  if (running && running.gen === gen && running.epoch === epoch) return running.promise;
+  const started = { gen, epoch };
+  const promise = resolveEntityUncached(entityId, { inspect: true, userAgent });
+  inflight.set(entityId, { ...started, promise });
+  try {
+    const body = await promise;
+    if (started.epoch === epoch) inspectCache.set(entityId, { ...started, at: Date.now(), body });
+    return body;
+  } finally {
+    const cur = inflight.get(entityId);
+    if (cur && cur.promise === promise) inflight.delete(entityId);
+  }
+}
+
 async function resolveEntity(entityId, { inspect = false, userAgent = '' } = {}) {
+  if (inspect) return resolveInspect(entityId, userAgent);
+  await invalidate(entityId);
+  try {
+    return await resolveEntityUncached(entityId, { inspect, userAgent });
+  } finally {
+    await invalidate(entityId); // the scan is committed: drop anything built meanwhile
+  }
+}
+
+async function resolveEntityUncached(entityId, { inspect = false, userAgent = '' } = {}) {
   if (!isId(entityId)) throw qrNotFound({ entity_id: String(entityId).slice(0, 64) });
   const facts = await loadEntityFacts(entityId);
   const type = pickType(entityId, facts);
@@ -173,4 +252,4 @@ async function exportQr(entityId, fmt) {
   return { contentType: Q.EXPORT_CONTENT_TYPES[fmt], body, filename: `qr-${entityId}.${fmt}` };
 }
 
-module.exports = { resolveEntity, resolveShortCode, exportQr, totalScans };
+module.exports = { resolveEntity, resolveShortCode, exportQr, totalScans, clearQrCache };

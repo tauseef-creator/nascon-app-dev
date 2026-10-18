@@ -247,9 +247,9 @@ function ordinal(n: number) {
 }
 
 const styles = StyleSheet.create({
-  list: { backgroundColor: colors.card, borderRadius: 20, overflow: 'hidden', marginBottom: spacing.md },
-  note: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.md },
-  card: { backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.md },
+  list: { backgroundColor: 'rgba(28,28,30,0.86)', borderRadius: 20, overflow: 'hidden', marginBottom: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.08)' },
+  note: { backgroundColor: 'rgba(28,28,30,0.86)', borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.08)' },
+  card: { backgroundColor: 'rgba(28,28,30,0.86)', borderRadius: radius.md, padding: spacing.lg, marginBottom: spacing.md, borderWidth: StyleSheet.hairlineWidth, borderColor: 'rgba(255,255,255,0.08)' },
   item: { gap: spacing.sm, marginBottom: spacing.md },
   itemHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   clubRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginBottom: spacing.sm },

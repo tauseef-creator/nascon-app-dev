@@ -40,22 +40,61 @@ export const font = {
   small: 13,
   label: 15,
   title: 17,
-  h1: 26,
+  h1: 28,
   score: 48,
 };
 
+/**
+ * Type scale by role. Display numbers are heavy with tight tracking; headings are bold with slight
+ * negative tracking; labels are semibold; captions and overlines are small, medium weight, and
+ * muted. Overlines are uppercase with open tracking so they read as labels, not body text.
+ */
+export const type = {
+  display: { fontFamily: 'Inter_800ExtraBold', fontSize: 56, lineHeight: 62, letterSpacing: -2, fontVariant: ['tabular-nums'] },
+  score: { fontFamily: 'Inter_800ExtraBold', fontSize: 32, lineHeight: 38, letterSpacing: -1, fontVariant: ['tabular-nums'] },
+  h1: { fontFamily: 'Inter_800ExtraBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.8 },
+  h2: { fontFamily: 'Inter_700Bold', fontSize: 20, lineHeight: 26, letterSpacing: -0.4 },
+  title: { fontFamily: 'Inter_700Bold', fontSize: 17, lineHeight: 22, letterSpacing: -0.2 },
+  body: { fontFamily: 'Inter_400Regular', fontSize: 15, lineHeight: 21, letterSpacing: -0.1 },
+  label: { fontFamily: 'Inter_600SemiBold', fontSize: 15, lineHeight: 20, letterSpacing: -0.1 },
+  caption: { fontFamily: 'Inter_500Medium', fontSize: 12, lineHeight: 16 },
+  overline: { fontFamily: 'Inter_700Bold', fontSize: 11, lineHeight: 14, letterSpacing: 0.8, textTransform: 'uppercase' },
+} satisfies Record<string, TextStyle>;
+
 export const text: Record<string, TextStyle> = {
-  body: { fontFamily: 'Inter_400Regular', fontSize: font.body, color: colors.text, lineHeight: 20 },
-  muted: { fontFamily: 'Inter_400Regular', fontSize: font.body, color: colors.textMuted, lineHeight: 20 },
-  small: { fontFamily: 'Inter_400Regular', fontSize: font.small, color: colors.textMuted, lineHeight: 18 },
-  label: { fontSize: font.label, color: colors.text, fontFamily: 'Inter_600SemiBold' },
-  title: { fontSize: font.title, color: colors.text, fontFamily: 'Inter_700Bold' },
-  h1: { fontSize: font.h1, color: colors.text, fontFamily: 'Inter_700Bold', letterSpacing: -0.4 },
-  section: {
-    fontSize: 15,
-    color: colors.text,
-    fontFamily: 'Inter_700Bold',
-  },
+  body: { ...type.body, color: colors.text },
+  muted: { ...type.body, color: colors.textMuted },
+  small: { fontFamily: 'Inter_500Medium', fontSize: font.small, color: colors.textMuted, lineHeight: 18 },
+  label: { ...type.label, color: colors.text },
+  title: { ...type.title, color: colors.text },
+  h1: { ...type.h1, color: colors.text },
+  section: { ...type.title, color: colors.text },
+  heading: { ...type.h2, color: colors.text },
+  caption: { ...type.caption, color: colors.textMuted },
+  overline: { ...type.overline, color: colors.textMuted },
+};
+
+/**
+ * Surfaces: translucent fills with a soft hairline edge, so cards read as layered glass over the
+ * header wash. `sheen` is a faint top-down highlight drawn over a surface (see <Sheen />).
+ */
+export const surface = {
+  glass: 'rgba(28,28,30,0.86)',
+  glassHi: 'rgba(44,44,46,0.9)',
+  edge: 'rgba(255,255,255,0.08)',
+  edgeStrong: 'rgba(255,255,255,0.14)',
+};
+
+export const gradients = {
+  /** Screen header wash: brand green fading into the black canvas. */
+  wash: ['#0E3418', 'rgba(9,32,15,0.55)', 'rgba(0,0,0,0)'] as const,
+  washLocations: [0, 0.45, 1] as const,
+  /** Glossy highlight laid over cards and buttons. */
+  sheen: ['rgba(255,255,255,0.07)', 'rgba(255,255,255,0)'] as const,
+  /** Primary action fill: brand green with a slightly deeper base. */
+  primary: ['#3BDB64', '#2AC151'] as const,
+  /** Bottom bar: near-black with a faint lift at the top edge. */
+  bar: ['rgba(22,22,24,0.98)', 'rgba(6,6,7,1)'] as const,
 };
 
 export const shadow: ViewStyle = Platform.select({

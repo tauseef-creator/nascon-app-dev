@@ -189,7 +189,7 @@ module.exports = {
 
 const TILE = { w: 640, h: 360 };
 const XSTACK = { 3: '0_0|w0_0|0_h0', 4: '0_0|w0_0|0_h0|w0_h0' };
-const SAFE_URL_RE = /^(rtmp|rtsp):\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9_.:\/-]+$/;
+const SAFE_URL_RE = /^(rtmp|rtsp|http):\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9_.:\/-]+$/;
 
 /**
  * FFmpeg argument list that mixes the live inputs (active participants in order, host first) into one
@@ -213,15 +213,17 @@ function compositeArgs({ inputs, layout, output, spotlight = null }) {
   }
   let filter;
   if (n === 1) {
-    filter = `[0:v]scale=${TILE.w * 2}:${TILE.h * 2},setsar=1[v]`;
+    filter = `[0:v]scale=${TILE.w * 2}:${TILE.h * 2}:out_range=tv,setsar=1,format=yuv420p[v]`;
   } else {
-    const scaled = list.map((_, i) => `[${i}:v]scale=${TILE.w}:${TILE.h},setsar=1[v${i}]`).join(';');
+    const scaled = list.map((_, i) => `[${i}:v]scale=${TILE.w}:${TILE.h}:out_range=tv,setsar=1,format=yuv420p[v${i}]`).join(';');
     const labels = list.map((_, i) => `[v${i}]`).join('');
     filter = n === 2 ? `${scaled};${labels}hstack=inputs=2[v]` : `${scaled};${labels}xstack=inputs=${n}:layout=${XSTACK[n]}:fill=black[v]`;
   }
   args.push('-filter_complex', filter, '-map', '[v]', '-map', '0:a?',
-    '-c:v', 'libx264', '-preset', 'veryfast', '-tune', 'zerolatency', '-g', '50', '-b:v', '2500k',
-    '-c:a', 'aac', '-b:a', '128k', '-f', 'flv', output);
+    // Browsers expect limited-range 4:2:0; phone cameras often publish full-range (yuvj420p).
+    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-color_range', 'tv', '-preset', 'veryfast', '-tune', 'zerolatency', '-g', '50', '-b:v', '2500k',
+    // RTSP output keeps large keyframes intact (the RTMP leg dropped them, leaving a grey picture).
+    '-c:a', 'aac', '-b:a', '128k', ...(output.startsWith('rtsp://') ? ['-f', 'rtsp', '-rtsp_transport', 'tcp'] : ['-f', 'flv']), output);
   return args;
 }
 

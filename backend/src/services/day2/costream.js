@@ -122,12 +122,13 @@ async function compositePlan(sessionId) {
   for (const r of keys.rows) if (!keyOf.has(r.player_id)) keyOf.set(r.player_id, r.stream_key);
   const paths = await require('./streaming').listPaths(1000);
   const ready = new Set((paths || []).filter((p) => p && p.ready).map((p) => p.name));
-  // Read over RTSP so WebRTC (AV1/VP9/Opus) and RTMP (H.264/AAC) publishers both decode.
-  const url = (pid) => `rtsp://localhost:8554/live/${keyOf.get(pid)}`;
+  // Read each broadcaster's HLS feed: MediaMTX starts it on a keyframe, so the mix never decodes from a
+  // grey base (browser WebRTC publishers send keyframes only on request), and Opus/AAC both decode.
+  const url = (pid) => `http://localhost:8888/live/${keyOf.get(pid)}/index.m3u8`;
   const live = order.filter((pid) => keyOf.has(pid) && (paths === null || ready.has(`live/${keyOf.get(pid)}`)));
   const spotlight = s.spotlight && live.includes(s.spotlight) ? url(s.spotlight) : null;
   return domain.compositeArgs({
-    inputs: live.map(url), layout: s.layout, spotlight, output: `rtmp://localhost:1935/costream/${sessionId}`,
+    inputs: live.map(url), layout: s.layout, spotlight, output: `rtsp://localhost:8554/costream/${sessionId}`,
   });
 }
 

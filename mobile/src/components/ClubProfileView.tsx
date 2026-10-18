@@ -2,7 +2,7 @@ import { Icon } from './Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
-import { Linking, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { ClubProfile } from '../api/types';
 import { canManageRoster, useAuth } from '../auth/AuthContext';
 import { humanize } from '../hooks/useClubNames';
@@ -103,23 +103,29 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
       {players.length ? (
         <Card testID="club-players">
           {players.map((p, i) => (
-            <View
+            // Each squad member opens their public athlete profile (FR-3.1), the same screen as nascon://entity/{player_id}.
+            <Pressable
               key={p.player_id}
-              style={{
+              onPress={() => router.push(`/entity/${encodeURIComponent(p.player_id)}` as never)}
+              style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
                 minHeight: 48,
                 gap: spacing.md,
                 borderBottomWidth: i === players.length - 1 ? 0 : 1,
                 borderBottomColor: colors.divider,
-              }}
-              accessible
+                opacity: pressed ? 0.6 : 1,
+              })}
+              accessibilityRole="button"
               accessibilityLabel={`${p.name}, ${positionLabel(p.position)}${p.role ? `, ${humanize(p.role)}` : ''}`}
+              accessibilityHint="Opens the athlete profile"
+              testID={`club-player-${p.player_id}`}
             >
               <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' }}><Icon name="person" size={15} color={colors.textMuted} /></View>
               <Text style={[text.label, { flex: 1, fontSize: 13 }]}>{p.name}</Text>
               <Text style={[text.small, { fontSize: 11 }]}>{positionLabel(p.position)}</Text>
-            </View>
+              <Icon name="chevron-forward" size={16} color={colors.textMuted} />
+            </Pressable>
           ))}
         </Card>
       ) : (

@@ -174,13 +174,21 @@ describe('compositeArgs (FR-3.3 compositor)', () => {
     expect(c.compositeArgs({ inputs: [u('a')], layout: 'grid_4', output: 'file:/etc/x' })).toBeNull();
     expect(c.compositeArgs({ inputs: [u('a')], layout: 'grid_4' })).toBeNull();
   });
+  test('rtsp output is published over tcp', () => {
+    const a = c.compositeArgs({ inputs: [u('a')], layout: 'grid_4', output: 'rtsp://localhost:8554/costream/cs-1' });
+    expect(a.slice(-5)).toEqual(['-f', 'rtsp', '-rtsp_transport', 'tcp', 'rtsp://localhost:8554/costream/cs-1']);
+  });
+  test('hls inputs are accepted', () => {
+    const a = c.compositeArgs({ inputs: ['http://localhost:8888/live/a/index.m3u8'], layout: 'grid_4', output: out });
+    expect(a.slice(3, 7)).toEqual(['-fflags', 'nobuffer', '-i', 'http://localhost:8888/live/a/index.m3u8']);
+  });
   test('rtsp inputs are read over tcp', () => {
     const a = c.compositeArgs({ inputs: ['rtsp://localhost:8554/live/a'], layout: 'grid_4', output: out });
     expect(a.slice(3, 9)).toEqual(['-rtsp_transport', 'tcp', '-fflags', 'nobuffer', '-i', 'rtsp://localhost:8554/live/a']);
   });
   test('one input fills the frame; output is the composite path', () => {
     const a = c.compositeArgs({ inputs: [u('a')], layout: 'grid_4', output: out });
-    expect(filterOf(a)).toBe('[0:v]scale=1280:720,setsar=1[v]');
+    expect(filterOf(a)).toBe('[0:v]scale=1280:720:out_range=tv,setsar=1,format=yuv420p[v]');
     expect(a[a.length - 1]).toBe(out);
     expect(a.every((x) => !/\s/.test(x))).toBe(true);
   });

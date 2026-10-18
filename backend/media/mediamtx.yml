@@ -39,7 +39,10 @@ playbackAddress: :9996
 playbackAllowOrigin: '*'
 
 # ---------------------------------------------------------------- protocols
-rtsp: no
+# RTSP stays inside the container (port not published): the co-stream compositor reads inputs over it.
+rtsp: yes
+rtspAddress: :8554
+protocols: [tcp]
 
 rtmp: yes
 rtmpAddress: :1935

@@ -174,6 +174,10 @@ describe('compositeArgs (FR-3.3 compositor)', () => {
     expect(c.compositeArgs({ inputs: [u('a')], layout: 'grid_4', output: 'file:/etc/x' })).toBeNull();
     expect(c.compositeArgs({ inputs: [u('a')], layout: 'grid_4' })).toBeNull();
   });
+  test('rtsp inputs are read over tcp', () => {
+    const a = c.compositeArgs({ inputs: ['rtsp://localhost:8554/live/a'], layout: 'grid_4', output: out });
+    expect(a.slice(3, 9)).toEqual(['-rtsp_transport', 'tcp', '-fflags', 'nobuffer', '-i', 'rtsp://localhost:8554/live/a']);
+  });
   test('one input fills the frame; output is the composite path', () => {
     const a = c.compositeArgs({ inputs: [u('a')], layout: 'grid_4', output: out });
     expect(filterOf(a)).toBe('[0:v]scale=1280:720,setsar=1[v]');

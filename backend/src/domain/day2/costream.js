@@ -189,7 +189,7 @@ module.exports = {
 
 const TILE = { w: 640, h: 360 };
 const XSTACK = { 3: '0_0|w0_0|0_h0', 4: '0_0|w0_0|0_h0|w0_h0' };
-const SAFE_URL_RE = /^rtmp:\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9_.:\/-]+$/;
+const SAFE_URL_RE = /^(rtmp|rtsp):\/\/[A-Za-z0-9.:-]+\/[A-Za-z0-9_.:\/-]+$/;
 
 /**
  * FFmpeg argument list that mixes the live inputs (active participants in order, host first) into one
@@ -206,7 +206,11 @@ function compositeArgs({ inputs, layout, output, spotlight = null }) {
   list = list.slice(0, cap);
   const n = list.length;
   const args = ['-hide_banner', '-loglevel', 'error'];
-  for (const u of list) args.push('-fflags', 'nobuffer', '-i', u);
+  // RTSP inputs carry every codec a browser can publish (AV1, VP8/VP9, Opus); RTMP cannot.
+  for (const u of list) {
+    if (u.startsWith('rtsp://')) args.push('-rtsp_transport', 'tcp');
+    args.push('-fflags', 'nobuffer', '-i', u);
+  }
   let filter;
   if (n === 1) {
     filter = `[0:v]scale=${TILE.w * 2}:${TILE.h * 2},setsar=1[v]`;

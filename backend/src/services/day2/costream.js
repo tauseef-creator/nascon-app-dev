@@ -122,7 +122,8 @@ async function compositePlan(sessionId) {
   for (const r of keys.rows) if (!keyOf.has(r.player_id)) keyOf.set(r.player_id, r.stream_key);
   const paths = await require('./streaming').listPaths(1000);
   const ready = new Set((paths || []).filter((p) => p && p.ready).map((p) => p.name));
-  const url = (pid) => `rtmp://localhost:1935/live/${keyOf.get(pid)}`;
+  // Read over RTSP so WebRTC (AV1/VP9/Opus) and RTMP (H.264/AAC) publishers both decode.
+  const url = (pid) => `rtsp://localhost:8554/live/${keyOf.get(pid)}`;
   const live = order.filter((pid) => keyOf.has(pid) && (paths === null || ready.has(`live/${keyOf.get(pid)}`)));
   const spotlight = s.spotlight && live.includes(s.spotlight) ? url(s.spotlight) : null;
   return domain.compositeArgs({

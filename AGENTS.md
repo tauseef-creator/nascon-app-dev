@@ -12,7 +12,7 @@ compared literally by the grader.
 - **Day 2 (Oct 18) push windows (each missed window is penalised):** at least one push inside
   10:15-11:30, 11:30-12:45, 12:45-13:45 and 13:45-14:00 PKT (final code freeze). Push early in each window.
 - **Hard deadline:** the grader checks out the last commit pushed at or before
-  **14:05:00 PKT**; later commits are ignored. (Day 1 windows ended with a 15:05 lock.)
+  **14:20:00 PKT** (organizers extended it from 14:05); later commits are ignored. (Day 1 windows ended with a 15:05 lock.)
 - **Never** force-push, rebase, amend or squash on `main`. Day 2 must continue
   from the Day 1 SHA. No pushes between 15:05 today and 10:15 tomorrow.
 - **The salt (`DAY1_SALT`) must never be committed.** It lives only in the local
@@ -236,7 +236,7 @@ works, `git status` shows no `.env`, no `node_modules`.
 ## 8. NEXT STEPS (in priority order) for the next agent
 
 Time budget (Day 2): push in every window (10:15-11:30, 11:30-12:45, 12:45-13:45,
-13:45-14:00). Final push before 14:05:00. Desk audit from 14:30: the backend must be
+13:45-14:00). Final push before 14:20:00 (extended from 14:05). Desk audit from 14:30: the backend must be
 running (`docker compose up -d --build`) and the APK installed on the phone.
 
 ### 8.1 Backend endpoints the mobile app needs: DONE (kept for reference)

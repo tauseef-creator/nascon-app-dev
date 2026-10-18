@@ -3,7 +3,7 @@
 // resolved through the server's 302 redirect to the matching Guest Web Player route.
 import { BarcodeScanningResult, CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import { Linking, StyleSheet, Text, View } from 'react-native';
 import { Screen } from '../src/components/Screen';
@@ -23,6 +23,17 @@ export default function Scan() {
   const [foreign, setForeign] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const locked = useRef(false);
+  // The scan screen stays mounted under the screen it opened; ignore codes while it is not focused
+  // so a QR code still in view does not open the same screen again.
+  const focused = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      focused.current = true;
+      return () => {
+        focused.current = false;
+      };
+    }, []),
+  );
 
   const handle = useCallback(async (raw: string) => {
     const value = raw.trim();
@@ -57,7 +68,7 @@ export default function Scan() {
   }, []);
 
   const onScanned = (r: BarcodeScanningResult) => {
-    if (locked.current) return;
+    if (locked.current || !focused.current) return;
     locked.current = true;
     handle(r.data);
   };
@@ -79,13 +90,13 @@ export default function Scan() {
           {permission.canAskAgain ? (
             <PrimaryButton title="Allow camera" icon="videocam" onPress={requestPermission} testID="scan-allow" />
           ) : (
-            <SecondaryButton title="Open settings" icon="settings-outline" onPress={() => Linking.openSettings()} testID="scan-settings" />
+            <SecondaryButton title="Open settings" icon="settings-outline" onPress={() => Linking.openSettings().catch(() => {})} testID="scan-settings" />
           )}
         </Card>
       )}
       {working ? <InfoBanner message="Opening link…" testID="scan-working" /> : null}
       {message ? <ErrorBanner message={message} testID="scan-error" /> : null}
-      {foreign ? <SecondaryButton title="Open in browser" icon="arrow-forward" onPress={() => Linking.openURL(foreign)} testID="scan-open-browser" /> : null}
+      {foreign ? <SecondaryButton title="Open in browser" icon="arrow-forward" onPress={() => Linking.openURL(foreign).catch(() => setMessage('No app on this phone can open that link.'))} testID="scan-open-browser" /> : null}
 
       <Text style={[text.small, { marginTop: spacing.lg, marginBottom: spacing.sm }]}>Can't scan? Type or paste the link instead.</Text>
       <Field

@@ -2,10 +2,12 @@
 // (live score, pinned product), so overlays update without restarting the media stream.
 import { useEvent } from 'expo';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '../theme';
 import { Icon } from './Icon';
+
+const RETRY_MS = 4000;
 
 type Props = {
   url: string | null;
@@ -35,6 +37,20 @@ function Player({ url, label }: { url: string; label: string }) {
     p.play();
   });
   const { status } = useEvent(player, 'statusChange', { status: player.status });
+  // A stream that is not live yet fails to load; try again every few seconds so the video starts
+  // as soon as the broadcaster goes live, without the user reopening the screen.
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    if (status !== 'error') return;
+    const t = setTimeout(() => {
+      setAttempt((a) => a + 1);
+      player
+        .replaceAsync({ uri: url, contentType: 'hls' })
+        .then(() => player.play())
+        .catch(() => {});
+    }, RETRY_MS);
+    return () => clearTimeout(t);
+  }, [status, player, url, attempt]);
   return (
     <>
       <VideoView

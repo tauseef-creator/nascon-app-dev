@@ -45,8 +45,12 @@ export function QrCard({ entityId, title = 'Share with a QR code' }: { entityId:
   }, [load]);
 
   const copy = async (value: string, what: string) => {
-    await Clipboard.setStringAsync(value);
-    toast(`${what} copied.`);
+    try {
+      await Clipboard.setStringAsync(value);
+      toast(`${what} copied.`);
+    } catch {
+      toast('Could not copy the link.', 'error');
+    }
   };
   const open = (url: string | null) => {
     if (url) Linking.openURL(url).catch(() => toast('No app on this phone can open that file.', 'error'));

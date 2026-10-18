@@ -131,7 +131,9 @@ export default function MatchDetail() {
   useEffect(() => {
     const lg = score.data?.league_id;
     if (!lg) return;
-    readCache<{ matches: Match[] }>(`matches:${lg}`).then((c) => setInfo(c?.data.matches.find((m) => m.match_id === id) ?? null));
+    readCache<{ matches: Match[] }>(`matches:${lg}`)
+      .then((c) => setInfo(c?.data?.matches?.find((m) => m.match_id === id) ?? null))
+      .catch(() => {});
   }, [score.data?.league_id, id]);
 
   const [queued, setQueued] = useState<QueuedAction[]>([]);

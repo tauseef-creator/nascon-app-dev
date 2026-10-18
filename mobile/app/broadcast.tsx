@@ -1,11 +1,13 @@
 // Broadcaster (FR-3.2): manage the signed stream key (generate / rotate / revoke via
-// POST /audit/v1/stream/key), show the RTMP and WHIP ingest addresses for OBS or FFmpeg, and
-// preview the HLS playback with the live score and pinned product drawn over the video.
+// POST /audit/v1/stream/key), go live from the phone camera over WebRTC (WHIP, through the media
+// server's publish page in the browser), show the RTMP and WHIP ingest addresses for OBS or FFmpeg,
+// and preview the HLS playback with the live score and pinned product drawn over the video.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
 import React, { useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../src/api/client';
 import { errorText } from '../src/api/errors';
 import { Match } from '../src/api/types';
@@ -35,6 +37,52 @@ type StreamKey = {
 
 const storeKey = (playerId: string) => `nascon.streamKey.${playerId}`;
 const CAN_BROADCAST = new Set(['player', 'league_organizer', 'super_admin', 'club_manager']);
+const LIVE_POLL_MS = 4000;
+
+/** MediaMTX serves its WHIP publish page next to the WHIP endpoint: .../live/<key>/publish. */
+function publishPageUrl(whip: string | null): string | null {
+  if (!whip) return null;
+  const u = whip.replace(/\/whip(?=$|[?#])/, '/publish');
+  return u === whip ? null : u;
+}
+
+/** Browsers only allow the camera on a secure origin; plain http works for localhost only. */
+function isSecureForCamera(url: string): boolean {
+  return /^https:\/\//i.test(url) || /^http:\/\/(localhost|127\.0\.0\.1)(?=[:/]|$)/i.test(url);
+}
+
+/** True while the HLS playlist for the stream answers 200, which means video is being received. */
+function useStreamLive(playback: string | null): boolean | null {
+  const [live, setLive] = useState<boolean | null>(null);
+  useEffect(() => {
+    setLive(null);
+    if (!playback) return;
+    let stopped = false;
+    let ctl: AbortController | null = null;
+    const check = async () => {
+      ctl?.abort();
+      const c = new AbortController();
+      ctl = c;
+      const t = setTimeout(() => c.abort(), 3000);
+      try {
+        const r = await fetch(playback, { signal: c.signal });
+        if (!stopped) setLive(r.ok);
+      } catch {
+        if (!stopped && !c.signal.aborted) setLive(false);
+      } finally {
+        clearTimeout(t);
+      }
+    };
+    check();
+    const id = setInterval(check, LIVE_POLL_MS);
+    return () => {
+      stopped = true;
+      clearInterval(id);
+      ctl?.abort();
+    };
+  }, [playback]);
+  return live;
+}
 
 export default function Broadcast() {
   const { user } = useAuth();
@@ -61,15 +109,15 @@ export default function Broadcast() {
   useEffect(() => {
     if (!league) return;
     readCache<{ matches: Match[] }>(`matches:${league.league_id}`).then((c) => {
-      const list = (c?.data.matches ?? []).filter((m) => m.status === 'in_progress' || m.status === 'upcoming').slice(0, 6);
+      const list = (c?.data?.matches ?? []).filter((m) => m.status === 'in_progress' || m.status === 'upcoming').slice(0, 6);
       setMatches(list);
       setMatchId((cur) => cur || list.find((m) => m.status === 'in_progress')?.match_id || list[0]?.match_id || 'match-m1');
-    });
+    }).catch(() => setMatchId((cur) => cur || 'match-m1'));
   }, [league]);
 
   const overlay = useLiveOverlay(matchId.trim() || null);
 
-  const run = async (action: KeyAction) => {
+  const run = async (action: KeyAction, doneMessage?: string) => {
     const pid = playerId.trim();
     if (!pid) return setError('Enter the player ID that will broadcast.');
     setError(null);
@@ -80,11 +128,12 @@ export default function Broadcast() {
       AsyncStorage.setItem(storeKey(pid), JSON.stringify(r)).catch(() => {});
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       toast(
-        action === 'revoke'
+        doneMessage ??
+        (action === 'revoke'
           ? 'Stream key revoked. Any live broadcast using it has been cut off.'
           : action === 'rotate'
             ? 'New stream key issued. The old key no longer works.'
-            : 'Stream key ready. Copy it into OBS or FFmpeg to go live.',
+            : 'Stream key ready. Go live with the camera, or copy it into OBS or FFmpeg.'),
       );
     } catch (e) {
       setError(errorText(e));
@@ -94,8 +143,12 @@ export default function Broadcast() {
   };
 
   const copy = async (value: string, what: string) => {
-    await Clipboard.setStringAsync(value);
-    toast(`${what} copied.`);
+    try {
+      await Clipboard.setStringAsync(value);
+      toast(`${what} copied.`);
+    } catch {
+      toast('Could not copy. Long-press the text to select it instead.', 'error');
+    }
   };
 
   const active = key?.status === 'active' && !!key.ingest_endpoints;
@@ -103,6 +156,23 @@ export default function Broadcast() {
   const whip = forDevice(key?.ingest_endpoints?.webrtc);
   const playback = active ? forDevice(key?.playback_url) : null;
   const obs = rtmp ? splitRtmp(rtmp) : null;
+  const publishPage = active ? publishPageUrl(whip) : null;
+  const cameraOk = !!publishPage && isSecureForCamera(publishPage);
+  const live = useStreamLive(playback);
+  const [opening, setOpening] = useState(false);
+
+  const goLiveWithCamera = async () => {
+    if (!publishPage) return;
+    setOpening(true);
+    try {
+      await WebBrowser.openBrowserAsync(publishPage);
+    } catch {
+      await Linking.openURL(publishPage).catch(() => setError('Could not open the camera publish page. Use OBS or FFmpeg with the addresses below.'));
+    } finally {
+      setOpening(false);
+    }
+  };
+
   const ffmpeg = useMemo(() => (rtmp ? `ffmpeg -re -i input.mp4 -c:v libx264 -preset veryfast -tune zerolatency -c:a aac -f flv ${rtmp}` : ''), [rtmp]);
 
   if (user && !CAN_BROADCAST.has(user.role)) {
@@ -156,6 +226,52 @@ export default function Broadcast() {
 
       {active && key ? (
         <>
+          <SectionTitle>Go live from this phone</SectionTitle>
+          <Card testID="broadcast-camera-card">
+            <View style={styles.headRow}>
+              <Text style={text.title} accessibilityRole="header">
+                Camera broadcast
+              </Text>
+              <StatusPill
+                kind={live ? 'live' : 'pending'}
+                label={live ? 'LIVE' : live === null ? 'CHECKING' : 'NOT LIVE'}
+                testID="broadcast-live-status"
+              />
+            </View>
+            <Text style={[text.small, { marginBottom: spacing.md }]}>
+              Opens the media server's WebRTC (WHIP) publish page with your key. Allow the camera, then tap Publish. To stop, tap Stop on that page or close it.
+            </Text>
+            {!cameraOk && publishPage ? (
+              <InfoBanner
+                tone="warning"
+                testID="broadcast-camera-insecure"
+                message="The browser only allows the camera on localhost. Run adb reverse tcp:8889 tcp:8889 and set the server to http://localhost:8080 in Settings, or stream with OBS or FFmpeg using the addresses below."
+              />
+            ) : null}
+            <PrimaryButton
+              title="Open camera and go live"
+              icon="videocam"
+              onPress={goLiveWithCamera}
+              loading={opening}
+              disabled={!publishPage || !!busy}
+              testID="broadcast-camera"
+              accessibilityHint="Opens the WebRTC publish page in the browser"
+            />
+            {live ? (
+              <SecondaryButton
+                title="Stop broadcast"
+                icon="stop-circle-outline"
+                danger
+                onPress={() => run('rotate', 'Broadcast stopped. A new stream key is ready for next time.')}
+                loading={busy === 'rotate'}
+                disabled={!!busy}
+                testID="broadcast-stop"
+                accessibilityHint="Cuts off the live stream by issuing a new key"
+                style={{ marginTop: spacing.sm }}
+              />
+            ) : null}
+          </Card>
+
           <SectionTitle>Ingest addresses</SectionTitle>
           <Card testID="broadcast-ingest">
             <CopyRow label="RTMP server (OBS: Server)" value={obs?.server ?? ''} onCopy={copy} testID="ingest-rtmp-server" />

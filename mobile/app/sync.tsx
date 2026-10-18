@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ConfirmDialog } from '../src/components/ConfirmDialog';
@@ -45,7 +45,7 @@ export default function SyncScreen() {
     <Screen title="Sync queue" back onRefresh={load} testID="sync-screen">
       <Card testID="sync-summary">
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-          <Ionicons name={sync.online ? 'cloud-done' : 'cloud-offline'} size={28} color={colors.text} />
+          <Icon name={sync.online ? 'cloud-done' : 'cloud-offline'} size={28} color={colors.text} />
           <Text style={text.title}>{status}</Text>
         </View>
         <Text style={[text.body, { marginTop: spacing.sm }]}>
@@ -90,7 +90,7 @@ export default function SyncScreen() {
                 onPress={() => setOpen(open === a.action_id ? null : a.action_id)}
                 style={{ minHeight: TOUCH, flexDirection: 'row', alignItems: 'center', gap: 4 }}
               >
-                <Ionicons name={open === a.action_id ? 'chevron-up' : 'code-slash'} size={18} color={colors.text} />
+                <Icon name={open === a.action_id ? 'chevron-up' : 'code-slash'} size={18} color={colors.text} />
                 <Text style={[text.body, { fontFamily: 'Inter_600SemiBold' }]}>{open === a.action_id ? 'Hide details' : 'Show details'}</Text>
               </Pressable>
               <SecondaryButton title="Discard" compact danger icon="trash-outline" onPress={() => setDiscard(a)} testID={`sync-discard-${a.action_id}`} />

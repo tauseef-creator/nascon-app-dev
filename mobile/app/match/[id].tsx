@@ -1,14 +1,15 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import { randomUUID } from 'expo-crypto';
 import * as Haptics from 'expo-haptics';
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { api } from '../../src/api/client';
-import { errorText } from '../../src/api/errors';
-import { Match, Product, ScoreProjection, TimelineEvent } from '../../src/api/types';
-import { canPin, canScore, useAuth, useBrand } from '../../src/auth/AuthContext';
+import { errorText, toAppError } from '../../src/api/errors';
+import { Match, MatchStatus, MatchStatusInfo, Product, ScoreProjection, TimelineEvent } from '../../src/api/types';
+import { canPin, managesLeague, useAuth, useBrand } from '../../src/auth/AuthContext';
 import { ConfirmDialog } from '../../src/components/ConfirmDialog';
+import { ManagePanel, ManageSection, toolsCaption } from '../../src/components/ManagePanel';
 import { Screen } from '../../src/components/Screen';
 import { useToast } from '../../src/components/Toast';
 import {
@@ -16,6 +17,8 @@ import {
   Card,
   EmptyState,
   ErrorBanner,
+  Field,
+  formatDateTime,
   InfoBanner,
   LoadingView,
   matchPill,
@@ -35,20 +38,85 @@ import { colors, radius, spacing, text, TOUCH } from '../../src/theme';
 import { ClubCrest, crestColor } from '../../src/components/ClubCrest';
 import { ProductArt } from '../../src/components/ProductArt';
 import { LinearGradient } from 'expo-linear-gradient';
+import { frozenMessage, isFrozen, OFF_SCHEDULE, statusLabel } from '../../src/utils/matchStatus';
+
+type StatusAction = 'postponed' | 'upcoming' | 'cancelled' | 'abandoned';
+
+const STATUS_COPY: Record<StatusAction, { title: string; message: string; confirm: string; cancel: string; success: string; destructive?: boolean }> = {
+  postponed: {
+    title: 'Postpone this match?',
+    message: 'Scoring is paused until you set a new date. Everyone following the match will see it as postponed.',
+    confirm: 'Postpone match',
+    cancel: 'Go back',
+    success: 'Match postponed.',
+  },
+  upcoming: {
+    title: 'Reschedule this match',
+    message: 'Choose the new kick-off date and time. The match becomes upcoming again.',
+    confirm: 'Save new date',
+    cancel: 'Go back',
+    success: 'Match rescheduled.',
+  },
+  cancelled: {
+    title: 'Cancel this match?',
+    message: 'The match will not be played and scoring closes. This cannot be undone.',
+    confirm: 'Cancel match',
+    cancel: 'Keep match',
+    success: 'Match cancelled.',
+    destructive: true,
+  },
+  abandoned: {
+    title: 'Abandon this match?',
+    message: 'Play stops now and the current score is kept. Scoring closes and this cannot be undone.',
+    confirm: 'Abandon match',
+    cancel: 'Keep playing',
+    success: 'Match abandoned.',
+    destructive: true,
+  },
+};
+
+const STATUS_OFFLINE = 'Changing the match status needs a connection, so nothing was saved. Reconnect and try again.';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+/** Local YYYY-MM-DD and HH:MM for an ISO time (defaults to tomorrow at the same time if it has passed). */
+function localParts(iso: string | null | undefined): { date: string; time: string } {
+  let d = iso ? new Date(iso) : new Date();
+  if (Number.isNaN(d.getTime())) d = new Date();
+  if (d.getTime() < Date.now()) {
+    const t = new Date(Date.now() + 24 * 3600 * 1000);
+    t.setHours(d.getHours(), d.getMinutes(), 0, 0);
+    d = t;
+  }
+  return { date: `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`, time: `${pad(d.getHours())}:${pad(d.getMinutes())}` };
+}
+
+/** Parses the reschedule inputs; returns the Date or a plain-language problem. */
+function parseWhen(date: string, time: string): Date | string {
+  const dm = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date.trim());
+  if (!dm) return 'Enter the date as YYYY-MM-DD, for example 2026-10-30.';
+  const tm = /^([01]?\d|2[0-3]):([0-5]\d)$/.exec(time.trim());
+  if (!tm) return 'Enter the time as HH:MM in 24-hour format, for example 18:30.';
+  const [y, mo, d] = [Number(dm[1]), Number(dm[2]), Number(dm[3])];
+  const when = new Date(y, mo - 1, d, Number(tm[1]), Number(tm[2]), 0, 0);
+  if (when.getFullYear() !== y || when.getMonth() !== mo - 1 || when.getDate() !== d) return 'That date does not exist. Check the day and month.';
+  if (when.getTime() <= Date.now()) return 'Choose a date and time in the future.';
+  return when;
+}
 
 type Pending = { action: string; title: string; message: string; destructive?: boolean; run: () => Promise<void> };
 
 export default function MatchDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, action } = useLocalSearchParams<{ id: string; action?: string }>();
   const { user } = useAuth();
   const brand = useBrand();
   const toast = useToast();
   const sync = useSync();
   const name = useClubNames();
-  const scorer = canScore(user?.role);
-
   const score = useCachedQuery<ScoreProjection>(id ? `score:${id}` : null, id ? `/audit/v1/score/${encodeURIComponent(id)}` : null);
+  // Scoring and status tools only for the organizer of this match's league (or the super admin).
+  const scorer = managesLeague(user, score.data?.league_id);
   const pinned = useCachedQuery<{ product: Product | null }>(id ? `pinned:${id}` : null, id ? `/api/v1/matches/${encodeURIComponent(id)}/pinned` : null);
+  const status = useCachedQuery<MatchStatusInfo>(id ? `status:${id}` : null, id ? `/api/v1/matches/${encodeURIComponent(id)}/status` : null);
   const sportId = score.data?.sport_id ?? null;
   const sport = useCachedQuery<{ sport_id: string; config: any }>(
     scorer && sportId ? `sport:${sportId}` : null,
@@ -78,9 +146,19 @@ export default function MatchDetail() {
     onScore: (p) => {
       score.setData(p);
       if (id) writeCache(`score:${id}`, p).catch(() => {});
+      // Start or end of play changes the effective status too.
+      if (status.data && status.data.log_status !== p.status) status.reload();
     },
     onPinned: () => pinned.reload(),
-    poll: () => score.reload(),
+    onStatus: (st: MatchStatusInfo) => {
+      status.setData(st);
+      if (id) writeCache(`status:${id}`, st).catch(() => {});
+      score.reload();
+    },
+    poll: () => {
+      score.reload();
+      status.reload();
+    },
   });
 
   const [confirm, setConfirm] = useState<Pending | null>(null);
@@ -89,6 +167,11 @@ export default function MatchDetail() {
   const [undoTarget, setUndoTarget] = useState<TimelineEvent | null>(null);
   const [undoReason, setUndoReason] = useState('Scoring mistake');
   const [pinOpen, setPinOpen] = useState(false);
+  const [statusAction, setStatusAction] = useState<StatusAction | null>(null);
+  const [newDate, setNewDate] = useState('');
+  const [newTime, setNewTime] = useState('');
+  const [statusErr, setStatusErr] = useState<string | null>(null);
+  const [statusBusy, setStatusBusy] = useState(false);
 
   const s = score.data;
   const homeName = name(s?.home.team_id, info?.home_name ?? 'Home');
@@ -112,6 +195,7 @@ export default function MatchDetail() {
       else {
         toast(successMsg);
         score.reload();
+        status.reload();
       }
     } catch (e) {
       const msg = errorText(e);
@@ -167,6 +251,58 @@ export default function MatchDetail() {
     );
   };
 
+  const openStatus = useCallback(
+    (a: StatusAction) => {
+      setStatusErr(null);
+      if (a === 'upcoming') {
+        const p = localParts(status.data?.scheduled_at ?? info?.scheduled_at);
+        setNewDate(p.date);
+        setNewTime(p.time);
+      }
+      setStatusAction(a);
+    },
+    [status.data?.scheduled_at, info?.scheduled_at],
+  );
+
+  // Home > Needs attention > Reschedule opens the reschedule form directly.
+  const autoOpened = useRef(false);
+  useEffect(() => {
+    if (autoOpened.current || action !== 'reschedule' || !scorer || !status.data) return;
+    autoOpened.current = true;
+    if (status.data.allowed_transitions.includes('upcoming')) openStatus('upcoming');
+  }, [action, scorer, status.data, openStatus]);
+
+  const submitStatus = async () => {
+    if (!id || !statusAction) return;
+    let when: Date | null = null;
+    if (statusAction === 'upcoming') {
+      const w = parseWhen(newDate, newTime);
+      if (typeof w === 'string') return setStatusErr(w);
+      when = w;
+    }
+    if (!sync.online) return setStatusErr(STATUS_OFFLINE);
+    setStatusErr(null);
+    setStatusBusy(true);
+    try {
+      const body: Record<string, string> = { status: statusAction };
+      if (when) body.scheduled_at = when.toISOString();
+      const r = await api<MatchStatusInfo>(`/api/v1/matches/${encodeURIComponent(id)}/status`, { method: 'POST', body });
+      status.setData(r);
+      writeCache(`status:${id}`, r).catch(() => {});
+      const done = STATUS_COPY[statusAction].success;
+      setStatusAction(null);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      toast(when ? `${done} New kick-off: ${formatDateTime(r.scheduled_at ?? when.toISOString())}.` : done);
+      score.reload();
+    } catch (e) {
+      const err = toAppError(e);
+      setStatusErr(err.isNetwork ? STATUS_OFFLINE : err.message);
+      if (err.code === 'ILLEGAL_TRANSITION') status.reload();
+    } finally {
+      setStatusBusy(false);
+    }
+  };
+
   const events = s?.events ?? [];
   const lastUndoable = [...events].reverse().find((e) => e.type === 'score' && !e.compensated);
 
@@ -185,7 +321,14 @@ export default function MatchDetail() {
     );
   }
 
-  const isLive = s.status === 'in_progress';
+  // Effective status: the FR-1.3 status endpoint wins, then the fixtures list, then the event log.
+  const eff: MatchStatus = status.data?.status ?? info?.status ?? s.status;
+  const frozen = isFrozen(eff);
+  const off = OFF_SCHEDULE[eff];
+  const isLive = eff === 'in_progress';
+  const kickoff = status.data?.scheduled_at ?? info?.scheduled_at ?? null;
+  const allowed = (status.data?.allowed_transitions ?? []) as StatusAction[];
+  const showManage = scorer || canPin(user?.role);
   const liveText =
     !sync.online ? 'Offline: showing the last saved score' : live === 'live' ? 'Live updates on' : live === 'polling' ? 'Refreshing every 5 seconds' : 'Connecting to live updates…';
 
@@ -202,9 +345,9 @@ export default function MatchDetail() {
         >
           <View style={{ backgroundColor: 'rgba(0, 0, 0, 0.48)', padding: spacing.lg }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm }}>
-          <StatusPill kind={matchPill(s.status)} testID="match-status" />
+          <StatusPill kind={matchPill(eff)} label={frozen ? statusLabel(eff).toUpperCase() : undefined} testID="match-status" />
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 1 }}>
-            <Ionicons name={live === 'live' ? 'pulse' : sync.online ? 'refresh' : 'cloud-offline-outline'} size={16} color={colors.textMuted} />
+            <Icon name={live === 'live' ? 'pulse' : sync.online ? 'refresh' : 'cloud-offline-outline'} size={16} color={colors.textMuted} />
             <Text style={text.small} testID="live-mode">
               {liveText}
             </Text>
@@ -222,7 +365,7 @@ export default function MatchDetail() {
             </Text>
             <Text style={styles.sideNote}>Home</Text>
           </View>
-          <Text style={styles.dash}>{s.status === 'in_progress' ? 'Live' : s.status === 'completed' ? 'Final' : 'vs'}</Text>
+          <Text style={styles.dash}>{isLive ? 'Live' : eff === 'completed' ? 'Final' : frozen ? statusLabel(eff) : 'vs'}</Text>
           <View style={styles.side}>
             <Text style={[styles.scoreNum, s.home.score > s.away.score && styles.scoreDim]} testID="score-away">
               {s.away.score}
@@ -234,11 +377,17 @@ export default function MatchDetail() {
             <Text style={styles.sideNote}>Away</Text>
           </View>
         </View>
-        {s.status === 'completed' ? (
+        {eff === 'completed' ? (
           <Text style={[text.label, { textAlign: 'center' }]} testID="match-outcome">
             {s.winner_team_id ? `${teamName(s.winner_team_id)} won` : s.outcome === 'draw' ? 'Draw' : 'Full time'}
           </Text>
         ) : null}
+        {(eff === 'upcoming' || eff === 'postponed') && kickoff ? (
+          <Text style={[text.small, { textAlign: 'center', color: '#E5E5E7' }]} testID="match-kickoff">
+            {eff === 'postponed' ? `Was due ${formatDateTime(kickoff)}. New date to be confirmed.` : `Kick-off ${formatDateTime(kickoff)}`}
+          </Text>
+        ) : null}
+
           </View>
         </LinearGradient>
       </Card>
@@ -248,71 +397,131 @@ export default function MatchDetail() {
         <View style={{ width: 1, backgroundColor: colors.divider }} />
         <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ color: colors.white, fontFamily: 'Inter_800ExtraBold', fontSize: 20 }}>{events.length}</Text><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>PLAYS</Text></View>
         <View style={{ width: 1, backgroundColor: colors.divider }} />
-        <View style={{ flex: 1, alignItems: 'center' }}><Ionicons name={isLive ? 'radio' : 'time-outline'} size={21} color={isLive ? colors.live : colors.accent} /><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>{isLive ? 'LIVE' : s.status === 'completed' ? 'FINAL' : 'UPCOMING'}</Text></View>
+        <View style={{ flex: 1, alignItems: 'center' }}><Icon name={isLive ? 'radio' : off ? off.icon : 'time-outline'} size={21} color={isLive ? colors.live : off ? off.color : colors.accent} /><Text style={{ color: colors.textMuted, fontSize: 10, fontFamily: 'Inter_700Bold' }}>{isLive ? 'LIVE' : eff === 'completed' ? 'FINAL' : statusLabel(eff).toUpperCase()}</Text></View>
       </View>
+
+      {frozen ? (
+        <InfoBanner
+          testID="match-frozen"
+          tone="warning"
+          icon={off?.icon ?? 'pause-circle'}
+          message={frozenMessage(eff)}
+        />
+      ) : null}
 
       {pinned.data?.product ? <PinnedCard product={pinned.data.product} /> : null}
 
-      {scorer ? (
-        <Card testID="scoring-panel">
-          <Text style={[text.title, { marginBottom: spacing.xs }]}>Scoring</Text>
-          <Text style={[text.muted, { marginBottom: spacing.md }]}>
-            {isLive
-              ? 'Tap a button to add a score. Every action is recorded and can be corrected.'
-              : s.status === 'completed'
-                ? 'This match has ended. Scores can no longer be added.'
-                : 'Start the match to begin adding scores.'}
-          </Text>
-          {actionError ? <ErrorBanner message={actionError} testID="scoring-error" /> : null}
-          {s.status !== 'completed' && s.status !== 'in_progress' ? (
-            <PrimaryButton title="Start match" icon="play" onPress={() => lifecycle('match_start')} loading={busy === 'Start match'} testID="score-start" />
-          ) : null}
-          {isLive ? (
-            <>
-              {sport.loading && !scoringKeys.length ? <LoadingView label="Loading scoring options…" /> : null}
-              {sport.error && !scoringKeys.length ? <ErrorBanner message={sport.error} onRetry={sport.refresh} /> : null}
-              <View style={styles.scoreGrid}>
-                {[s.home.team_id, s.away.team_id].map((tid) => (
-                  <View key={tid} style={styles.scoreCol}>
-                    <Text style={[text.label, { marginBottom: spacing.sm }]} numberOfLines={2}>
-                      {teamName(tid)}
-                    </Text>
-                    {scoringKeys.map((k) => (
-                      <PrimaryButton
-                        key={k}
-                        title={`+ ${humanize(k)}`}
-                        accessibilityLabel={`Add ${humanize(k)} for ${teamName(tid)}`}
-                        onPress={() => addScore(tid, k)}
-                        disabled={!!busy}
-                        testID={`score-add-${tid === s.home.team_id ? 'home' : 'away'}-${k}`}
-                        style={{ marginBottom: spacing.sm }}
-                      />
-                    ))}
-                  </View>
-                ))}
-              </View>
-              <View style={{ gap: spacing.sm }}>
-                <SecondaryButton
-                  title="Undo last score"
-                  icon="arrow-undo"
-                  disabled={!lastUndoable || !!busy}
-                  onPress={() => lastUndoable && setUndoTarget(lastUndoable)}
-                  testID="score-undo-last"
-                />
-                <SecondaryButton title="End match" icon="stop-circle-outline" danger onPress={() => lifecycle('match_end')} disabled={!!busy} testID="score-end" />
-              </View>
-            </>
+      {showManage ? (
+        <ManagePanel title="Manage match" caption={toolsCaption(user?.role)} testID="manage-match">
+          {scorer ? (
+            <ManageSection first title="Scoring" testID="scoring-panel">
+              {frozen ? (
+                <Text style={text.muted} testID="scoring-paused">
+                  {frozenMessage(eff)}
+                </Text>
+              ) : (
+                <>
+                  <Text style={[text.muted, { marginBottom: spacing.md }]}>
+                    {isLive
+                      ? 'Tap a button to add a score. Every action is recorded and can be corrected.'
+                      : eff === 'completed'
+                        ? 'This match has ended. Scores can no longer be added.'
+                        : 'Start the match to begin adding scores.'}
+                  </Text>
+                  {actionError ? <ErrorBanner message={actionError} testID="scoring-error" /> : null}
+                  {eff === 'upcoming' ? (
+                    <PrimaryButton title="Start match" icon="play" onPress={() => lifecycle('match_start')} loading={busy === 'Start match'} testID="score-start" />
+                  ) : null}
+                  {isLive ? (
+                    <>
+                      {sport.loading && !scoringKeys.length ? <LoadingView label="Loading scoring options…" /> : null}
+                      {sport.error && !scoringKeys.length ? <ErrorBanner message={sport.error} onRetry={sport.refresh} /> : null}
+                      <View style={styles.scoreGrid}>
+                        {[s.home.team_id, s.away.team_id].map((tid) => (
+                          <View key={tid} style={styles.scoreCol}>
+                            <Text style={[text.label, { marginBottom: spacing.sm }]} numberOfLines={2}>
+                              {teamName(tid)}
+                            </Text>
+                            {scoringKeys.map((k) => (
+                              <PrimaryButton
+                                key={k}
+                                title={`+ ${humanize(k)}`}
+                                accessibilityLabel={`Add ${humanize(k)} for ${teamName(tid)}`}
+                                onPress={() => addScore(tid, k)}
+                                disabled={!!busy}
+                                testID={`score-add-${tid === s.home.team_id ? 'home' : 'away'}-${k}`}
+                                style={{ marginBottom: spacing.sm }}
+                              />
+                            ))}
+                          </View>
+                        ))}
+                      </View>
+                      <View style={{ gap: spacing.sm }}>
+                        <SecondaryButton
+                          title="Undo last score"
+                          icon="arrow-undo"
+                          disabled={!lastUndoable || !!busy}
+                          onPress={() => lastUndoable && setUndoTarget(lastUndoable)}
+                          testID="score-undo-last"
+                        />
+                        <SecondaryButton title="End match" icon="stop-circle-outline" danger onPress={() => lifecycle('match_end')} disabled={!!busy} testID="score-end" />
+                      </View>
+                    </>
+                  ) : null}
+                </>
+              )}
+            </ManageSection>
           ) : null}
           {canPin(user?.role) ? (
-            <SecondaryButton
-              title={pinned.data?.product ? 'Change pinned product' : 'Pin a product'}
-              icon="pricetag-outline"
-              onPress={() => (sync.online ? setPinOpen(true) : toast('Pinning a product needs a connection.', 'error'))}
-              testID="pin-open"
-              style={{ marginTop: spacing.sm }}
-            />
+            <ManageSection first={!scorer} title="Featured product" testID="pin-section">
+              <SecondaryButton
+                title={pinned.data?.product ? 'Change pinned product' : 'Pin a product'}
+                icon="pricetag-outline"
+                onPress={() => (sync.online ? setPinOpen(true) : toast('Pinning a product needs a connection.', 'error'))}
+                testID="pin-open"
+              />
+            </ManageSection>
           ) : null}
-        </Card>
+          {scorer ? (
+            <ManageSection title="Match status" testID="status-panel">
+              <Text style={[text.small, { marginBottom: spacing.sm }]} testID="status-current">
+                Current status: {statusLabel(eff)}
+              </Text>
+              {!sync.online ? (
+                <InfoBanner
+                  testID="status-offline"
+                  tone="warning"
+                  icon="cloud-offline-outline"
+                  message="You're offline. Postponing, rescheduling, cancelling or abandoning a match needs a connection and is not saved for later."
+                />
+              ) : null}
+              {status.loading && !status.data ? <Text style={text.muted}>Loading status options…</Text> : null}
+              {status.error && !status.data ? <ErrorBanner message={status.error} onRetry={status.refresh} testID="status-error" /> : null}
+              {status.data ? (
+                allowed.length ? (
+                  <View style={{ gap: spacing.sm }}>
+                    {allowed.includes('upcoming') ? (
+                      <PrimaryButton title="Reschedule" icon="calendar-outline" onPress={() => openStatus('upcoming')} disabled={!sync.online || statusBusy} testID="status-reschedule" accessibilityHint="Set a new kick-off date and time" />
+                    ) : null}
+                    {allowed.includes('postponed') ? (
+                      <SecondaryButton title="Postpone match" icon="pause-circle-outline" onPress={() => openStatus('postponed')} disabled={!sync.online || statusBusy} testID="status-postpone" />
+                    ) : null}
+                    {allowed.includes('abandoned') ? (
+                      <SecondaryButton title="Abandon match" icon="alert-circle-outline" danger onPress={() => openStatus('abandoned')} disabled={!sync.online || statusBusy} testID="status-abandon" />
+                    ) : null}
+                    {allowed.includes('cancelled') ? (
+                      <SecondaryButton title="Cancel match" icon="close-circle-outline" danger onPress={() => openStatus('cancelled')} disabled={!sync.online || statusBusy} testID="status-cancel" />
+                    ) : null}
+                  </View>
+                ) : (
+                  <Text style={text.muted} testID="status-final">
+                    {eff === 'completed' ? 'This match is complete, so its status can no longer change.' : `This match is ${statusLabel(eff).toLowerCase()}. This is final.`}
+                  </Text>
+                )
+              ) : null}
+            </ManageSection>
+          ) : null}
+        </ManagePanel>
       ) : null}
 
       {queued.length ? (
@@ -342,7 +551,7 @@ export default function MatchDetail() {
               last={i === arr.length - 1}
               teamName={teamName}
               events={events}
-              canUndo={scorer && isLive && e.type === 'score' && !e.compensated}
+              canUndo={scorer && isLive && !frozen && e.type === 'score' && !e.compensated}
               onUndo={() => setUndoTarget(e)}
             />
           ))}
@@ -380,6 +589,43 @@ export default function MatchDetail() {
           onChangeText={setUndoReason}
           style={styles.input}
         />
+      </ConfirmDialog>
+      <ConfirmDialog
+        visible={!!statusAction}
+        title={statusAction ? STATUS_COPY[statusAction].title : ''}
+        message={statusAction ? STATUS_COPY[statusAction].message : undefined}
+        confirmTitle={statusAction ? STATUS_COPY[statusAction].confirm : 'Confirm'}
+        cancelTitle={statusAction ? STATUS_COPY[statusAction].cancel : 'Cancel'}
+        destructive={statusAction ? STATUS_COPY[statusAction].destructive : false}
+        loading={statusBusy}
+        onCancel={() => setStatusAction(null)}
+        onConfirm={submitStatus}
+        testID="status-dialog"
+      >
+        {statusAction === 'upcoming' ? (
+          <>
+            <Field
+              label="New date (YYYY-MM-DD)"
+              testID="status-date"
+              value={newDate}
+              onChangeText={setNewDate}
+              keyboardType="numbers-and-punctuation"
+              autoCorrect={false}
+              placeholder="2026-10-30"
+            />
+            <Field
+              label="Kick-off time (24-hour HH:MM)"
+              testID="status-time"
+              value={newTime}
+              onChangeText={setNewTime}
+              keyboardType="numbers-and-punctuation"
+              autoCorrect={false}
+              placeholder="18:30"
+            />
+          </>
+        ) : null}
+        {!sync.online ? <InfoBanner tone="warning" icon="cloud-offline-outline" message="You're offline. This change needs a connection and will not be saved for later." /> : null}
+        {statusErr ? <ErrorBanner message={statusErr} testID="status-dialog-error" /> : null}
       </ConfirmDialog>
       <PinPicker
         visible={pinOpen}
@@ -420,7 +666,7 @@ function TimelineRow({
   canUndo: boolean;
   onUndo: () => void;
 }) {
-  const icon: React.ComponentProps<typeof Ionicons>['name'] =
+  const icon: React.ComponentProps<typeof Icon>['name'] =
     e.type === 'score' ? 'add-circle' : e.type === 'compensation' ? 'arrow-undo-circle' : e.type === 'match_start' ? 'play-circle' : e.type === 'match_end' ? 'flag' : 'ellipse';
   let title = describe(e, teamName);
   if (e.type === 'compensation') {
@@ -429,7 +675,7 @@ function TimelineRow({
   }
   return (
     <View style={[styles.tl, !last && { borderBottomWidth: 1, borderBottomColor: colors.divider }]} testID={`timeline-${e.sequence}`}>
-      <Ionicons name={icon} size={24} color={e.compensated ? colors.textMuted : colors.text} />
+      <Icon name={icon} size={24} color={e.compensated ? colors.textMuted : colors.text} />
       <View style={{ flex: 1 }}>
         <Text
           style={[text.body, { fontFamily: 'Inter_600SemiBold' }, e.compensated && { textDecorationLine: 'line-through', color: colors.textMuted }]}
@@ -452,7 +698,7 @@ function TimelineRow({
           onPress={onUndo}
           style={styles.undoBtn}
         >
-          <Ionicons name="arrow-undo" size={20} color={colors.danger} />
+          <Icon name="arrow-undo" size={20} color={colors.danger} />
           <Text style={{ color: colors.danger, fontFamily: 'Inter_700Bold', fontSize: 15 }}>Undo</Text>
         </Pressable>
       ) : null}
@@ -465,7 +711,7 @@ function PinnedCard({ product }: { product: Product }) {
     return (
       <Card testID="pinned-product">
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.xs }}>
-        <Ionicons name="star" size={18} color={colors.warning} />
+        <Icon name="star" size={18} color={colors.warning} />
         <Text style={[text.section, { color: colors.warning }]}>Featured in this match</Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm }}>

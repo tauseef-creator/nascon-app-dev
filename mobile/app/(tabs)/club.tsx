@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
@@ -36,7 +36,7 @@ export default function ClubTab() {
         </>
       ) : null}
       <LinearGradient colors={['#205A28', '#17331E', colors.card]} style={{ borderRadius: 24, padding: spacing.xl, marginBottom: spacing.lg }}>
-        <Ionicons name="shield-checkmark" size={28} color={colors.accent} />
+        <Icon name="shield-checkmark" size={28} color={colors.accent} />
         <Text style={[text.h1, { marginTop: spacing.md }]}>{ownId ? 'The competition' : 'Find your team'}</Text>
         <Text style={[text.small, { color: '#D5DED5', marginTop: spacing.xs }]}>{clubs.data?.clubs.length ?? 0} clubs • Players, staff and home grounds</Text>
       </LinearGradient>
@@ -49,7 +49,7 @@ export default function ClubTab() {
           <Pressable key={c.club_id} testID={`club-item-${c.club_id}`} accessibilityRole="button" accessibilityLabel={`${c.name}. Opens club profile.`} onPress={() => router.push(`/club/${c.club_id}`)} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 68, borderBottomWidth: i === others.length - 1 ? 0 : 1, borderBottomColor: colors.divider }}>
             <ClubCrest name={c.name} size={32} />
             <View style={{ flex: 1 }}><Text style={text.label}>{c.name}</Text>{c.home_venue?.name ? <Text style={[text.small, { fontSize: 11 }]}>{c.home_venue.name}</Text> : null}</View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+            <Icon name="chevron-forward" size={18} color={colors.textMuted} />
           </Pressable>
         ))}
       </View> : null}

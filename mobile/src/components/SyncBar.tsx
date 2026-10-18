@@ -1,15 +1,19 @@
-// Always-visible connection + sync indicator (text + icon, never colour alone).
-import { Ionicons } from '@expo/vector-icons';
+// Compact, always-visible connection + sync indicator for the header (spec 8.2 "Sync status").
+// A cloud icon whose shape AND short label change with the state, so meaning never relies on colour:
+//   Synced (cloud + check) · N pending (cloud + up arrow) · Syncing (spinner) · Offline (cloud + slash)
+//   · No server (warning). Tapping opens the sync queue.
 import { router } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSync } from '../offline/SyncProvider';
-import { colors, spacing } from '../theme';
+import { colors } from '../theme';
+import { Icon, IconName } from './Icon';
 
-export function SyncBar() {
+/** `compact` hides the text label (icon shape + badge still show the state; used on back screens). */
+export function SyncBar({ compact = false }: { compact?: boolean }) {
   const { online, serverDown, syncing, pending } = useSync();
-  let icon: React.ComponentProps<typeof Ionicons>['name'] = 'cloud-done';
-  let label = 'Online';
+  let icon: IconName = 'cloud-done';
+  let label = 'Synced';
   let tint = colors.success;
   if (!online) {
     icon = 'cloud-offline';
@@ -20,50 +24,54 @@ export function SyncBar() {
     tint = colors.info;
   } else if (serverDown) {
     icon = 'warning';
-    label = 'Server unreachable';
+    label = 'No server';
+    tint = colors.warning;
+  } else if (pending > 0) {
+    icon = 'cloud-upload';
+    label = 'Pending';
     tint = colors.warning;
   }
-  const pendingText = pending > 0 ? `${pending} pending` : 'All synced';
-  const a11y = `Connection: ${label}. ${pending > 0 ? `${pending} actions waiting to sync` : 'Nothing waiting to sync'}. Opens the sync queue.`;
+  const a11y = `Connection: ${online ? (serverDown ? 'server unreachable' : 'online') : 'offline'}. ${
+    pending > 0 ? `${pending} actions waiting to sync` : 'Nothing waiting to sync'
+  }. Opens the sync queue.`;
   return (
     <Pressable
       testID="sync-bar"
       accessibilityRole="button"
       accessibilityLabel={a11y}
       onPress={() => router.push('/sync')}
-      hitSlop={{ top: 4, bottom: 4 }}
-      style={({ pressed }) => [styles.bar, pressed && { backgroundColor: 'rgba(255,255,255,0.16)' }]}
+      hitSlop={8}
+      style={({ pressed }) => [styles.chip, compact && styles.compact, pressed && { opacity: 0.7 }]}
     >
-      <View style={styles.left}>
-        {syncing ? <ActivityIndicator size="small" color={tint} /> : <Ionicons name={icon} size={17} color={tint} />}
-        <Text testID="sync-status" style={[styles.text, { color: tint }]} numberOfLines={1}>
+      {syncing ? <ActivityIndicator size="small" color={tint} /> : <Icon name={icon} size={18} color={tint} />}
+      {compact ? null : (
+        <Text testID="sync-status" style={[styles.label, { color: tint }]} numberOfLines={1}>
           {label}
         </Text>
-      </View>
-      <View style={styles.right}>
-        <Ionicons name={pending > 0 ? 'cloud-upload' : 'checkmark-done'} size={16} color={pending > 0 ? colors.warning : colors.textMuted} />
-        <Text testID="sync-pending" style={styles.text} numberOfLines={1}>
-          {pendingText}
-        </Text>
-        <Ionicons name="chevron-forward" size={15} color={colors.textMuted} />
-      </View>
+      )}
+      {pending > 0 ? (
+        <View style={[styles.badge, { backgroundColor: tint }]}>
+          <Text testID="sync-pending" style={styles.badgeText}>
+            {pending}
+          </Text>
+        </View>
+      ) : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
-    minHeight: 34,
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.xs,
-    paddingHorizontal: 14,
+  chip: {
+    minHeight: 36,
+    paddingHorizontal: 12,
     borderRadius: 999,
     backgroundColor: 'rgba(255,255,255,0.08)',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 6,
   },
-  left: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  right: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
-  text: { color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  compact: { paddingHorizontal: 9 },
+  label: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  badge: { minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { color: colors.black, fontSize: 11, fontFamily: 'Inter_700Bold' },
 });

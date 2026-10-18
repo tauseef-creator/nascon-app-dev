@@ -21,7 +21,18 @@ export type Tenant = {
 
 export type League = { league_id: string; name: string; sport_id: string; tenant_id: string };
 
-export type MatchStatus = 'upcoming' | 'in_progress' | 'completed' | string;
+export type MatchStatus = 'upcoming' | 'in_progress' | 'completed' | 'postponed' | 'abandoned' | 'cancelled' | (string & {});
+
+/** GET/POST /api/v1/matches/:id/status (FR-1.3 state machine). */
+export type MatchStatusInfo = {
+  match_id: string;
+  status: MatchStatus;
+  log_status: MatchStatus;
+  reason: string | null;
+  scheduled_at: string | null;
+  allowed_transitions: MatchStatus[];
+  history: { from: MatchStatus; to: MatchStatus; reason: string | null; by: string; at: string }[];
+};
 
 export type Match = {
   match_id: string;
@@ -114,6 +125,8 @@ export type Product = {
   name: string;
   category: string;
   description: string | null;
+  /** Server-relative media path, e.g. "/media/products/x.jpg"; null when the product has no image. */
+  image_url?: string | null;
   club_id?: string | null;
   variants: Variant[];
 };
@@ -132,6 +145,8 @@ export type RosterState = {
   league_id: string | null;
   squad_id: string | null;
   transfer_window: { open: string; close: string } | null;
+  /** Present only when the backend exposes the league's squad limit. */
+  max_squad_size?: number | null;
   squads: { squad_id: string; club_id: string; name: string }[];
   players: RosterPlayer[];
 };

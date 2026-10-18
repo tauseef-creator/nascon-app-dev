@@ -1,4 +1,5 @@
 'use strict';
+const path = require('path');
 const express = require('express');
 const { errorHandler, ApiError, errorBody } = require('./lib/errors');
 const { rateLimit } = require('./lib/rateLimit');
@@ -12,7 +13,7 @@ function buildApp() {
   // CORS for the mobile web build and tools.
   app.use((req, res, next) => {
     res.set('Access-Control-Allow-Origin', '*');
-    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, Accept, Cache-Control, Last-Event-ID');
     res.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, PUT, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') return res.sendStatus(204);
     return next();
@@ -25,6 +26,12 @@ function buildApp() {
     if (await isHealthy()) return res.status(200).json({ status: 'ok' });
     return res.status(503).json(errorBody(new ApiError(503, 'NOT_READY', 'Database not ready or not seeded.')));
   });
+
+  // Product and club media (images). Paths are stored on records as media keys, e.g. "products/x.jpg".
+  app.use('/media', express.static(path.join(__dirname, '..', 'media'), {
+    maxAge: '7d', index: false, dotfiles: 'deny',
+    setHeaders: (res) => res.set('Cross-Origin-Resource-Policy', 'cross-origin'),
+  }));
 
   // Server-Sent Events for live match updates (not rate limited, read-only public match data).
   app.get('/realtime/matches/:match_id', require('./routes/realtime'));

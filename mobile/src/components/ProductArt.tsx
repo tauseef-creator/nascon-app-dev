@@ -1,19 +1,32 @@
 import { Image } from 'expo-image';
-import React from 'react';
+import React, { useState } from 'react';
 import { Product } from '../api/types';
+import { getBaseUrl } from '../api/client';
 
-const UNITED_JERSEY = require('../../assets/demo-united-jersey.png');
-const ROVERS_JERSEY = require('../../assets/demo-rovers-jersey.png');
-const SCARF = require('../../assets/demo-scarf.png');
-const BOTTLE = require('../../assets/demo-bottle.png');
-const FALLBACK = require('../../assets/merch.jpg');
+// Generic fallback shown while an image loads, when a product has no image, or when it fails to load.
+const PLACEHOLDER = require('../../assets/product-placeholder.jpg');
 
-/** Bundled merchandise photos work without a network connection. */
-export function ProductArt({ product, height }: { product: Pick<Product, 'product_id'>; height: number }) {
-  const source = product.product_id === 'prod-jersey-001' ? UNITED_JERSEY
-    : product.product_id === 'demo-prod-rovers-jersey' ? ROVERS_JERSEY
-    : product.product_id === 'demo-prod-united-scarf' ? SCARF
-    : product.product_id === 'demo-prod-training-bottle' ? BOTTLE
-      : FALLBACK;
-  return <Image source={source} style={{ width: '100%', height }} contentFit="cover" />;
+type Props = {
+  product: Pick<Product, 'product_id'> & { image_url?: string | null };
+  height: number;
+};
+
+/** Product image from the API (`image_url`), cached on disk so it also shows offline. */
+export function ProductArt({ product, height }: Props) {
+  const [failed, setFailed] = useState(false);
+  const url = product.image_url && !failed
+    ? (/^https?:\/\//.test(product.image_url) ? product.image_url : getBaseUrl() + product.image_url)
+    : null;
+  return (
+    <Image
+      source={url ? { uri: url } : PLACEHOLDER}
+      placeholder={PLACEHOLDER}
+      placeholderContentFit="cover"
+      cachePolicy="memory-disk"
+      transition={150}
+      onError={() => setFailed(true)}
+      style={{ width: '100%', height }}
+      contentFit="cover"
+    />
+  );
 }

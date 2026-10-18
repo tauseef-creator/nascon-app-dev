@@ -136,7 +136,7 @@ export default function StandingsTab() {
     );
 
   return (
-    <Screen title="Standings" subtitle={lg.league?.name} onRefresh={q.refresh} refreshing={q.refreshing} testID="standings-screen">
+    <Screen title="Standings" onRefresh={q.refresh} refreshing={q.refreshing} testID="standings-screen">
       <LeaguePicker />
       {q.fromCache && q.updatedAt ? <CachedNotice updatedAt={q.updatedAt} /> : null}
       {body}

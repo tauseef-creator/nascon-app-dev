@@ -1,7 +1,7 @@
 // Authentication state. Token in expo-secure-store (Android Keystore); user and tenant
 // in AsyncStorage so the app opens offline after a previous sign-in.
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as SecureStore from 'expo-secure-store';
+import { deleteToken as deleteStoredToken, getToken as getStoredToken, setToken as storeToken } from './tokenStore';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { api, loadBaseUrl, setToken, setUnauthorizedHandler } from '../api/client';
 import { AppError } from '../api/errors';
@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
     setTenant(null);
     try {
-      await SecureStore.deleteItemAsync(TOKEN_KEY);
+      await deleteStoredToken(TOKEN_KEY);
     } catch {
       // ignore
     }
@@ -44,7 +44,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       await loadBaseUrl();
       try {
-        const token = await SecureStore.getItemAsync(TOKEN_KEY);
+        const token = await getStoredToken(TOKEN_KEY);
         const raw = await AsyncStorage.getItem(PROFILE_KEY);
         if (token && raw) {
           const p = JSON.parse(raw) as { user: User; tenant: Tenant };
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         body: { email: email.trim().toLowerCase(), password },
         auth: false,
       });
-      await SecureStore.setItemAsync(TOKEN_KEY, res.token);
+      await storeToken(TOKEN_KEY, res.token);
       await AsyncStorage.setItem(PROFILE_KEY, JSON.stringify({ user: res.user, tenant: res.tenant }));
       setToken(res.token);
       setSessionExpired(false);
@@ -157,6 +157,15 @@ export const ROLE_LABEL: Record<Role, string> = {
 
 export function canScore(role?: Role | null) {
   return role === 'league_organizer' || role === 'super_admin';
+}
+/**
+ * League management (scoring, match status) is scoped to the organizer's own league (spec 5.13:
+ * "the league organizer owns only league-alpha-1"); the super admin manages every league.
+ */
+export function managesLeague(user: { role: Role; league_id?: string | null } | null | undefined, leagueId?: string | null) {
+  if (!user || !leagueId) return false;
+  if (user.role === 'super_admin') return true;
+  return user.role === 'league_organizer' && user.league_id === leagueId;
 }
 export function canManageRoster(role?: Role | null) {
   return role === 'club_manager' || role === 'super_admin';

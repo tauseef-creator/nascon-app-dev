@@ -1,4 +1,4 @@
-// Live score via Server-Sent Events (XMLHttpRequest streaming). Falls back to polling
+// Live score, pinned product and match status via Server-Sent Events (XMLHttpRequest streaming). Falls back to polling
 // every 5 s if the stream fails or delivers nothing.
 import { useEffect, useRef, useState } from 'react';
 import { getBaseUrl } from '../api/client';
@@ -8,6 +8,8 @@ export type LiveMode = 'connecting' | 'live' | 'polling' | 'offline';
 type Handlers = {
   onScore: (projection: any) => void;
   onPinned: () => void;
+  /** FR-1.3 status object pushed when an organizer postpones, reschedules, abandons or cancels. */
+  onStatus?: (status: any) => void;
   poll: () => void;
 };
 
@@ -75,6 +77,7 @@ export function useLiveMatch(matchId: string | undefined, online: boolean, handl
             const data = JSON.parse(dataLines.join('\n'));
             if (ev === 'score' && data && data.match_id) h.current.onScore(data);
             else if (ev === 'pinned_product') h.current.onPinned();
+            else if (ev === 'status' && data && data.match_id) h.current.onStatus?.(data);
           } catch {
             // ignore malformed chunk
           }

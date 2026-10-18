@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import { File, Paths } from 'expo-file-system';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Sharing from 'expo-sharing';
@@ -90,7 +90,7 @@ export default function Receipt() {
         <LinearGradient colors={['#30D158', '#0B7A34']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.head}>
           <View testID="receipt-success" style={{ alignItems: 'center' }} accessible accessibilityLabel={`Payment successful. Total paid ${money(order.total_minor, order.currency)}`}>
             <View style={styles.tick}>
-              <Ionicons name="checkmark" size={30} color="#0B7A34" />
+              <Icon name="checkmark" size={30} color="#0B7A34" />
             </View>
             <Text style={styles.headLabel}>Payment successful</Text>
             <Text style={styles.headTotal} testID="receipt-total">
@@ -144,7 +144,7 @@ export default function Receipt() {
           </Text>
           {order.receipt?.signature ? (
             <View style={styles.signed}>
-              <Ionicons name="shield-checkmark" size={14} color={colors.accent} />
+              <Icon name="shield-checkmark" size={14} color={colors.accent} />
               <Text style={styles.signedText}>Digitally signed receipt</Text>
             </View>
           ) : (

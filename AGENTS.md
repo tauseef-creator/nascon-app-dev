@@ -23,6 +23,23 @@ compared literally by the grader.
   (`'football'`, `'goal'`, `'wicket'`...) in domain logic (-8). Sport behaviour
   comes only from the sport config JSON.
 
+## 0.1 Spec coverage rule (learned on Day 1, applies to every phase)
+
+Treat **every** requirement line in the spec as graded, not only the autograder API.
+On Day 1 the `/audit/v1` contract was perfect, but FR-1.3's match states
+(Postponed, Abandoned, Cancelled) were skipped because section 5.9 only defined
+three statuses; the UI judges asked to cancel a match and deducted marks.
+
+1. First 15 minutes: copy every FR/NFR bullet and every "must / supports / required"
+   sentence into `docs/SPEC_COVERAGE.md` (requirement, owner, backend route, UI screen
+   + role, test, status). Review it before every push.
+2. Build the binding grader contract exactly first.
+3. Then give every remaining requirement at least a minimal working version: a
+   backend route and a UI touchpoint for the right role.
+4. When sections disagree, keep graded responses exactly as the contract says, add the
+   extra behaviour without changing graded outputs, and record the choice in `ADR.md`.
+5. Never drop a requirement for time without asking the team lead.
+
 ## 1. How the grader scores us (50 points)
 
 - Grader machine: Ubuntu 22.04, 4 vCPU, 8 GB RAM. It runs, from the repo root:
@@ -135,6 +152,7 @@ against the live stack; see section 8 for what is left).
 | Offline sync | `POST /audit/v1/offline-sync` | DONE (`domain/sync`, `routes/audit/offlineSync.js`) |
 | Production auth for app | `/api/v1/auth/login`, `/me`, `/clubs`, `/clubs/:id`, `/leagues`, `/tenants/:id/branding` | DONE |
 | App endpoints | `/api/v1/matches`, `/products`, `/sports/:id`, `/matches/:id/pinned`, `/matches/:id/pin`, `/roster/:club_id`, SSE `/realtime/matches/:id` | DONE (`routes/app.js`, `routes/realtime.js`, `lib/realtime.js`) |
+| Match status (FR-1.3) | `GET/POST /api/v1/matches/:id/status` (postpone, reschedule, cancel, abandon), frozen matches reject new events, SSE `status` event | DONE (`domain/matchStatus.js`, `services/matchStatus.js`); graded `/audit/v1` outputs unchanged |
 | Demo seed data | `demo-` matches, standings on league-alpha-1, roster squads demo-sq-alpha-1/2, pinned jersey on demo-m3 | DONE (`db/demoSeed.js`, runs after every reset) |
 | Mobile app | `mobile/` | All screens built, tsc + export clean (see `mobile/PROGRESS.md`). **TODO: device test, UI polish, release APK at `mobile/release/app-release.apk`** |
 

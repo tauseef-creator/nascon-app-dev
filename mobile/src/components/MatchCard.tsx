@@ -1,21 +1,26 @@
+import { Icon } from './Icon';
 import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Match } from '../api/types';
 import { ClubCrest } from './ClubCrest';
 import { colors, spacing } from '../theme';
+import { OFF_SCHEDULE, statusLabel } from '../utils/matchStatus';
 import { formatDateTime, formatTime } from './ui';
 
-export function MatchCard({ m }: { m: Match }) {
+export function MatchCard({ m, testID }: { m: Match; testID?: string }) {
   const live = m.status === 'in_progress';
-  const showScore = live || m.status === 'completed';
-  const statusWord = live ? 'live' : m.status === 'completed' ? 'full time' : 'upcoming';
+  const off = OFF_SCHEDULE[m.status];
+  // Abandoned matches keep the score reached before play stopped.
+  const showScore = live || m.status === 'completed' || m.status === 'abandoned';
+  const statusWord = statusLabel(m.status).toLowerCase();
+  const id = testID ?? `match-card-${m.match_id}`;
   const label = `${m.home_name} versus ${m.away_name}, ${statusWord}${showScore ? `, score ${m.home_score} to ${m.away_score}` : ''}, ${formatDateTime(m.scheduled_at)}. Opens match details.`;
   const homeLeads = showScore && m.home_score > m.away_score;
   const awayLeads = showScore && m.away_score > m.home_score;
   return (
     <Pressable
-      testID={`match-card-${m.match_id}`}
+      testID={id}
       accessibilityRole="button"
       accessibilityLabel={label}
       onPress={() => router.push(`/match/${m.match_id}`)}
@@ -33,6 +38,11 @@ export function MatchCard({ m }: { m: Match }) {
             <View style={styles.liveRow}>
               <View style={styles.liveDot} />
               <Text style={styles.liveText}>LIVE</Text>
+            </View>
+          ) : off ? (
+            <View style={styles.liveRow} testID={`${id}-status`}>
+              <Icon name={off.icon} size={14} color={off.color} />
+              <Text style={[styles.offText, { color: off.color }]}>{statusLabel(m.status)}</Text>
             </View>
           ) : (
             <Text style={styles.status}>{showScore ? 'Final' : formatTime(m.scheduled_at)}</Text>
@@ -62,5 +72,6 @@ const styles = StyleSheet.create({
   liveRow: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.live },
   liveText: { color: colors.live, fontSize: 14, fontFamily: 'Inter_800ExtraBold', letterSpacing: 0.6 },
+  offText: { fontSize: 13, fontFamily: 'Inter_800ExtraBold', letterSpacing: 0.3 },
   venueText: { color: '#6E6E73', fontSize: 11, marginTop: 3, textAlign: 'center' },
 });

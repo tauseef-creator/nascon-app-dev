@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import React from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, text } from '../theme';
@@ -35,7 +35,7 @@ export function ConfirmDialog({
         <View style={styles.box} testID={testID} accessibilityViewIsModal>
           <ScrollView contentContainerStyle={{ padding: spacing.xl }} keyboardShouldPersistTaps="handled">
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginBottom: spacing.sm }}>
-              <Ionicons
+              <Icon
                 name={destructive ? 'warning' : 'help-circle'}
                 size={28}
                 color={destructive ? colors.danger : colors.info}

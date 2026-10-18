@@ -78,23 +78,23 @@ const CLUBS = [
 ];
 
 const PLAYERS = [
-  { player_id: 'player-alpha-1', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', name: 'Ahmed Player', position: 'fw' },
-  { player_id: 'player-alpha-2', tenant_id: 'tenant-alpha', club_id: 'club-alpha-2', name: 'Usman Player', position: 'gk' },
-  { player_id: 'player-beta-1', tenant_id: 'tenant-beta', club_id: 'club-beta-1', name: 'Kamran Player', position: 'df' },
+  { player_id: 'player-alpha-1', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', name: 'Ahmed Raza', position: 'fw' },
+  { player_id: 'player-alpha-2', tenant_id: 'tenant-alpha', club_id: 'club-alpha-2', name: 'Usman Ghani', position: 'gk' },
+  { player_id: 'player-beta-1', tenant_id: 'tenant-beta', club_id: 'club-beta-1', name: 'Kamran Akmal', position: 'df' },
 ];
 
 const DEMO_PASSWORD = 'Nascon@26';
 const USERS = [
-  { user_id: 'user-admin', email: 'admin@nascon.test', role: 'super_admin', tenant_id: null, display_name: 'Platform Admin' },
-  { user_id: 'user-organizer', email: 'organizer@nascon.test', role: 'league_organizer', tenant_id: 'tenant-alpha', league_id: 'league-alpha-1', display_name: 'League Organizer' },
-  { user_id: 'user-manager', email: 'manager@nascon.test', role: 'club_manager', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', display_name: 'Club Manager' },
-  { user_id: 'user-player', email: 'player@nascon.test', role: 'player', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', player_id: 'player-alpha-1', display_name: 'Player One' },
-  { user_id: 'user-viewer', email: 'viewer@nascon.test', role: 'viewer', tenant_id: 'tenant-alpha', display_name: 'Viewer' },
+  { user_id: 'user-admin', email: 'admin@nascon.test', role: 'super_admin', tenant_id: null, display_name: 'Ayesha Khan' },
+  { user_id: 'user-organizer', email: 'organizer@nascon.test', role: 'league_organizer', tenant_id: 'tenant-alpha', league_id: 'league-alpha-1', display_name: 'Bilal Hassan' },
+  { user_id: 'user-manager', email: 'manager@nascon.test', role: 'club_manager', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', display_name: 'Sara Malik' },
+  { user_id: 'user-player', email: 'player@nascon.test', role: 'player', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', player_id: 'player-alpha-1', display_name: 'Ahmed Raza' },
+  { user_id: 'user-viewer', email: 'viewer@nascon.test', role: 'viewer', tenant_id: 'tenant-alpha', display_name: 'Hina Tariq' },
 ];
 
 const PRODUCTS = [
   { product_id: 'prod-jersey-001', tenant_id: 'tenant-alpha', club_id: 'club-alpha-1', name: 'Alpha United Home Jersey', category: 'apparel',
-    data: { description: 'Official 2026 home jersey.' } },
+    data: { description: 'Official 2026 home jersey.', image: 'products/prod-jersey-001.jpg' } },
 ];
 const VARIANTS = [
   { variant_id: 'var-jersey-001-M', product_id: 'prod-jersey-001', size: 'M', color: 'Blue', price_minor: 450000 },

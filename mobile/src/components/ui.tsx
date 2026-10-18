@@ -1,6 +1,6 @@
 // Shared building blocks. Every interactive element has testID, accessibilityRole,
 // and a minimum 48 dp touch target.
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -16,7 +16,7 @@ import {
 import { useBrand } from '../auth/AuthContext';
 import { colors, font, radius, spacing, text, TOUCH } from '../theme';
 
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
+type IconName = React.ComponentProps<typeof Icon>['name'];
 
 export function Card({ children, style, testID }: { children: React.ReactNode; style?: StyleProp<ViewStyle>; testID?: string }) {
   return (
@@ -88,7 +88,7 @@ export function PrimaryButton({ title, onPress, testID, loading, disabled, icon,
       {loading ? (
         <ActivityIndicator color={fg} />
       ) : icon ? (
-        <Ionicons name={icon} size={20} color={fg} />
+        <Icon name={icon} size={20} color={fg} />
       ) : null}
       <Text style={[styles.btnText, { color: fg }]} numberOfLines={2}>
         {loading ? 'Please wait…' : title}
@@ -117,7 +117,7 @@ export function SecondaryButton({ title, onPress, testID, loading, disabled, ico
         style,
       ]}
     >
-      {loading ? <ActivityIndicator color={fg} /> : icon ? <Ionicons name={icon} size={20} color={fg} /> : null}
+      {loading ? <ActivityIndicator color={fg} /> : icon ? <Icon name={icon} size={20} color={fg} /> : null}
       <Text style={[styles.btnText, { color: fg }]} numberOfLines={2}>
         {title}
       </Text>
@@ -149,7 +149,7 @@ export function IconButton({
       hitSlop={4}
       style={({ pressed }) => [styles.iconBtn, pressed && { opacity: 0.6 }]}
     >
-      <Ionicons name={icon} size={26} color={color} />
+      <Icon name={icon} size={26} color={color} />
       {badge ? (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{badge > 99 ? '99+' : badge}</Text>
@@ -176,7 +176,7 @@ export function EmptyState({
 }) {
   return (
     <View testID={testID} style={styles.empty} accessible accessibilityLabel={`${title}. ${message ?? ''}`}>
-      <Ionicons name={icon} size={36} color={colors.textMuted} />
+      <Icon name={icon} size={36} color={colors.textMuted} />
       <Text style={[text.title, { textAlign: 'center', marginTop: spacing.md }]}>{title}</Text>
       {message ? <Text style={[text.muted, { textAlign: 'center', marginTop: spacing.sm }]}>{message}</Text> : null}
       {actionTitle && onAction ? (
@@ -190,7 +190,7 @@ export function ErrorBanner({ message, onRetry, testID = 'error-banner' }: { mes
   return (
     <View testID={testID} style={styles.errorBox} accessibilityRole="alert" accessibilityLiveRegion="polite">
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
-        <Ionicons name="alert-circle" size={24} color={colors.danger} accessibilityLabel="Problem" />
+        <Icon name="alert-circle" size={24} color={colors.danger} accessibilityLabel="Problem" />
         <Text style={[text.body, { flex: 1, color: colors.text }]}>{message}</Text>
       </View>
       {onRetry ? (
@@ -208,7 +208,7 @@ export function InfoBanner({ message, icon = 'information-circle', tone = 'info'
   }[tone];
   return (
     <View testID={testID} style={[styles.infoBox, { backgroundColor: map.bg }]} accessibilityRole="text">
-      <Ionicons name={icon} size={22} color={map.fg} />
+      <Icon name={icon} size={22} color={map.fg} />
       <Text style={[text.body, { flex: 1, color: map.fg }]}>{message}</Text>
     </View>
   );
@@ -224,12 +224,15 @@ export function LoadingView({ label = 'Loading…' }: { label?: string }) {
   );
 }
 
-export type PillKind = 'live' | 'ft' | 'upcoming' | 'clinched' | 'eliminated' | 'possible' | 'pending' | 'applied' | 'rejected' | 'duplicate' | 'corrected' | 'offline';
+export type PillKind = 'live' | 'ft' | 'upcoming' | 'postponed' | 'abandoned' | 'cancelled' | 'clinched' | 'eliminated' | 'possible' | 'pending' | 'applied' | 'rejected' | 'duplicate' | 'corrected' | 'offline';
 
 const PILL: Record<PillKind, { label: string; icon: IconName; bg: string; fg: string }> = {
   live: { label: 'LIVE', icon: 'radio-button-on', bg: colors.dangerBg, fg: colors.live },
   ft: { label: 'FT', icon: 'flag', bg: colors.neutralBg, fg: colors.textMuted },
   upcoming: { label: 'UPCOMING', icon: 'time-outline', bg: colors.infoBg, fg: colors.info },
+  postponed: { label: 'POSTPONED', icon: 'pause-circle', bg: colors.warningBg, fg: colors.warning },
+  abandoned: { label: 'ABANDONED', icon: 'alert-circle', bg: colors.dangerBg, fg: colors.danger },
+  cancelled: { label: 'CANCELLED', icon: 'ban', bg: colors.neutralBg, fg: colors.textMuted },
   clinched: { label: 'CLINCHED', icon: 'checkmark-circle', bg: colors.successBg, fg: colors.success },
   eliminated: { label: 'OUT', icon: 'close-circle', bg: colors.dangerBg, fg: colors.danger },
   possible: { label: 'IN CONTENTION', icon: 'ellipse-outline', bg: colors.neutralBg, fg: colors.textMuted },
@@ -245,7 +248,7 @@ export function StatusPill({ kind, label, testID }: { kind: PillKind; label?: st
   const p = PILL[kind];
   return (
     <View testID={testID} style={[styles.pill, { backgroundColor: p.bg }]} accessible accessibilityLabel={`Status: ${label ?? p.label}`}>
-      <Ionicons name={p.icon} size={12} color={p.fg} />
+      <Icon name={p.icon} size={12} color={p.fg} />
       <Text style={[styles.pillText, { color: p.fg }]}>{label ?? p.label}</Text>
     </View>
   );
@@ -254,6 +257,7 @@ export function StatusPill({ kind, label, testID }: { kind: PillKind; label?: st
 export function matchPill(status: string): PillKind {
   if (status === 'in_progress') return 'live';
   if (status === 'completed') return 'ft';
+  if (status === 'postponed' || status === 'abandoned' || status === 'cancelled') return status;
   return 'upcoming';
 }
 
@@ -288,7 +292,7 @@ export function Chip({
         pressed && { opacity: 0.8 },
       ]}
     >
-      {selected ? <Ionicons name="checkmark" size={16} color={colors.black} /> : null}
+      {selected ? <Icon name="checkmark" size={16} color={colors.black} /> : null}
       <Text style={[styles.chipText, { color: selected ? colors.black : colors.text }]} numberOfLines={1}>
         {label}
       </Text>
@@ -309,7 +313,7 @@ export function Field({ label, testID, error, ...rest }: TextInputProps & { labe
       />
       {error ? (
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
-          <Ionicons name="alert-circle" size={16} color={colors.danger} />
+          <Icon name="alert-circle" size={16} color={colors.danger} />
           <Text style={{ color: colors.danger, fontSize: font.small }}>{error}</Text>
         </View>
       ) : null}

@@ -1,27 +1,43 @@
-import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Icon } from '../../src/components/Icon';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { canManageRoster, ROLE_LABEL, useAuth, useBrand } from '../../src/auth/AuthContext';
 import { ConfirmDialog } from '../../src/components/ConfirmDialog';
-import { Screen, TenantLogo } from '../../src/components/Screen';
+import { Screen } from '../../src/components/Screen';
 import { SectionTitle } from '../../src/components/ui';
 import { useSync } from '../../src/offline/SyncProvider';
 import { useCart } from '../../src/store/CartContext';
-import { colors, spacing, text } from '../../src/theme';
+import { colors, radius, spacing, text } from '../../src/theme';
 
-type IconName = React.ComponentProps<typeof Ionicons>['name'];
+type IconName = React.ComponentProps<typeof Icon>['name'];
 
-function LinkRow({ icon, title, detail, onPress, testID }: { icon: IconName; title: string; detail?: string; onPress: () => void; testID: string }) {
+function initialsOf(name: string, email: string) {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const letters = words.length ? words.slice(0, 2).map((w) => w[0]!) : [email[0] ?? '?'];
+  return letters.join('').toUpperCase();
+}
+
+function LinkRow({ icon, title, detail, onPress, testID, last, danger }: { icon: IconName; title: string; detail?: string; onPress: () => void; testID: string; last?: boolean; danger?: boolean }) {
+  const tint = danger ? colors.danger : colors.text;
   return (
-    <Pressable testID={testID} accessibilityRole="button" accessibilityLabel={detail ? `${title}. ${detail}` : title} onPress={onPress} style={{ minHeight: 66, flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: spacing.lg, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
-        <View style={{ width: 34, height: 34, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cardHi }}><Ionicons name={icon} size={19} color={colors.accent} /></View>
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={detail ? `${title}. ${detail}` : title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed && { backgroundColor: colors.cardHi }]}
+    >
+      <View style={styles.rowIcon}>
+        <Icon name={icon} size={20} color={tint} />
+      </View>
+      <View style={[styles.rowBody, !last && styles.rowDivider]}>
         <View style={{ flex: 1 }}>
-          <Text style={[text.label, { fontSize: 14 }]}>{title}</Text>
-          {detail ? <Text style={[text.small, { fontSize: 11 }]}>{detail}</Text> : null}
+          <Text style={[styles.rowTitle, { color: tint }]}>{title}</Text>
+          {detail ? <Text style={styles.rowDetail} numberOfLines={1}>{detail}</Text> : null}
         </View>
-        <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        {danger ? null : <Icon name="chevron-forward" size={16} color={colors.textMuted} />}
+      </View>
     </Pressable>
   );
 }
@@ -33,25 +49,32 @@ export default function More() {
   const cart = useCart();
   const [confirm, setConfirm] = useState(false);
   if (!user) return null;
+  const role = ROLE_LABEL[user.role] ?? user.role;
+  const tenantName = tenant?.name ?? brand.tenantName;
 
   return (
-    <Screen title="Profile" testID="more-screen">
-      <View testID="profile-card" style={{ borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md }}>
-        <LinearGradient colors={['#20592C', '#142B1B', colors.card]} style={{ minHeight: 216, padding: spacing.xl, justifyContent: 'space-between' }}>
-          <Text style={{ color: '#B8E8C2', fontFamily: 'Inter_700Bold', fontSize: 11, letterSpacing: 1 }}>YOUR ACCOUNT</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.28)' }}><TenantLogo size={48} /></View>
-            <View style={{ flex: 1 }}><Text style={[text.h1, { fontSize: 22 }]} numberOfLines={2}>{user.display_name}</Text><Text style={[text.small, { color: '#D6E0D7' }]} numberOfLines={1}>{user.email}</Text></View>
+    <Screen title="Profile" testID="more-screen" hideRole>
+      <View testID="profile-card" style={styles.card}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.lg }}>
+          <View style={styles.avatar} accessible accessibilityLabel={`Profile picture for ${user.display_name}`}>
+            <Text style={styles.avatarText}>{initialsOf(user.display_name, user.email)}</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-            <View testID="profile-role" style={{ paddingHorizontal: spacing.md, paddingVertical: 6, backgroundColor: 'rgba(255,255,255,0.16)', borderRadius: 16 }}><Text style={{ color: colors.white, fontSize: 11, fontFamily: 'Inter_700Bold' }}>{ROLE_LABEL[user.role] ?? user.role}</Text></View>
-            <Text style={[text.small, { color: '#D6E0D7', flex: 1 }]} numberOfLines={1}>{tenant?.name ?? brand.tenantName}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.name} numberOfLines={2}>{user.display_name}</Text>
+            <Text style={[text.small, { marginTop: 2 }]} numberOfLines={1}>{user.email}</Text>
           </View>
-        </LinearGradient>
+        </View>
+        <View style={styles.cardFoot}>
+          <View testID="profile-role" style={styles.roleChip} accessible accessibilityLabel={`Role: ${role}`}>
+            <Icon name="shield-checkmark" size={14} color={colors.accent} />
+            <Text style={styles.roleText}>{role}</Text>
+          </View>
+          <Text style={[text.small, { flex: 1, textAlign: 'right' }]} numberOfLines={1} accessibilityLabel={`Organisation: ${tenantName}`}>{tenantName}</Text>
+        </View>
       </View>
 
       <SectionTitle>App</SectionTitle>
-      <View style={{ backgroundColor: colors.card, borderRadius: 22, overflow: 'hidden', marginBottom: spacing.lg }}>
+      <View style={styles.group}>
       <LinkRow
         icon="cloud-upload-outline"
         title="Sync queue"
@@ -65,12 +88,12 @@ export default function More() {
       {cart.lastOrder ? (
         <LinkRow icon="receipt-outline" title="Last receipt" detail={`Order ${cart.lastOrder.order_id.slice(0, 8)}…`} onPress={() => router.push(`/receipt/${cart.lastOrder!.order_id}`)} testID="more-receipt" />
       ) : null}
-      <LinkRow icon="settings-outline" title="Settings" detail="Server address and device details" onPress={() => router.push('/settings')} testID="more-settings" />
+      <LinkRow icon="settings-outline" title="Settings" detail="Server address and device details" onPress={() => router.push('/settings')} testID="more-settings" last />
       </View>
 
       <SectionTitle>Account</SectionTitle>
-      <View style={{ backgroundColor: colors.card, borderRadius: 22, overflow: 'hidden', marginBottom: spacing.lg }}>
-      <LinkRow icon="log-out-outline" title="Sign out" onPress={() => setConfirm(true)} testID="more-logout" />
+      <View style={styles.group}>
+      <LinkRow icon="log-out-outline" title="Sign out" onPress={() => setConfirm(true)} testID="more-logout" last danger />
       </View>
 
       <ConfirmDialog
@@ -93,3 +116,52 @@ export default function More() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: 24,
+    padding: spacing.xl,
+    marginBottom: spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.08)',
+  },
+  avatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: colors.accentBg,
+    borderWidth: 1,
+    borderColor: 'rgba(48,209,88,0.28)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarText: { color: colors.accent, fontSize: 22, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
+  name: { color: colors.text, fontSize: 20, fontFamily: 'Inter_700Bold', letterSpacing: -0.3 },
+  cardFoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.lg,
+    paddingTop: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.border,
+  },
+  roleChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: spacing.md,
+    paddingVertical: 6,
+    borderRadius: radius.pill,
+    backgroundColor: colors.accentBg,
+  },
+  roleText: { color: colors.accent, fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  group: { backgroundColor: colors.card, borderRadius: 20, overflow: 'hidden', marginBottom: spacing.lg },
+  row: { minHeight: 60, flexDirection: 'row', alignItems: 'center', paddingLeft: spacing.lg, gap: spacing.md },
+  rowIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cardHi },
+  rowBody: { flex: 1, minHeight: 60, flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingRight: spacing.lg, paddingVertical: spacing.sm },
+  rowDivider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border },
+  rowTitle: { fontSize: 15, fontFamily: 'Inter_600SemiBold' },
+  rowDetail: { color: colors.textMuted, fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
+});

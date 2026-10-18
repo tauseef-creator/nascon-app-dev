@@ -1,21 +1,23 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
+import { ProductArt } from '../src/components/ProductArt';
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../src/api/client';
 import { AppError, errorText } from '../src/api/errors';
-import { Order } from '../src/api/types';
+import { Order, Product } from '../src/api/types';
 import { useAuth, useBrand } from '../src/auth/AuthContext';
 import { ConfirmDialog } from '../src/components/ConfirmDialog';
 import { Screen } from '../src/components/Screen';
 import { Stepper } from '../src/components/Stepper';
 import { useToast } from '../src/components/Toast';
 import { Card, EmptyState, ErrorBanner, Field, InfoBanner, money, PrimaryButton, Row, SecondaryButton, SectionTitle } from '../src/components/ui';
+import { useCachedQuery } from '../src/hooks/useCachedQuery';
 import { writeCache } from '../src/offline/cache';
 import { useSync } from '../src/offline/SyncProvider';
 import { CartItem, useCart } from '../src/store/CartContext';
-import { colors, radius, spacing, text, TOUCH } from '../src/theme';
+import { colors, radius, spacing, text } from '../src/theme';
 
 const CARDS = [
   { token: 'tok_success', title: 'Test card: approved', detail: 'Visa ending 4242. Payment goes through.', icon: 'card' as const },
@@ -33,10 +35,21 @@ export default function CartScreen() {
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [token, setToken] = useState('tok_success');
   const [confirm, setConfirm] = useState(false);
-  const [removeItem, setRemoveItem] = useState<CartItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const card = CARDS.find((c) => c.token === token)!;
+  // Product photos come from the cached catalogue (same query as the store), so they also show offline.
+  const catalogue = useCachedQuery<{ products: Product[] }>('products', '/api/v1/products');
+  const images = useMemo(() => new Map((catalogue.data?.products ?? []).map((p) => [p.product_id, p.image_url ?? null])), [catalogue.data]);
+
+  const removeLine = (item: CartItem) => {
+    cart.remove(item.variant_id);
+    toast(`${item.name} removed from your cart.`, 'info', {
+      label: 'Undo',
+      accessibilityLabel: `Undo removing ${item.name}`,
+      onPress: () => cart.add(item),
+    });
+  };
 
   const pay = async () => {
     setConfirm(false);
@@ -96,27 +109,32 @@ export default function CartScreen() {
   return (
     <Screen title="Your cart" subtitle={`${cart.count} item${cart.count === 1 ? '' : 's'}`} back testID="cart-screen">
       {cart.items.map((i) => (
-        <Card key={i.variant_id} testID={`cart-item-${i.variant_id}`}>
-          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }}>
-            <View style={{ flex: 1 }}>
-              <Text style={text.label}>{i.name}</Text>
-              <Text style={text.small}>{[i.size && `Size ${i.size}`, i.color].filter(Boolean).join(' · ')}</Text>
-              <Text style={[text.body, { marginTop: 4 }]}>{money(i.price_minor, i.currency)} each</Text>
-            </View>
-            <Pressable
-              testID={`cart-remove-${i.variant_id}`}
-              accessibilityRole="button"
-              accessibilityLabel={`Remove ${i.name} from cart`}
-              onPress={() => setRemoveItem(i)}
-              style={styles.remove}
-            >
-              <Ionicons name="trash-outline" size={22} color={colors.danger} />
-              <Text style={{ color: colors.danger, fontFamily: 'Inter_700Bold', fontSize: 15 }}>Remove</Text>
-            </Pressable>
+        <Card key={i.variant_id} testID={`cart-item-${i.variant_id}`} style={styles.item}>
+          <View style={styles.thumb} accessible={false}>
+            <ProductArt product={{ product_id: i.product_id, image_url: images.get(i.product_id) ?? null }} height={72} />
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: spacing.sm, flexWrap: 'wrap', gap: spacing.sm }}>
-            <Stepper value={i.quantity} max={Math.max(1, i.stock)} onChange={(v) => cart.setQuantity(i.variant_id, v)} testID={`cart-qty-${i.variant_id}`} label={`Quantity of ${i.name}`} />
-            <Text style={[text.label, { fontSize: 18 }]}>{money(i.price_minor * i.quantity, i.currency)}</Text>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={text.label} numberOfLines={2}>{i.name}</Text>
+            {i.size || i.color ? (
+              <Text style={[text.small, { marginTop: 2 }]} numberOfLines={1}>
+                {[i.size && `Size ${i.size}`, i.color].filter(Boolean).join(' · ')}
+              </Text>
+            ) : null}
+            <Text style={text.small}>{money(i.price_minor, i.currency)} each</Text>
+            <View style={styles.itemFoot}>
+              <Text style={[text.label, { fontSize: 17 }]}>{money(i.price_minor * i.quantity, i.currency)}</Text>
+              <Stepper
+                compact
+                value={i.quantity}
+                max={Math.max(1, i.stock)}
+                onChange={(v) => cart.setQuantity(i.variant_id, v)}
+                onRemove={() => removeLine(i)}
+                removeTestID={`cart-remove-${i.variant_id}`}
+                removeLabel={`Remove ${i.name} from cart`}
+                testID={`cart-qty-${i.variant_id}`}
+                label={`Quantity of ${i.name}`}
+              />
+            </View>
           </View>
         </Card>
       ))}
@@ -159,12 +177,12 @@ export default function CartScreen() {
               onPress={() => setToken(c.token)}
               style={[styles.payOpt, sel && { borderColor: colors.accent, backgroundColor: colors.accentBg }]}
             >
-              <Ionicons name={sel ? 'radio-button-on' : 'radio-button-off'} size={24} color={sel ? colors.accent : colors.textMuted} />
+              <Icon name={sel ? 'radio-button-on' : 'radio-button-off'} size={24} color={sel ? colors.accent : colors.textMuted} />
               <View style={{ flex: 1 }}>
                 <Text style={text.label}>{c.title}</Text>
                 <Text style={text.small}>{c.detail}</Text>
               </View>
-              <Ionicons name={c.icon} size={24} color={colors.textMuted} />
+              <Icon name={c.icon} size={24} color={colors.textMuted} />
             </Pressable>
           );
         })}
@@ -182,7 +200,6 @@ export default function CartScreen() {
       {error ? <ErrorBanner message={error} testID="cart-error" /> : null}
       <PrimaryButton
         title={`Pay ${money(cart.subtotal)}`}
-        icon="lock-closed"
         onPress={() => setConfirm(true)}
         loading={busy}
         disabled={!sync.online}
@@ -198,26 +215,14 @@ export default function CartScreen() {
         onConfirm={pay}
         testID="pay-confirm"
       />
-      <ConfirmDialog
-        visible={!!removeItem}
-        title="Remove item?"
-        message={removeItem ? `Remove ${removeItem.name}${removeItem.size ? ` (size ${removeItem.size})` : ''} from your cart?` : ''}
-        confirmTitle="Remove"
-        destructive
-        onCancel={() => setRemoveItem(null)}
-        onConfirm={() => {
-          if (removeItem) cart.remove(removeItem.variant_id);
-          setRemoveItem(null);
-          toast('Item removed from your cart.', 'info');
-        }}
-        testID="remove-confirm"
-      />
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  remove: { minHeight: TOUCH, minWidth: TOUCH, flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 4 },
+  item: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md },
+  thumb: { width: 72, height: 72, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.cardHi },
+  itemFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.sm, flexWrap: 'wrap' },
   payOpt: {
     flexDirection: 'row',
     alignItems: 'center',

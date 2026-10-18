@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import React from 'react';
 import { Text, View } from 'react-native';
 import { colors } from '../theme';
@@ -12,7 +12,7 @@ export function StockText({ count }: { count: number }) {
   const color = out ? colors.danger : low ? colors.warning : colors.success;
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} accessible accessibilityLabel={label}>
-      <Ionicons name={out ? 'close-circle' : low ? 'alert-circle' : 'checkmark-circle'} size={18} color={color} />
+      <Icon name={out ? 'close-circle' : low ? 'alert-circle' : 'checkmark-circle'} size={18} color={color} />
       <Text style={{ color, fontSize: 15, fontFamily: 'Inter_700Bold' }}>{label}</Text>
     </View>
   );

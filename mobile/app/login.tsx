@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
@@ -40,6 +40,7 @@ export default function Login() {
     try {
       await login(email, password);
     } catch (e) {
+      console.error('[login] failed', e);
       setError(errorText(e));
     } finally {
       setBusy(false);
@@ -100,7 +101,7 @@ export default function Login() {
                 onPress={() => setShow((s) => !s)}
                 style={styles.eye}
               >
-                <Ionicons name={show ? 'eye-off' : 'eye'} size={24} color={colors.textMuted} />
+                <Icon name={show ? 'eye-off' : 'eye'} size={24} color={colors.textMuted} />
                 <Text style={{ color: colors.textMuted, fontSize: 14, fontFamily: 'Inter_600SemiBold' }}>{show ? 'Hide' : 'Show'}</Text>
               </Pressable>
             </View>

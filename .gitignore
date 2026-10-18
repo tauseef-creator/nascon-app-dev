@@ -9,3 +9,5 @@ web-build/
 mobile/android/
 mobile/ios/
 !mobile/release/app-release.apk
+__pycache__/
+*.pyc

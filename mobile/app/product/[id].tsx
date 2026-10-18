@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../../src/components/Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
@@ -89,7 +89,7 @@ export default function ProductScreen() {
         </LinearGradient>
       </View>
       <Card style={{ borderRadius: radius.lg }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}><Ionicons name="checkmark-circle" size={18} color={colors.accent} /><Text style={[text.label, { flex: 1, fontSize: 13 }]}>Official club merchandise</Text>{variant ? <StockText count={available(variant)} /> : null}</View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}><Icon name="checkmark-circle" size={18} color={colors.accent} /><Text style={[text.label, { flex: 1, fontSize: 13 }]}>Official club merchandise</Text>{variant ? <StockText count={available(variant)} /> : null}</View>
         {product.description ? <Text style={[text.muted, { marginTop: spacing.md }]}>{product.description}</Text> : null}
       </Card>
 

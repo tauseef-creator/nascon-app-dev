@@ -1,6 +1,7 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from '../src/components/Icon';
 import { randomUUID } from 'expo-crypto';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { api } from '../src/api/client';
 import { AppError, errorText } from '../src/api/errors';
@@ -35,7 +36,9 @@ export default function Roster() {
   const { user } = useAuth();
   const toast = useToast();
   const sync = useSync();
-  const clubId = user?.club_id ?? null;
+  const params = useLocalSearchParams<{ club?: string; add?: string }>();
+  // Club managers always manage their own club; a super admin arrives with ?club= from a club profile.
+  const clubId = user?.club_id ?? (user?.role === 'super_admin' && params.club ? String(params.club) : null);
   const allowed = canManageRoster(user?.role);
   const q = useCachedQuery<RosterState>(clubId && allowed ? `roster:${clubId}` : null, clubId && allowed ? `/api/v1/roster/${encodeURIComponent(clubId)}` : null);
   const [queued, setQueued] = useState<QueuedAction[]>([]);
@@ -68,6 +71,14 @@ export default function Roster() {
   }, [loadQueued]);
 
   const data = q.data;
+  // Club profile > Manage club > Add a player opens the add form once the roster has loaded.
+  const addOpened = useRef(false);
+  useEffect(() => {
+    if (addOpened.current || params.add !== '1' || !data?.squad_id || !sync.online) return;
+    addOpened.current = true;
+    openAdd();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.add, data?.squad_id, sync.online]);
   const squads = data?.squads ?? [];
   const otherSquads = squads.filter((s) => s.squad_id !== player?.squad_id);
   const squadName = (id: string | null) => squads.find((s) => s.squad_id === id)?.name ?? id ?? '';
@@ -220,7 +231,7 @@ export default function Roster() {
         return (
           <Card key={p.player_id} testID={`roster-player-${p.player_id}`}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-              <Ionicons name="person-circle" size={36} color={colors.textMuted} />
+              <Icon name="person-circle" size={36} color={colors.textMuted} />
               <View style={{ flex: 1 }}>
                 <Text style={text.label}>{p.name}</Text>
                 <Text style={text.small}>

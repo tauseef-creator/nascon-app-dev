@@ -215,7 +215,8 @@ async function listProducts(tenantId) {
     if (!out.has(r.product_id)) {
       out.set(r.product_id, {
         product_id: r.product_id, tenant_id: r.tenant_id, club_id: r.club_id, name: r.name,
-        category: r.category, description: (r.data && r.data.description) || null, variants: [],
+        category: r.category, description: (r.data && r.data.description) || null,
+        image_url: r.data && r.data.image ? `/media/${r.data.image}` : null, variants: [],
       });
     }
     if (r.variant_id) {

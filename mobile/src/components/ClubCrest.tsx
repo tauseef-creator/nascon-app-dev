@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 // Demo club crest: a shield drawn from the club name, so every club gets a stable,
 // distinct badge without needing logo uploads. Works offline (pure SVG).
 import React from 'react';
@@ -27,6 +28,9 @@ function hash(s: string): number {
 }
 
 /** Main crest colour for a club, used to tint match headers. */
+// Decorative artwork: hidden from screen readers (native prop vs web attribute).
+const decorative: Record<string, unknown> = Platform.OS === 'web' ? { 'aria-hidden': true } : { accessible: false };
+
 export function crestColor(name: string): string {
   return PALETTES[(hash(name || 'club') >>> 4) % PALETTES.length]![0];
 }
@@ -49,7 +53,7 @@ export function ClubCrest({ name, size = 40 }: { name: string; size?: number }) 
   const id = `c${h.toString(36)}`;
   const letters = initials(name || 'FC');
   return (
-    <Svg width={size} height={size * 1.04} viewBox="0 0 100 104" accessible={false}>
+    <Svg width={size} height={size * 1.04} viewBox="0 0 100 104" {...decorative}>
       <Defs>
         <ClipPath id={id}>
           <Path d={SHIELD} />

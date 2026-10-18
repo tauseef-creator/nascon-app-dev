@@ -3,6 +3,7 @@
 const { hub } = require('../lib/realtime');
 const { query } = require('../db/pool');
 const events = require('../services/events');
+const matchStatus = require('../services/matchStatus');
 
 async function pinned(matchId) {
   const { rows } = await query(
@@ -23,6 +24,11 @@ module.exports = async function realtime(req, res) {
 
   const onMatch = (id) => { if (id === matchId) sendScore(); };
   const onPin = (id) => { if (id === matchId) sendPin(); };
+  const sendStatus = async () => {
+    try { send('status', await matchStatus.getStatus(matchId)); } catch (e) { /* match may not exist */ }
+  };
+  const onStatus = (id) => { if (id === matchId) sendStatus(); };
+  hub.on('status', onStatus);
   hub.on('match', onMatch);
   hub.on('pinned', onPin);
   const heartbeat = setInterval(() => res.write(': ping\n\n'), 15000);
@@ -30,7 +36,9 @@ module.exports = async function realtime(req, res) {
     clearInterval(heartbeat);
     hub.off('match', onMatch);
     hub.off('pinned', onPin);
+    hub.off('status', onStatus);
   });
   await sendScore();
   await sendPin();
+  await sendStatus();
 };

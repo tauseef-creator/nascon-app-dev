@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Icon } from './Icon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React from 'react';
@@ -8,6 +8,7 @@ import { canManageRoster, useAuth } from '../auth/AuthContext';
 import { humanize } from '../hooks/useClubNames';
 import { colors, spacing, text } from '../theme';
 import { ClubCrest, crestColor } from './ClubCrest';
+import { ManagePanel, toolsCaption } from './ManagePanel';
 import { Card, EmptyState, PrimaryButton, Row, SecondaryButton, SectionTitle } from './ui';
 
 const POS: Record<string, string> = { gk: 'Goalkeeper', df: 'Defender', mf: 'Midfielder', fw: 'Forward' };
@@ -18,6 +19,8 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
   const players = club.players ?? club.roster ?? [];
   const manages = canManageRoster(user?.role) && (user?.role === 'super_admin' || user?.club_id === club.club_id);
   const v = club.home_venue;
+  // A super admin has no club of their own, so the roster screen is told which club to open.
+  const rosterHref = (user?.role === 'super_admin' && user?.club_id !== club.club_id ? `/roster?club=${encodeURIComponent(club.club_id)}` : '/roster') as '/roster';
   return (
     <View testID="club-profile">
       <View style={{ borderRadius: 24, overflow: 'hidden', marginBottom: spacing.md, backgroundColor: colors.card }}>
@@ -36,17 +39,23 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
             <Text style={{ color: colors.white, fontFamily: 'Inter_700Bold', fontSize: 12 }}>{Object.keys(club.staff ?? {}).length} STAFF</Text>
           </View>
         </LinearGradient>
-        {manages ? (
-          <PrimaryButton title="Manage roster" icon="people" onPress={() => router.push('/roster')} testID="club-manage-roster" style={{ margin: spacing.md }} />
-        ) : null}
       </View>
+
+      {manages ? (
+        <ManagePanel title="Manage club" caption={toolsCaption(user?.role)} testID="club-manage" description="Add, transfer, loan or release players in this club's squad.">
+          <View style={{ gap: spacing.sm }}>
+            <PrimaryButton title="Manage roster" icon="people" onPress={() => router.push(rosterHref)} testID="club-manage-roster" />
+            <SecondaryButton title="Add a player" icon="person-add-outline" onPress={() => router.push(`${rosterHref}${rosterHref.includes('?') ? '&' : '?'}add=1` as never)} testID="club-add-player" />
+          </View>
+        </ManagePanel>
+      ) : null}
 
       <SectionTitle>Home venue</SectionTitle>
       <Card testID="club-venue">
         {v?.name ? (
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
-              <Ionicons name="location" size={22} color={colors.text} />
+              <Icon name="location" size={22} color={colors.text} />
               <Text style={[text.label, { flex: 1 }]}>{v.name}</Text>
             </View>
             {v.lat != null && v.lng != null ? (
@@ -107,7 +116,7 @@ export function ClubProfileView({ club }: { club: ClubProfile }) {
               accessible
               accessibilityLabel={`${p.name}, ${positionLabel(p.position)}${p.role ? `, ${humanize(p.role)}` : ''}`}
             >
-              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' }}><Ionicons name="person" size={15} color={colors.textMuted} /></View>
+              <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.cardHi, alignItems: 'center', justifyContent: 'center' }}><Icon name="person" size={15} color={colors.textMuted} /></View>
               <Text style={[text.label, { flex: 1, fontSize: 13 }]}>{p.name}</Text>
               <Text style={[text.small, { fontSize: 11 }]}>{positionLabel(p.position)}</Text>
             </View>

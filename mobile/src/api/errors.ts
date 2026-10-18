@@ -32,7 +32,7 @@ const MESSAGES: Record<string, string> = {
   EVENT_NOT_FOUND: "We couldn't find the event you tried to correct.",
   VARIANT_NOT_FOUND: 'That product option is no longer available.',
   NOT_FOUND: "We couldn't find what you were looking for.",
-  ILLEGAL_TRANSITION: "The match can't change to that state right now.",
+  ILLEGAL_TRANSITION: "This change isn't possible for a match in its current state.",
   UNKNOWN_EVENT_TYPE: "This sport doesn't use that kind of score event.",
   INNINGS_COMPLETE: 'This innings is already complete.',
   SERIES_ALREADY_DECIDED: 'This series has already been decided.',

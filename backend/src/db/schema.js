@@ -159,6 +159,16 @@ CREATE TABLE IF NOT EXISTS orders (
   response JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+-- Administrative match status overrides (FR-1.3: postponed / abandoned / cancelled).
+CREATE TABLE IF NOT EXISTS match_status (
+  match_id TEXT PRIMARY KEY,
+  status TEXT, -- NULL = no override (event log is authoritative)
+  reason TEXT,
+  scheduled_at TIMESTAMPTZ,
+  updated_by TEXT,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  history JSONB NOT NULL DEFAULT '[]'
+);
 CREATE TABLE IF NOT EXISTS pinned_products (
   match_id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL
@@ -190,7 +200,7 @@ CREATE TABLE IF NOT EXISTS app_state (
 const RESET_TABLES = [
   'tenants', 'users', 'sports', 'leagues', 'clubs', 'players', 'matches', 'match_events',
   'roster_leagues', 'squads', 'registrations', 'roster_live_matches', 'roster_audit', 'roster_requests',
-  'products', 'variants', 'discount_codes', 'orders', 'pinned_products', 'offline_actions', 'app_state',
+  'products', 'variants', 'discount_codes', 'orders', 'pinned_products', 'match_status', 'offline_actions', 'app_state',
 ];
 
 module.exports = { SCHEMA, RESET_TABLES };

@@ -9,6 +9,7 @@ jest.mock('../backend/src/db/pool', () => {
   async function query(sql, p = []) {
     const s = sql.replace(/\s+/g, ' ').trim();
     if (s.includes('pg_advisory_xact_lock')) return rows([]);
+    if (s.includes('FROM match_status')) return rows([]); // no admin status overrides in these tests
     if (s.startsWith('INSERT INTO sports')) {
       if (db.sports.has(p[0])) return rows([]);
       db.sports.set(p[0], json(p[1]));

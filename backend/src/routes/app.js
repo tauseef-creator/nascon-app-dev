@@ -9,6 +9,8 @@ const { hub } = require('../lib/realtime');
 const { tenantScope } = require('../domain/rbac');
 const events = require('../services/events');
 const store = require('../services/store');
+const matchStatus = require('../services/matchStatus');
+const { effectiveStatus } = require('../domain/matchStatus');
 const roster = require('../services/roster');
 
 const router = express.Router();
@@ -22,7 +24,7 @@ function inScope(req, tenantId) {
   return scope === null || (scope !== undefined && scope === tenantId);
 }
 
-async function matchSummary(row, clubNames) {
+async function matchSummary(row, clubNames, overrides = {}) {
   const p = await events.getProjection(row.match_id).catch(() => null);
   return {
     match_id: row.match_id,
@@ -34,7 +36,7 @@ async function matchSummary(row, clubNames) {
     away_name: clubNames[row.away_team_id] || row.away_team_id,
     scheduled_at: row.scheduled_at ? new Date(row.scheduled_at).toISOString().replace(/\.\d{3}Z$/, 'Z') : null,
     venue: row.venue || null,
-    status: p ? p.status : 'upcoming',
+    status: effectiveStatus(p ? p.status : 'upcoming', overrides[row.match_id]),
     home_score: p ? p.home.score : 0,
     away_score: p ? p.away.score : 0,
     version: p ? p.version : 0,
@@ -72,8 +74,10 @@ router.get('/matches', requireAuth, async (req, res) => {
   sql += ' ORDER BY m.scheduled_at NULLS LAST, m.match_id';
   const { rows } = await query(sql, params);
   const names = await clubNameMap();
+  const ov = await query('SELECT match_id, status, reason FROM match_status WHERE status IS NOT NULL');
+  const overrides = Object.fromEntries(ov.rows.map((r) => [r.match_id, r]));
   const matches = [];
-  for (const row of rows) matches.push(await matchSummary(row, names));
+  for (const row of rows) matches.push(await matchSummary(row, names, overrides));
   res.json({ matches });
 });
 
@@ -133,6 +137,7 @@ router.get('/roster/:club_id', requireAuth, async (req, res) => {
     league_id: leagueId,
     squad_id: squadId,
     transfer_window: cfg.transfer_window || null,
+    max_squad_size: Number.isInteger(cfg.max_squad_size) ? cfg.max_squad_size : null,
     squads: squads.rows,
     players: players.rows,
   });
@@ -142,6 +147,16 @@ router.get('/roster/:club_id', requireAuth, async (req, res) => {
 router.post('/roster/:club_id/players', requireAuth, async (req, res) => {
   const out = await roster.addPlayer(req.params.club_id, req.body, req.principal);
   res.status(out.statusCode).json(out.body);
+});
+
+// GET /api/v1/matches/:match_id/status -> effective status, allowed transitions, history (FR-1.3)
+router.get('/matches/:match_id/status', requireAuth, async (req, res) => {
+  res.json(await matchStatus.getStatus(req.params.match_id));
+});
+
+// POST /api/v1/matches/:match_id/status {status: postponed|cancelled|abandoned|upcoming, reason?, scheduled_at?}
+router.post('/matches/:match_id/status', requireAuth, async (req, res) => {
+  res.json(await matchStatus.setStatus(req.params.match_id, req.body, req.principal));
 });
 
 module.exports = router;

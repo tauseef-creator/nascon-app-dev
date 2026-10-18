@@ -1,8 +1,9 @@
 'use strict';
 const { hub } = require('../lib/realtime');
+const { isFrozen } = require('../domain/matchStatus');
 // Match event log service (spec 5.9). Shared by the /audit/v1/events route and offline sync (5.14).
 const { pool, tx } = require('../db/pool');
-const { ApiError, validation, notFound } = require('../lib/errors');
+const { ApiError, validation, notFound, conflict } = require('../lib/errors');
 const { isId } = require('../lib/validate');
 const { canonical, sign, bodyHash } = require('../lib/signing');
 const {
@@ -63,6 +64,14 @@ async function appendInClient(client, event, hash, opts) {
     if (!match) throw notFound('MATCH_NOT_FOUND', `Match ${event.match_id} not found.`, { match_id: event.match_id });
     sport = await loadSport(client, match.sport_id);
     if (!sport) throw notFound('SPORT_NOT_FOUND', `Sport ${match.sport_id} not found.`, { sport_id: match.sport_id });
+    // FR-1.3: a postponed, abandoned or cancelled match accepts corrections only.
+    if (event.type !== 'compensation') {
+      const ov = await client.query('SELECT status FROM match_status WHERE match_id = $1', [event.match_id]);
+      if (isFrozen(ov.rows[0])) {
+        throw conflict('ILLEGAL_TRANSITION', `Match ${event.match_id} is ${ov.rows[0].status}; no new events are accepted.`,
+          { match_id: event.match_id, status: ov.rows[0].status });
+      }
+    }
     events = await loadEvents(client, event.match_id);
     let target = null;
     if (event.type === 'compensation') {

@@ -176,13 +176,33 @@ async function mediaAuth(body) {
 
 const liveSince = new Map(); // path -> { at: Date, key, player_id }
 
+// Redis copy of liveSince for cluster mode (WEB_CONCURRENCY > 1). Best effort: never throws.
+const LIVE_HASH = 'nascon:live_since';
+async function sharedLive(op, name, value) {
+  try {
+    // eslint-disable-next-line global-require
+    const redis = require('../../lib/queue').client();
+    const timeout = new Promise((resolve) => setTimeout(() => resolve(null), 300));
+    if (op === 'set') return await Promise.race([redis.hset(LIVE_HASH, name, JSON.stringify(value)), timeout]);
+    if (op === 'del') return await Promise.race([redis.hdel(LIVE_HASH, name), timeout]);
+    const raw = await Promise.race([redis.hget(LIVE_HASH, name), timeout]);
+    if (!raw) return null;
+    const v = JSON.parse(raw);
+    return { ...v, at: new Date(v.at) };
+  } catch (e) {
+    return null;
+  }
+}
+
 /** runOnReady hook. The hook is only a signal: the stream key must exist before anything is tracked. */
 async function onPathReady(path) {
   const t = domain.parseMediaPath(path);
   if (!t || t.kind !== 'live') return { tracked: false };
   const row = await keyStatus(t.key);
   if (!row || row.status !== 'active') return { tracked: false };
-  liveSince.set(`live/${t.key}`, { at: new Date(), key: t.key, player_id: row.player_id });
+  const live = { at: new Date(), key: t.key, player_id: row.player_id };
+  liveSince.set(`live/${t.key}`, live);
+  await sharedLive('set', `live/${t.key}`, live);
   bus.emitStream(row.player_id, { stream_key: t.key, status: 'live' });
   // A broadcaster came online: restart the compositor of every active co-stream they belong to.
   const { rows } = await query(
@@ -197,9 +217,11 @@ async function onPathNotReady(path) {
   const t = domain.parseMediaPath(path);
   if (!t || t.kind !== 'live') return { indexed: false };
   const name = `live/${t.key}`;
-  const started = liveSince.get(name);
+  // Ready and not-ready hooks can land on different cluster workers: fall back to the shared copy.
+  const started = liveSince.get(name) || await sharedLive('get', name);
   if (!started) return { indexed: false };
   liveSince.delete(name);
+  await sharedLive('del', name);
   const durationS = Math.max(0, Math.ceil((Date.now() - started.at.getTime()) / 1000));
   // Millisecond precision: the hook fires just after recording starts, so this instant lies inside it.
   const startIso = started.at.toISOString();
@@ -230,7 +252,32 @@ async function activeKeyCount() {
   return rows[0].n;
 }
 
+// Live HLS path for a match (FR-3.1 match live page): a broadcast that is on air right now from an active
+// key owned by a player of either club, home club first. Reads MediaMTX, so every worker agrees.
+const MATCH_STREAM_TTL_MS = 2000;
+const matchStreamCache = new Map();
+async function liveStreamForMatch(matchId) {
+  const hit = matchStreamCache.get(matchId);
+  if (hit && Date.now() - hit.at < MATCH_STREAM_TTL_MS) return hit.path;
+  let path = null;
+  const paths = await listPaths();
+  const keys = (paths || [])
+    .filter((it) => it && it.ready && typeof it.name === 'string' && it.name.startsWith('live/'))
+    .map((it) => it.name.slice('live/'.length));
+  if (keys.length) {
+    const { rows } = await query(
+      `SELECT k.stream_key FROM matches m
+         JOIN players p ON p.club_id IN (m.home_team_id, m.away_team_id)
+         JOIN stream_keys k ON k.player_id = p.player_id AND k.status = 'active'
+       WHERE m.match_id = $1 AND k.stream_key = ANY($2::text[])
+       ORDER BY (p.club_id = m.home_team_id) DESC, k.created_at DESC LIMIT 1`, [matchId, keys]);
+    if (rows.length) path = `live/${rows[0].stream_key}`;
+  }
+  matchStreamCache.set(matchId, { at: Date.now(), path });
+  return path;
+}
+
 module.exports = {
   manageKey, publishCheck, mediaAuth, kickPublishers, kickPaths, listPaths, keyStatus,
-  onPathReady, onPathNotReady, vodPlaybackUrl, activeKeyCount, mediaApiBase,
+  onPathReady, onPathNotReady, vodPlaybackUrl, activeKeyCount, mediaApiBase, liveStreamForMatch,
 };

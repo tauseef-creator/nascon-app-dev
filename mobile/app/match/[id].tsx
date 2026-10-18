@@ -38,6 +38,7 @@ import { useSync } from '../../src/offline/SyncProvider';
 import { colors, radius, spacing, surface, text, TOUCH, type } from '../../src/theme';
 import { ClubCrest, crestColor } from '../../src/components/ClubCrest';
 import { ProductArt } from '../../src/components/ProductArt';
+import { MatchLiveVideo } from '../../src/components/MatchLiveVideo';
 import { LinearGradient } from 'expo-linear-gradient';
 import { frozenMessage, isFrozen, OFF_SCHEDULE, statusLabel } from '../../src/utils/matchStatus';
 import { QrCard } from '../../src/components/QrCard';
@@ -409,6 +410,8 @@ export default function MatchDetail() {
         </LinearGradient>
         <Sheen radius={26} height="35%" />
       </Card>
+
+      {isLive ? <MatchLiveVideo matchId={String(id)} /> : null}
 
       <View style={{ flexDirection: 'row', backgroundColor: surface.glass, borderWidth: StyleSheet.hairlineWidth, borderColor: surface.edge, borderRadius: 20, paddingVertical: spacing.md, marginBottom: spacing.md }} testID="match-summary">
         <View style={{ flex: 1, alignItems: 'center' }}><Text style={{ ...type.score, fontSize: 22, lineHeight: 26, color: colors.white }}>{events.filter((e) => e.type === 'score' && !e.compensated).length}</Text><Text style={{ ...type.overline, fontSize: 10, letterSpacing: 0.7, color: colors.textMuted, marginTop: 2 }}>SCORES</Text></View>

@@ -233,7 +233,10 @@ router.get('/api/v1/guest/matches/:match_id', async (req, res) => {
     score,
     pinned_product: product,
     pinned_variant_id: variant ? variant.variant_id : null,
-    stream: { hls_path: await liveStreamPath(matchId), hls_port: 8888 },
+    stream: await (async () => {
+      const hlsPath = await liveStreamPath(matchId);
+      return { hls_path: hlsPath, hls_port: 8888, live: hlsPath !== `live/${matchId}` };
+    })(),
     chat_room_id: `chat-${matchId}`,
   });
 });
